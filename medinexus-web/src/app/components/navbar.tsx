@@ -31,20 +31,20 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
       <div className="app-shell">
-        <div className="flex min-h-[86px] items-center justify-between gap-6">
+        <div className="flex min-h-[96px] items-center justify-between gap-6">
           <Link
             href="/"
             onClick={handleNavigate}
             className="flex min-w-0 items-center"
           >
             <Image
-              src="/brand/medinexus-logo-v2.png"
-              alt="MediNexus"
-              width={520}
-              height={136}
-              className="h-16 w-auto object-contain sm:h-[72px] lg:h-20"
-              priority
-            />
+  src="/brand/medinexus-logo-v2.png"
+  alt="MediNexus"
+  width={620}
+  height={160}
+  className="h-[72px] w-auto object-contain sm:h-20 lg:h-24"
+  priority
+/>
           </Link>
 
           <div className="hidden items-center gap-3 md:flex">
