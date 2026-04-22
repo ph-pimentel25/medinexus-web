@@ -110,3 +110,50 @@ body {
     line-height: 1.15;
   }
 }
+:root {
+  --brand-ink: #2f3b46;
+  --brand-teal: #1b5d6f;
+  --brand-mint: #8cb7a5;
+  --brand-purple: #7564a7;
+  --brand-bg: #f8fafc;
+}
+
+@layer base {
+  body {
+    background-color: var(--brand-bg);
+  }
+}
+
+@layer components {
+  .brand-gradient-text {
+    background: linear-gradient(
+      90deg,
+      var(--brand-ink) 0%,
+      var(--brand-purple) 45%,
+      var(--brand-mint) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .brand-soft-card {
+    @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .brand-primary-btn {
+    background-color: var(--brand-teal);
+    @apply rounded-2xl px-5 py-3 font-semibold text-white transition;
+  }
+
+  .brand-primary-btn:hover {
+    filter: brightness(0.95);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-section-title {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+}

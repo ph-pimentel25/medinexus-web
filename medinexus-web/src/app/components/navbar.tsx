@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,17 +29,32 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3" onClick={handleNavigate}>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-600 text-lg font-bold text-white shadow-sm">
-              M
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-3"
+            onClick={handleNavigate}
+          >
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+              <Image
+                src="/brand/medinexus-logo.png"
+                alt="Logo MediNexus"
+                fill
+                className="object-cover"
+                sizes="44px"
+                priority
+              />
             </div>
 
-            <div>
-              <p className="text-base font-bold text-slate-900">MediNexus</p>
-              <p className="text-xs text-slate-500">Saúde digital inteligente</p>
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold text-slate-900">
+                MediNexus
+              </p>
+              <p className="truncate text-xs text-slate-500">
+                Saúde digital inteligente
+              </p>
             </div>
           </Link>
 
@@ -54,9 +70,14 @@ export default function Navbar() {
                   href={link.href}
                   className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                     isActive
-                      ? "bg-sky-600 text-white"
+                      ? "text-white"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: "var(--brand-teal)" }
+                      : undefined
+                  }
                 >
                   {link.label}
                 </Link>
@@ -96,9 +117,14 @@ export default function Navbar() {
                     onClick={handleNavigate}
                     className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
                       isActive
-                        ? "bg-sky-600 text-white"
+                        ? "text-white"
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
+                    style={
+                      isActive
+                        ? { backgroundColor: "var(--brand-teal)" }
+                        : undefined
+                    }
                   >
                     {link.label}
                   </Link>

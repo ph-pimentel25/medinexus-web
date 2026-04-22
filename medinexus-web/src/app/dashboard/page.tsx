@@ -124,7 +124,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="mx-auto max-w-7xl px-6 py-10">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Dashboard do paciente
@@ -141,7 +141,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Plano atual</p>
             <h3 className="mt-3 text-2xl font-bold text-slate-900">
@@ -171,13 +171,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">
               Ações rápidas
             </h2>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Link
   href="/perfil"
   className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"

@@ -6,13 +6,13 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-sm font-semibold text-sky-700">
-              Plataforma de agendamento inteligente
-            </span>
+            <span className="brand-primary-btn text-center">
+  Plataforma de agendamento inteligente
+</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-6xl">
-              Encontre e solicite sua consulta com menos burocracia.
-            </h1>
+  Encontre e solicite sua consulta com menos burocracia.
+</h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
               A MediNexus conecta paciente, clínica e disponibilidade em uma
