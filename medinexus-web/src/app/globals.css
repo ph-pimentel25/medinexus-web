@@ -100,3 +100,13 @@ body {
     @apply mt-2 text-slate-600;
   }
 }
+@media (max-width: 640px) {
+  h1 {
+    line-height: 1.15;
+  }
+
+  .app-section-title {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+}
