@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";;
+import Alert from "../components/alert";
+import { supabase } from "../lib/supabase";
 
 type HealthPlan = {
   id: string;
@@ -17,6 +18,9 @@ export default function CadastroPage() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  );
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -38,6 +42,7 @@ export default function CadastroPage() {
 
       if (error) {
         setMessage("Erro ao carregar os planos de saúde.");
+        setMessageType("error");
       } else {
         setHealthPlans(data || []);
       }
@@ -77,6 +82,7 @@ export default function CadastroPage() {
 
     if (error) {
       setMessage(error.message);
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -84,9 +90,8 @@ export default function CadastroPage() {
     const userId = data.user?.id;
 
     if (!userId) {
-      setMessage(
-        "Conta criada, mas não foi possível finalizar o cadastro do paciente."
-      );
+      setMessage("Conta criada, mas não foi possível finalizar o cadastro.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -101,190 +106,231 @@ export default function CadastroPage() {
 
     if (patientError) {
       setMessage("Conta criada, mas houve erro ao salvar os dados do paciente.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
 
     if (!data.session) {
-  setMessage(
-    "Conta criada. Agora confirme seu e-mail antes de fazer login."
-  );
-  setSubmitting(false);
-  return;
-}
+      setMessage("Conta criada. Agora confirme seu e-mail antes de fazer login.");
+      setMessageType("info");
+      setSubmitting(false);
+      return;
+    }
 
-setMessage("Cadastro realizado com sucesso! Você será redirecionado.");
+    setMessage("Cadastro realizado com sucesso! Você será redirecionado.");
+    setMessageType("success");
 
-setTimeout(() => {
-  router.push("/dashboard");
-}, 1500);
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 1500);
 
     setSubmitting(false);
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-8">
-          <Link href="/" className="text-sm font-medium text-sky-700 hover:underline">
-            ← Voltar para a página inicial
-          </Link>
-        </div>
+    <main className="min-h-screen bg-slate-50">
+      <section className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-sm font-semibold text-sky-700">
+              Crie sua conta
+            </span>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-2 text-3xl font-bold text-slate-900">Criar conta</h1>
-          <p className="mb-8 text-slate-600">
-            Cadastre seu perfil para começar a buscar consultas na MediNexus.
-          </p>
+            <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
+              Comece sua jornada na MediNexus em poucos minutos.
+            </h1>
 
-          <form onSubmit={handleSubmit} className="grid gap-5">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Nome completo
-              </label>
-              <input
-                name="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Digite seu nome"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-                required
-              />
-            </div>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
+              Cadastre seu perfil, escolha seu plano de saúde e deixe tudo pronto
+              para buscar consultas compatíveis com sua rotina.
+            </p>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                E-mail
-              </label>
-              <input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Digite seu e-mail"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Senha
-              </label>
-              <input
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Crie uma senha"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-                required
-                minLength={6}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Telefone
-              </label>
-              <input
-                name="phone"
-                type="text"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="(21) 99999-9999"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Data de nascimento
-              </label>
-              <input
-                name="birthDate"
-                type="date"
-                value={formData.birthDate}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Plano de saúde
-              </label>
-              <select
-                name="healthPlanId"
-                value={formData.healthPlanId}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-                required
-                disabled={loadingPlans}
-              >
-                <option value="">
-                  {loadingPlans ? "Carregando planos..." : "Selecione seu plano"}
-                </option>
-                {healthPlans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Cidade
-              </label>
-              <input
-                name="city"
-                type="text"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Digite sua cidade"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Estado
-              </label>
-              <input
-                name="state"
-                type="text"
-                value={formData.state}
-                onChange={handleChange}
-                placeholder="Digite seu estado"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
-              />
-            </div>
-
-            {message && (
-              <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-700">
-                {message}
+            <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-medium text-slate-500">
+                O cadastro já salva
               </p>
-            )}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-2 rounded-xl bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? "Criando conta..." : "Criar conta"}
-            </button>
-          </form>
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
+                  Seu plano de saúde principal
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
+                  Cidade e estado base para suas buscas
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
+                  Dados para acompanhar todo o fluxo do paciente
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <p className="mt-6 text-sm text-slate-600">
-            Já tem conta?{" "}
-            <Link href="/login" className="font-medium text-sky-700 hover:underline">
-              Entrar
-            </Link>
-          </p>
+          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+            <div className="mb-8">
+              <Link
+                href="/"
+                className="text-sm font-medium text-sky-700 hover:underline"
+              >
+                ← Voltar para a página inicial
+              </Link>
+            </div>
+
+            <h2 className="text-3xl font-bold text-slate-900">Criar conta</h2>
+            <p className="mt-2 text-slate-600">
+              Preencha seus dados para começar a usar a plataforma.
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Nome completo
+                </label>
+                <input
+                  name="fullName"
+                  type="text"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Digite seu nome"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    E-mail
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Digite seu e-mail"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Senha
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Crie uma senha"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Telefone
+                  </label>
+                  <input
+                    name="phone"
+                    type="text"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="(21) 99999-9999"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Data de nascimento
+                  </label>
+                  <input
+                    name="birthDate"
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Plano de saúde
+                </label>
+                <select
+                  name="healthPlanId"
+                  value={formData.healthPlanId}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  required
+                  disabled={loadingPlans}
+                >
+                  <option value="">
+                    {loadingPlans ? "Carregando planos..." : "Selecione seu plano"}
+                  </option>
+                  {healthPlans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Cidade
+                  </label>
+                  <input
+                    name="city"
+                    type="text"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Digite sua cidade"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Estado
+                  </label>
+                  <input
+                    name="state"
+                    type="text"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="Digite seu estado"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+              </div>
+
+              {message && <Alert variant={messageType}>{message}</Alert>}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-2xl bg-sky-600 px-6 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "Criando conta..." : "Criar conta"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-sm text-slate-600">
+              Já tem conta?{" "}
+              <Link href="/login" className="font-medium text-sky-700 hover:underline">
+                Entrar
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

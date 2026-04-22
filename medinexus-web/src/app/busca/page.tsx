@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
 type Specialty = {
@@ -47,6 +48,9 @@ export default function BuscaPage() {
   const [loadingSpecialties, setLoadingSpecialties] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  );
 
   const [formData, setFormData] = useState({
     specialtyId: "",
@@ -69,6 +73,7 @@ export default function BuscaPage() {
 
       if (error) {
         setMessage("Erro ao carregar as especialidades.");
+        setMessageType("error");
       } else {
         setSpecialties(data || []);
       }
@@ -124,6 +129,7 @@ export default function BuscaPage() {
 
     if (!user) {
       setMessage("Você precisa estar logado para fazer uma busca.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -138,6 +144,7 @@ export default function BuscaPage() {
 
     if (enabledWindows.length === 0) {
       setMessage("Selecione pelo menos um dia e horário disponível.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -148,6 +155,7 @@ export default function BuscaPage() {
 
     if (invalidWindow) {
       setMessage("Preencha os horários de todos os dias selecionados.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -169,6 +177,7 @@ export default function BuscaPage() {
 
     if (searchError || !searchPreference) {
       setMessage("Erro ao salvar a busca.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
@@ -186,33 +195,46 @@ export default function BuscaPage() {
 
     if (windowsError) {
       setMessage("A busca foi criada, mas houve erro ao salvar os horários.");
+      setMessageType("error");
       setSubmitting(false);
       return;
     }
 
     setMessage("Busca criada com sucesso!");
+    setMessageType("success");
 
     setTimeout(() => {
       router.push("/resultados");
-    }, 1500);
+    }, 1200);
 
     setSubmitting(false);
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm font-medium text-sky-700 hover:underline">
+    <main className="min-h-screen bg-slate-50">
+      <section className="mx-auto max-w-5xl px-6 py-10">
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="text-sm font-medium text-sky-700 hover:underline"
+          >
             ← Voltar para o dashboard
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-2 text-3xl font-bold text-slate-900">Nova busca</h1>
-          <p className="mb-8 text-slate-600">
-            Informe a especialidade, o raio e os dias e horários em que você pode ir.
-          </p>
+        <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+          <div className="mb-8">
+            <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
+              Nova busca
+            </p>
+            <h1 className="mt-3 text-4xl font-bold text-slate-900">
+              Encontre a consulta certa
+            </h1>
+            <p className="mt-2 text-slate-600">
+              Informe especialidade, localização e os dias e horários em que você
+              pode ir.
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="grid gap-6">
             <div>
@@ -223,7 +245,7 @@ export default function BuscaPage() {
                 name="specialtyId"
                 value={formData.specialtyId}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 required
                 disabled={loadingSpecialties}
               >
@@ -251,7 +273,7 @@ export default function BuscaPage() {
                   value={formData.searchCity}
                   onChange={handleChange}
                   placeholder="Ex: Rio de Janeiro"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </div>
 
@@ -265,7 +287,7 @@ export default function BuscaPage() {
                   value={formData.searchState}
                   onChange={handleChange}
                   placeholder="Ex: RJ"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </div>
             </div>
@@ -280,7 +302,7 @@ export default function BuscaPage() {
                 min="1"
                 value={formData.maxRadiusKm}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 required
               />
             </div>
@@ -295,7 +317,7 @@ export default function BuscaPage() {
                   type="date"
                   value={formData.preferredStartDate}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </div>
 
@@ -308,13 +330,13 @@ export default function BuscaPage() {
                   type="date"
                   value={formData.preferredEndDate}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </div>
             </div>
 
             <div>
-              <p className="mb-3 block text-sm font-medium text-slate-700">
+              <p className="mb-3 text-sm font-medium text-slate-700">
                 Dias e horários em que você pode ir
               </p>
 
@@ -326,7 +348,7 @@ export default function BuscaPage() {
                   return (
                     <div
                       key={day}
-                      className="rounded-xl border border-slate-200 p-4"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                     >
                       <div className="mb-3 flex items-center gap-3">
                         <input
@@ -355,7 +377,7 @@ export default function BuscaPage() {
                               onChange={(e) =>
                                 handleWeekdayTimeChange(day, "startTime", e.target.value)
                               }
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                             />
                           </div>
 
@@ -369,7 +391,7 @@ export default function BuscaPage() {
                               onChange={(e) =>
                                 handleWeekdayTimeChange(day, "endTime", e.target.value)
                               }
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                             />
                           </div>
                         </div>
@@ -389,26 +411,22 @@ export default function BuscaPage() {
                 value={formData.notes}
                 onChange={handleChange}
                 placeholder="Ex: prefiro clínica perto de metrô, atendimento pela manhã, etc."
-                className="min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+                className="min-h-[120px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
               />
             </div>
 
-            {message && (
-              <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-700">
-                {message}
-              </p>
-            )}
+            {message && <Alert variant={messageType}>{message}</Alert>}
 
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-2xl bg-sky-600 px-6 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Salvando busca..." : "Salvar busca"}
             </button>
           </form>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

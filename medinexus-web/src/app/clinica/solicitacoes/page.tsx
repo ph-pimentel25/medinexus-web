@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
 
 type AppointmentItem = {
@@ -32,6 +33,9 @@ export default function ClinicaSolicitacoesPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  );
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [actingId, setActingId] = useState<string | null>(null);
 
@@ -82,6 +86,7 @@ export default function ClinicaSolicitacoesPage() {
 
     if (error) {
       setMessage("Erro ao carregar as solicitações da clínica.");
+      setMessageType("error");
       setLoading(false);
       return;
     }
@@ -196,6 +201,7 @@ export default function ClinicaSolicitacoesPage() {
 
     if (!current?.date || !current?.startTime || !current?.endTime) {
       setMessage("Preencha data, hora inicial e hora final para confirmar.");
+      setMessageType("error");
       setActingId(null);
       return;
     }
@@ -215,11 +221,13 @@ export default function ClinicaSolicitacoesPage() {
 
     if (error) {
       setMessage("Erro ao confirmar a consulta.");
+      setMessageType("error");
       setActingId(null);
       return;
     }
 
     setMessage("Consulta confirmada com sucesso.");
+    setMessageType("success");
     setActingId(null);
     await loadClinicAppointments();
   }
@@ -232,6 +240,7 @@ export default function ClinicaSolicitacoesPage() {
 
     if (!reason?.trim()) {
       setMessage("Informe o motivo da recusa.");
+      setMessageType("error");
       setActingId(null);
       return;
     }
@@ -248,11 +257,13 @@ export default function ClinicaSolicitacoesPage() {
 
     if (error) {
       setMessage("Erro ao recusar a consulta.");
+      setMessageType("error");
       setActingId(null);
       return;
     }
 
     setMessage("Consulta recusada com sucesso.");
+    setMessageType("success");
     setActingId(null);
     await loadClinicAppointments();
   }
@@ -266,9 +277,9 @@ export default function ClinicaSolicitacoesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between">
+    <main className="min-h-screen bg-slate-50">
+      <section className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8">
           <Link
             href="/dashboard"
             className="text-sm font-medium text-sky-700 hover:underline"
@@ -277,21 +288,26 @@ export default function ClinicaSolicitacoesPage() {
           </Link>
         </div>
 
-        <h1 className="mb-2 text-3xl font-bold text-slate-900">
-          Painel da clínica
-        </h1>
-        <p className="mb-8 text-slate-600">
-          Gerencie as solicitações recebidas e confirme ou recuse consultas.
-        </p>
+        <div className="mb-8">
+          <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
+            Painel da clínica
+          </p>
+          <h1 className="mt-3 text-4xl font-bold text-slate-900">
+            Gerencie as solicitações recebidas
+          </h1>
+          <p className="mt-2 text-slate-600">
+            Confirme ou recuse consultas e acompanhe os pedidos dos pacientes.
+          </p>
+        </div>
 
         {message && (
-          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-slate-700">{message}</p>
+          <div className="mb-6">
+            <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
         {appointments.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
             <p className="text-slate-700">
               Nenhuma solicitação encontrada para esta clínica.
             </p>
@@ -301,29 +317,32 @@ export default function ClinicaSolicitacoesPage() {
             {appointments.map((item) => (
               <div
                 key={item.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
               >
-                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <h2 className="text-2xl font-semibold text-slate-900">
+                    <h2 className="text-3xl font-bold text-slate-900">
                       {item.patients?.profiles?.full_name || "Paciente não identificado"}
                     </h2>
-                    <p className="mt-1 text-slate-700">
-                      <span className="font-medium">Especialidade:</span>{" "}
-                      {item.specialties?.name || "Não informada"}
-                    </p>
-                    <p className="mt-1 text-slate-700">
-                      <span className="font-medium">Médico:</span>{" "}
-                      {item.doctors?.name || "Não informado"}
-                    </p>
-                    <p className="mt-1 text-slate-700">
-                      <span className="font-medium">E-mail:</span>{" "}
-                      {item.patients?.profiles?.email || "Não informado"}
-                    </p>
-                    <p className="mt-1 text-slate-700">
-                      <span className="font-medium">Telefone:</span>{" "}
-                      {item.patients?.profiles?.phone || "Não informado"}
-                    </p>
+
+                    <div className="mt-4 grid gap-2 text-slate-700">
+                      <p>
+                        <span className="font-semibold">Especialidade:</span>{" "}
+                        {item.specialties?.name || "Não informada"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Médico:</span>{" "}
+                        {item.doctors?.name || "Não informado"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">E-mail:</span>{" "}
+                        {item.patients?.profiles?.email || "Não informado"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Telefone:</span>{" "}
+                        {item.patients?.profiles?.phone || "Não informado"}
+                      </p>
+                    </div>
                   </div>
 
                   <span
@@ -335,31 +354,33 @@ export default function ClinicaSolicitacoesPage() {
                   </span>
                 </div>
 
-                <p className="text-slate-700">
-                  <span className="font-medium">Solicitada em:</span>{" "}
-                  {formatDateTime(item.created_at)}
-                </p>
+                <div className="grid gap-2 text-slate-700">
+                  <p>
+                    <span className="font-semibold">Solicitada em:</span>{" "}
+                    {formatDateTime(item.created_at)}
+                  </p>
 
-                <p className="mt-1 text-slate-700">
-                  <span className="font-medium">Data confirmada:</span>{" "}
-                  {formatDateTime(item.confirmed_start_at)}
-                </p>
+                  <p>
+                    <span className="font-semibold">Data confirmada:</span>{" "}
+                    {formatDateTime(item.confirmed_start_at)}
+                  </p>
+                </div>
 
                 {item.status === "rejected" && item.rejection_reason && (
-                  <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                    <span className="font-medium">Motivo da recusa:</span>{" "}
+                  <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <span className="font-semibold">Motivo da recusa:</span>{" "}
                     {item.rejection_reason}
-                  </p>
+                  </div>
                 )}
 
                 {item.status === "pending" && (
                   <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                      <h3 className="mb-4 text-lg font-semibold text-slate-900">
+                    <div className="rounded-3xl border border-green-200 bg-green-50 p-5">
+                      <h3 className="text-lg font-semibold text-slate-900">
                         Confirmar consulta
                       </h3>
 
-                      <div className="grid gap-4">
+                      <div className="mt-4 grid gap-4">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-slate-700">
                             Data
@@ -370,7 +391,7 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "date", e.target.value)
                             }
-                            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-green-500"
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
                           />
                         </div>
 
@@ -384,7 +405,7 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "startTime", e.target.value)
                             }
-                            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-green-500"
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
                           />
                         </div>
 
@@ -398,26 +419,26 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "endTime", e.target.value)
                             }
-                            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-green-500"
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
                           />
                         </div>
 
                         <button
                           onClick={() => handleConfirm(item.id)}
                           disabled={actingId === item.id}
-                          className="rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {actingId === item.id ? "Salvando..." : "Confirmar consulta"}
                         </button>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                      <h3 className="mb-4 text-lg font-semibold text-slate-900">
+                    <div className="rounded-3xl border border-red-200 bg-red-50 p-5">
+                      <h3 className="text-lg font-semibold text-slate-900">
                         Recusar consulta
                       </h3>
 
-                      <div className="grid gap-4">
+                      <div className="mt-4 grid gap-4">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-slate-700">
                             Motivo da recusa
@@ -431,14 +452,14 @@ export default function ClinicaSolicitacoesPage() {
                               }))
                             }
                             placeholder="Ex: agenda indisponível, profissional não atende neste dia, etc."
-                            className="min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-red-500"
+                            className="min-h-[120px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-red-500 focus:ring-4 focus:ring-red-100"
                           />
                         </div>
 
                         <button
                           onClick={() => handleReject(item.id)}
                           disabled={actingId === item.id}
-                          className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {actingId === item.id ? "Salvando..." : "Recusar consulta"}
                         </button>
@@ -450,7 +471,7 @@ export default function ClinicaSolicitacoesPage() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

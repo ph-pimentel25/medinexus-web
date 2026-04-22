@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
 type SearchPreference = {
@@ -27,9 +28,14 @@ type ResultItem = {
 export default function ResultadosPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  );
   const [results, setResults] = useState<ResultItem[]>([]);
   const [patient, setPatient] = useState<PatientData | null>(null);
-  const [searchPreference, setSearchPreference] = useState<SearchPreference | null>(null);
+  const [searchPreference, setSearchPreference] = useState<SearchPreference | null>(
+    null
+  );
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +49,7 @@ export default function ResultadosPage() {
 
       if (!user) {
         setMessage("Você precisa estar logado para ver os resultados.");
+        setMessageType("error");
         setLoading(false);
         return;
       }
@@ -55,6 +62,7 @@ export default function ResultadosPage() {
 
       if (patientError || !patientData) {
         setMessage("Não foi possível carregar os dados do paciente.");
+        setMessageType("error");
         setLoading(false);
         return;
       }
@@ -71,6 +79,7 @@ export default function ResultadosPage() {
 
       if (searchError || !latestSearch) {
         setMessage("Nenhuma busca encontrada para este paciente.");
+        setMessageType("info");
         setLoading(false);
         return;
       }
@@ -103,6 +112,7 @@ export default function ResultadosPage() {
 
       if (dsError || !doctorSpecialties) {
         setMessage("Erro ao buscar médicos compatíveis.");
+        setMessageType("error");
         setLoading(false);
         return;
       }
@@ -113,6 +123,7 @@ export default function ResultadosPage() {
 
       if (clinicPlansError || !clinicPlans) {
         setMessage("Erro ao buscar planos aceitos pelas clínicas.");
+        setMessageType("error");
         setLoading(false);
         return;
       }
@@ -153,6 +164,7 @@ export default function ResultadosPage() {
 
       if (formattedResults.length === 0) {
         setMessage("Nenhum resultado compatível foi encontrado.");
+        setMessageType("info");
         setResults([]);
         setLoading(false);
         return;
@@ -174,6 +186,7 @@ export default function ResultadosPage() {
 
     if (!user || !patient || !searchPreference) {
       setMessage("Não foi possível identificar os dados necessários para a solicitação.");
+      setMessageType("error");
       return;
     }
 
@@ -191,11 +204,13 @@ export default function ResultadosPage() {
 
     if (error) {
       setMessage("Erro ao solicitar a consulta.");
+      setMessageType("error");
       setSubmittingId(null);
       return;
     }
 
     setMessage(`Solicitação enviada com sucesso para ${result.doctor_name}.`);
+    setMessageType("success");
     setSubmittingId(null);
   }
 
@@ -208,34 +223,44 @@ export default function ResultadosPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-slate-50">
+      <section className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-8 flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm font-medium text-sky-700 hover:underline">
+          <Link
+            href="/dashboard"
+            className="text-sm font-medium text-sky-700 hover:underline"
+          >
             ← Voltar para o dashboard
           </Link>
 
           <Link
             href="/busca"
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100"
+            className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
           >
             Nova busca
           </Link>
         </div>
 
-        <h1 className="mb-2 text-3xl font-bold text-slate-900">Resultados</h1>
-        <p className="mb-8 text-slate-600">
-          Veja as opções compatíveis com sua última busca.
-        </p>
+        <div className="mb-8">
+          <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
+            Resultados
+          </p>
+          <h1 className="mt-3 text-4xl font-bold text-slate-900">
+            Opções compatíveis com sua busca
+          </h1>
+          <p className="mt-2 text-slate-600">
+            Escolha a clínica e solicite a consulta que mais faz sentido para você.
+          </p>
+        </div>
 
         {message && (
-          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-slate-700">{message}</p>
+          <div className="mb-6">
+            <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
         {results.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
             <p className="text-slate-700">Nenhum resultado compatível foi encontrado.</p>
           </div>
         ) : (
@@ -243,44 +268,50 @@ export default function ResultadosPage() {
             {results.map((result) => (
               <div
                 key={`${result.doctor_id}-${result.clinic_id}`}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
               >
-                <h2 className="text-2xl font-semibold text-slate-900">
-                  {result.doctor_name}
-                </h2>
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900">
+                      {result.doctor_name}
+                    </h2>
 
-                <p className="mt-2 text-slate-700">
-                  <span className="font-medium">Especialidade:</span>{" "}
-                  {result.specialty_name}
-                </p>
+                    <div className="mt-4 grid gap-2 text-slate-700">
+                      <p>
+                        <span className="font-semibold">Especialidade:</span>{" "}
+                        {result.specialty_name}
+                      </p>
 
-                <p className="mt-1 text-slate-700">
-                  <span className="font-medium">Clínica:</span>{" "}
-                  {result.clinic_name}
-                </p>
+                      <p>
+                        <span className="font-semibold">Clínica:</span>{" "}
+                        {result.clinic_name}
+                      </p>
 
-                <p className="mt-1 text-slate-700">
-                  <span className="font-medium">Local:</span>{" "}
-                  {result.city || "Cidade não informada"} /{" "}
-                  {result.state || "Estado não informado"}
-                </p>
+                      <p>
+                        <span className="font-semibold">Local:</span>{" "}
+                        {result.city || "Cidade não informada"} /{" "}
+                        {result.state || "Estado não informado"}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="mt-5">
-                  <button
-                    onClick={() => handleRequestAppointment(result)}
-                    disabled={submittingId === result.doctor_id}
-                    className="rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {submittingId === result.doctor_id
-                      ? "Solicitando..."
-                      : "Solicitar consulta"}
-                  </button>
+                  <div className="lg:min-w-[220px]">
+                    <button
+                      onClick={() => handleRequestAppointment(result)}
+                      disabled={submittingId === result.doctor_id}
+                      className="w-full rounded-2xl bg-sky-600 px-5 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {submittingId === result.doctor_id
+                        ? "Solicitando..."
+                        : "Solicitar consulta"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }
