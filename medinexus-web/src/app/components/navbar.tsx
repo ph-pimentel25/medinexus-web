@@ -11,7 +11,7 @@ const links = [
   { href: "/perfil", label: "Perfil" },
   { href: "/busca", label: "Nova busca" },
   { href: "/solicitacoes", label: "Solicitações" },
-  { href: "/clinica/solicitacoes", label: "Clínica" },
+  { href: "/clinica/dashboard", label: "Clínica" },
 ];
 
 export default function Navbar() {
