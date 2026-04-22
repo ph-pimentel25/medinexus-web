@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
 type DashboardData = {
@@ -93,26 +94,18 @@ export default function DashboardPage() {
         return;
       }
 
-      const pendingCount =
-        appointments?.filter((item) => item.status === "pending").length || 0;
-
-      const confirmedCount =
-        appointments?.filter((item) => item.status === "confirmed").length || 0;
-
-      const rejectedCount =
-        appointments?.filter((item) => item.status === "rejected").length || 0;
-
-      const cancelledCount =
-        appointments?.filter((item) => item.status === "cancelled").length || 0;
-
       setData({
         fullName: profile.full_name || "Paciente",
         email: profile.email || "",
         healthPlanName,
-        pendingCount,
-        confirmedCount,
-        rejectedCount,
-        cancelledCount,
+        pendingCount:
+          appointments?.filter((item) => item.status === "pending").length || 0,
+        confirmedCount:
+          appointments?.filter((item) => item.status === "confirmed").length || 0,
+        rejectedCount:
+          appointments?.filter((item) => item.status === "rejected").length || 0,
+        cancelledCount:
+          appointments?.filter((item) => item.status === "cancelled").length || 0,
       });
 
       setLoading(false);
@@ -121,149 +114,117 @@ export default function DashboardPage() {
     loadDashboard();
   }, [router]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando dashboard...</p>
+      <main className="flex min-h-screen items-center justify-center bg-slate-950">
+        <p className="text-slate-300">Carregando dashboard...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">MediNexus</h1>
-            <p className="text-sm text-slate-500">Dashboard do paciente</p>
+    <main className="min-h-screen bg-slate-950">
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl shadow-sky-950/30">
+          <div className="mb-8">
+            <p className="text-sm uppercase tracking-[0.25em] text-sky-300">
+              Dashboard do paciente
+            </p>
+            <h1 className="mt-3 text-4xl font-bold text-white">
+              Olá, {data.fullName} 👋
+            </h1>
+            <p className="mt-2 text-slate-400">{data.email}</p>
           </div>
 
-          <nav className="flex gap-4 text-sm font-medium">
-            <Link href="/" className="text-slate-600 hover:text-slate-900">
-              Início
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-slate-600 hover:text-slate-900"
-            >
-              Sair
-            </button>
-          </nav>
-        </div>
-      </header>
+          {message && (
+            <div className="mb-6">
+              <Alert variant="info">{message}</Alert>
+            </div>
+          )}
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900">
-            Olá, {data.fullName} 👋
-          </h2>
-          <p className="mt-2 text-slate-600">{data.email}</p>
-        </div>
+          <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+              <p className="text-sm text-slate-400">Plano atual</p>
+              <h3 className="mt-3 text-2xl font-bold text-white">
+                {data.healthPlanName}
+              </h3>
+            </div>
 
-        {message && (
-          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-slate-700">{message}</p>
-          </div>
-        )}
+            <div className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-6">
+              <p className="text-sm text-yellow-200">Pendentes</p>
+              <h3 className="mt-3 text-3xl font-bold text-white">
+                {data.pendingCount}
+              </h3>
+            </div>
 
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row">
-          <Link
-            href="/busca"
-            className="inline-block rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700"
-          >
-            Nova busca de consulta
-          </Link>
+            <div className="rounded-3xl border border-green-400/20 bg-green-400/10 p-6">
+              <p className="text-sm text-green-200">Confirmadas</p>
+              <h3 className="mt-3 text-3xl font-bold text-white">
+                {data.confirmedCount}
+              </h3>
+            </div>
 
-          <Link
-            href="/solicitacoes"
-            className="inline-block rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-          >
-            Ver minhas solicitações
-          </Link>
-
-          <Link
-            href="/clinica/solicitacoes"
-            className="inline-block rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-          >
-            Painel da clínica
-          </Link>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-slate-500">Plano atual</p>
-            <h3 className="text-xl font-semibold text-slate-900">
-              {data.healthPlanName}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Plano principal salvo no seu perfil.
-            </p>
+            <div className="rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
+              <p className="text-sm text-red-200">Recusadas</p>
+              <h3 className="mt-3 text-3xl font-bold text-white">
+                {data.rejectedCount}
+              </h3>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-slate-500">Pendentes</p>
-            <h3 className="text-xl font-semibold text-slate-900">
-              {data.pendingCount}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Solicitações aguardando resposta da clínica.
-            </p>
-          </div>
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <h2 className="text-xl font-semibold text-white">
+                Ações rápidas
+              </h2>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-slate-500">Confirmadas</p>
-            <h3 className="text-xl font-semibold text-slate-900">
-              {data.confirmedCount}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Consultas aprovadas pela clínica.
-            </p>
-          </div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <Link
+                  href="/busca"
+                  className="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-400 px-5 py-4 font-semibold text-white transition hover:scale-[1.02]"
+                >
+                  Nova busca de consulta
+                </Link>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-slate-500">Recusadas</p>
-            <h3 className="text-xl font-semibold text-slate-900">
-              {data.rejectedCount}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Solicitações recusadas pela clínica.
-            </p>
-          </div>
-        </div>
+                <Link
+                  href="/solicitacoes"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-white transition hover:bg-white/10"
+                >
+                  Ver minhas solicitações
+                </Link>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-slate-500">
-              Canceladas
-            </p>
-            <h3 className="text-xl font-semibold text-slate-900">
-              {data.cancelledCount}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Solicitações canceladas pelo paciente.
-            </p>
-          </div>
+                <Link
+                  href="/resultados"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-white transition hover:bg-white/10"
+                >
+                  Ver resultados
+                </Link>
 
-          <div className="rounded-2xl border border-dashed border-sky-300 bg-sky-50 p-6">
-            <h3 className="mb-2 text-xl font-semibold text-slate-900">
-              Próximo passo
-            </h3>
-            <p className="mb-4 text-slate-700">
-              Use a MediNexus para criar novas buscas, acompanhar solicitações e
-              testar o fluxo da clínica.
-            </p>
+                <Link
+                  href="/clinica/solicitacoes"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-semibold text-white transition hover:bg-white/10"
+                >
+                  Painel da clínica
+                </Link>
+              </div>
+            </div>
 
-            <Link
-              href="/busca"
-              className="inline-block rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700"
-            >
-              Buscar nova consulta
-            </Link>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <p className="text-sm text-slate-400">Canceladas</p>
+              <h3 className="mt-3 text-3xl font-bold text-white">
+                {data.cancelledCount}
+              </h3>
+
+              <div className="mt-6 rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4">
+                <p className="text-sm font-medium text-sky-200">
+                  Resumo do momento
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Você pode iniciar novas buscas, acompanhar retornos das clínicas
+                  e validar o fluxo completo da MediNexus.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
