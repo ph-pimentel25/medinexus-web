@@ -21,16 +21,16 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-400 text-lg font-bold text-white shadow-lg shadow-sky-500/20">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-600 text-lg font-bold text-white shadow-sm">
             M
           </div>
 
           <div>
-            <p className="text-base font-bold text-white">MediNexus</p>
-            <p className="text-xs text-slate-400">
+            <p className="text-base font-bold text-slate-900">MediNexus</p>
+            <p className="text-xs text-slate-500">
               Saúde digital inteligente
             </p>
           </div>
@@ -48,8 +48,8 @@ export default function Navbar() {
                 href={link.href}
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                   isActive
-                    ? "bg-white text-slate-950"
-                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-sky-600 text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 {link.label}
@@ -59,7 +59,7 @@ export default function Navbar() {
 
           <button
             onClick={handleLogout}
-            className="ml-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="ml-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
             Sair
           </button>
