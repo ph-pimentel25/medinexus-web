@@ -39,9 +39,7 @@ export default function LoginPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2">
           <div>
-            <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-sm font-semibold text-sky-700">
-              Acesse sua conta
-            </span>
+            <span className="brand-chip">Acesse sua conta</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
               Entre na MediNexus e acompanhe sua jornada de atendimento.
@@ -52,7 +50,7 @@ export default function LoginPage() {
               novas buscas de forma centralizada.
             </p>
 
-            <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
                 O que você pode fazer ao entrar
               </p>
@@ -71,7 +69,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+          <div className="app-card p-8 shadow-xl shadow-slate-200/60">
             <div className="mb-8">
               <Link
                 href="/"
@@ -96,7 +94,7 @@ export default function LoginPage() {
                   placeholder="Digite seu e-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  className="app-input"
                   required
                 />
               </div>
@@ -110,7 +108,7 @@ export default function LoginPage() {
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  className="app-input"
                   required
                 />
               </div>
@@ -120,7 +118,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-2xl bg-sky-600 px-6 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button-primary"
               >
                 {submitting ? "Entrando..." : "Entrar"}
               </button>

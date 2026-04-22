@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Alert from "../../components/alert";
+import StatusBadge from "../../components/status-badge";
 import { supabase } from "../../lib/supabase";
 
 type AppointmentItem = {
@@ -134,40 +135,6 @@ export default function ClinicaSolicitacoesPage() {
     setLoading(false);
   }
 
-  function getStatusLabel(status: AppointmentItem["status"]) {
-    switch (status) {
-      case "pending":
-        return "Pendente";
-      case "confirmed":
-        return "Confirmada";
-      case "rejected":
-        return "Recusada";
-      case "cancelled":
-        return "Cancelada";
-      case "completed":
-        return "Concluída";
-      default:
-        return status;
-    }
-  }
-
-  function getStatusClasses(status: AppointmentItem["status"]) {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "cancelled":
-        return "bg-slate-200 text-slate-700";
-      case "completed":
-        return "bg-sky-100 text-sky-800";
-      default:
-        return "bg-slate-100 text-slate-800";
-    }
-  }
-
   function formatDateTime(value: string | null) {
     if (!value) return "Ainda não definido";
 
@@ -292,10 +259,10 @@ export default function ClinicaSolicitacoesPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Painel da clínica
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-slate-900">
+          <h1 className="mt-3 app-section-title">
             Gerencie as solicitações recebidas
           </h1>
-          <p className="mt-2 text-slate-600">
+          <p className="app-section-subtitle">
             Confirme ou recuse consultas e acompanhe os pedidos dos pacientes.
           </p>
         </div>
@@ -307,7 +274,7 @@ export default function ClinicaSolicitacoesPage() {
         )}
 
         {appointments.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="app-card p-8">
             <p className="text-slate-700">
               Nenhuma solicitação encontrada para esta clínica.
             </p>
@@ -315,10 +282,7 @@ export default function ClinicaSolicitacoesPage() {
         ) : (
           <div className="grid gap-6">
             {appointments.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
-              >
+              <div key={item.id} className="app-card p-8">
                 <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <h2 className="text-3xl font-bold text-slate-900">
@@ -345,13 +309,7 @@ export default function ClinicaSolicitacoesPage() {
                     </div>
                   </div>
 
-                  <span
-                    className={`inline-block rounded-full px-4 py-2 text-sm font-semibold ${getStatusClasses(
-                      item.status
-                    )}`}
-                  >
-                    {getStatusLabel(item.status)}
-                  </span>
+                  <StatusBadge status={item.status} />
                 </div>
 
                 <div className="grid gap-2 text-slate-700">
@@ -391,7 +349,7 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "date", e.target.value)
                             }
-                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                            className="app-input"
                           />
                         </div>
 
@@ -405,7 +363,7 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "startTime", e.target.value)
                             }
-                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                            className="app-input"
                           />
                         </div>
 
@@ -419,14 +377,14 @@ export default function ClinicaSolicitacoesPage() {
                             onChange={(e) =>
                               handleConfirmFieldChange(item.id, "endTime", e.target.value)
                             }
-                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                            className="app-input"
                           />
                         </div>
 
                         <button
                           onClick={() => handleConfirm(item.id)}
                           disabled={actingId === item.id}
-                          className="rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-button-primary"
                         >
                           {actingId === item.id ? "Salvando..." : "Confirmar consulta"}
                         </button>
@@ -452,7 +410,7 @@ export default function ClinicaSolicitacoesPage() {
                               }))
                             }
                             placeholder="Ex: agenda indisponível, profissional não atende neste dia, etc."
-                            className="min-h-[120px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                            className="app-textarea"
                           />
                         </div>
 

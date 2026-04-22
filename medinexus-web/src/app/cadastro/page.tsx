@@ -133,9 +133,7 @@ export default function CadastroPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-2">
           <div>
-            <span className="inline-flex items-center rounded-full bg-sky-100 px-4 py-1 text-sm font-semibold text-sky-700">
-              Crie sua conta
-            </span>
+            <span className="brand-chip">Crie sua conta</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
               Comece sua jornada na MediNexus em poucos minutos.
@@ -146,7 +144,7 @@ export default function CadastroPage() {
               para buscar consultas compatíveis com sua rotina.
             </p>
 
-            <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
                 O cadastro já salva
               </p>
@@ -165,7 +163,7 @@ export default function CadastroPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+          <div className="app-card p-8 shadow-xl shadow-slate-200/60">
             <div className="mb-8">
               <Link
                 href="/"
@@ -191,7 +189,7 @@ export default function CadastroPage() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="Digite seu nome"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  className="app-input"
                   required
                 />
               </div>
@@ -207,7 +205,7 @@ export default function CadastroPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Digite seu e-mail"
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                     required
                   />
                 </div>
@@ -222,7 +220,7 @@ export default function CadastroPage() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Crie uma senha"
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                     required
                     minLength={6}
                   />
@@ -240,7 +238,7 @@ export default function CadastroPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="(21) 99999-9999"
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                   />
                 </div>
 
@@ -253,7 +251,7 @@ export default function CadastroPage() {
                     type="date"
                     value={formData.birthDate}
                     onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                   />
                 </div>
               </div>
@@ -266,7 +264,7 @@ export default function CadastroPage() {
                   name="healthPlanId"
                   value={formData.healthPlanId}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  className="app-input"
                   required
                   disabled={loadingPlans}
                 >
@@ -292,7 +290,7 @@ export default function CadastroPage() {
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="Digite sua cidade"
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                   />
                 </div>
 
@@ -306,7 +304,7 @@ export default function CadastroPage() {
                     value={formData.state}
                     onChange={handleChange}
                     placeholder="Digite seu estado"
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    className="app-input"
                   />
                 </div>
               </div>
@@ -316,7 +314,7 @@ export default function CadastroPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-2xl bg-sky-600 px-6 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button-primary"
               >
                 {submitting ? "Criando conta..." : "Criar conta"}
               </button>

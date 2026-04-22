@@ -242,7 +242,7 @@ export default function ResultadosPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Resultados
           </p>
-          <h1 className="app-section-title mt-3">
+          <h1 className="mt-3 app-section-title">
             Opções compatíveis com sua busca
           </h1>
           <p className="app-section-subtitle">

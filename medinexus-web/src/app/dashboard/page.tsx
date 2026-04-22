@@ -124,8 +124,14 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-8">
+      <section className="app-shell py-8 sm:py-10">
+        <div
+          className="mb-8 rounded-[32px] border border-slate-200 p-8 shadow-sm"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(27,75,88,0.08) 0%, rgba(122,157,141,0.10) 100%)",
+          }}
+        >
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Dashboard do paciente
           </p>
@@ -142,28 +148,28 @@ export default function DashboardPage() {
         )}
 
         <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="metric-card metric-card--neutral">
             <p className="text-sm text-slate-500">Plano atual</p>
             <h3 className="mt-3 text-2xl font-bold text-slate-900">
               {data.healthPlanName}
             </h3>
           </div>
 
-          <div className="rounded-3xl border border-yellow-200 bg-yellow-50 p-6">
+          <div className="metric-card metric-card--warning">
             <p className="text-sm text-yellow-700">Pendentes</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
               {data.pendingCount}
             </h3>
           </div>
 
-          <div className="rounded-3xl border border-green-200 bg-green-50 p-6">
+          <div className="metric-card metric-card--success">
             <p className="text-sm text-green-700">Confirmadas</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
               {data.confirmedCount}
             </h3>
           </div>
 
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+          <div className="metric-card metric-card--danger">
             <p className="text-sm text-red-700">Recusadas</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
               {data.rejectedCount}
@@ -172,56 +178,54 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="app-card p-6">
             <h2 className="text-xl font-semibold text-slate-900">
               Ações rápidas
             </h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link
-  href="/perfil"
-  className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"
->
-  Meu perfil
-</Link>
-              <Link
-                href="/busca"
-                className="rounded-2xl bg-sky-600 px-5 py-4 font-semibold text-white transition hover:bg-sky-700"
-              >
+              <Link href="/busca" className="app-button-primary text-center">
                 Nova busca de consulta
               </Link>
 
               <Link
+                href="/perfil"
+                className="app-button-secondary text-center"
+              >
+                Meu perfil
+              </Link>
+
+              <Link
                 href="/solicitacoes"
-                className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"
+                className="app-button-secondary text-center"
               >
                 Ver minhas solicitações
               </Link>
 
               <Link
                 href="/resultados"
-                className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"
+                className="app-button-secondary text-center"
               >
                 Ver resultados
               </Link>
 
               <Link
                 href="/clinica/solicitacoes"
-                className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"
+                className="app-button-secondary text-center sm:col-span-2"
               >
                 Painel da clínica
               </Link>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="app-card p-6">
             <p className="text-sm text-slate-500">Canceladas</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
               {data.cancelledCount}
             </h3>
 
-            <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
-              <p className="text-sm font-medium text-sky-700">
+            <div className="mt-6 rounded-2xl border p-4" style={{ borderColor: "rgba(27,75,88,0.12)", backgroundColor: "rgba(27,75,88,0.05)" }}>
+              <p className="text-sm font-medium" style={{ color: "var(--brand-petrol)" }}>
                 Resumo do momento
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Alert from "../components/alert";
+import StatusBadge from "../components/status-badge";
 import { supabase } from "../lib/supabase";
 
 type AppointmentItem = {
@@ -78,40 +79,6 @@ export default function SolicitacoesPage() {
     setLoading(false);
   }
 
-  function getStatusLabel(status: AppointmentItem["status"]) {
-    switch (status) {
-      case "pending":
-        return "Pendente";
-      case "confirmed":
-        return "Confirmada";
-      case "rejected":
-        return "Recusada";
-      case "cancelled":
-        return "Cancelada";
-      case "completed":
-        return "Concluída";
-      default:
-        return status;
-    }
-  }
-
-  function getStatusClasses(status: AppointmentItem["status"]) {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "cancelled":
-        return "bg-slate-200 text-slate-700";
-      case "completed":
-        return "bg-sky-100 text-sky-800";
-      default:
-        return "bg-slate-100 text-slate-800";
-    }
-  }
-
   function getDoctorName(item: AppointmentItem) {
     return Array.isArray(item.doctors)
       ? item.doctors[0]?.name
@@ -180,10 +147,7 @@ export default function SolicitacoesPage() {
             ← Voltar para o dashboard
           </Link>
 
-          <Link
-            href="/busca"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
-          >
+          <Link href="/busca" className="app-button-secondary">
             Nova busca
           </Link>
         </div>
@@ -192,10 +156,10 @@ export default function SolicitacoesPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Minhas solicitações
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-slate-900">
+          <h1 className="mt-3 app-section-title">
             Acompanhe seus pedidos de consulta
           </h1>
-          <p className="mt-2 text-slate-600">
+          <p className="app-section-subtitle">
             Veja o status de cada solicitação e acompanhe a resposta das clínicas.
           </p>
         </div>
@@ -207,7 +171,7 @@ export default function SolicitacoesPage() {
         )}
 
         {appointments.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="app-card p-8">
             <p className="text-slate-700">
               Você ainda não possui solicitações cadastradas.
             </p>
@@ -218,10 +182,7 @@ export default function SolicitacoesPage() {
               const clinic = getClinic(item);
 
               return (
-                <div
-                  key={item.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
-                >
+                <div key={item.id} className="app-card p-8">
                   <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <h2 className="text-3xl font-bold text-slate-900">
@@ -233,13 +194,7 @@ export default function SolicitacoesPage() {
                       </p>
                     </div>
 
-                    <span
-                      className={`inline-block rounded-full px-4 py-2 text-sm font-semibold ${getStatusClasses(
-                        item.status
-                      )}`}
-                    >
-                      {getStatusLabel(item.status)}
-                    </span>
+                    <StatusBadge status={item.status} />
                   </div>
 
                   <div className="grid gap-2 text-slate-700">
@@ -277,7 +232,7 @@ export default function SolicitacoesPage() {
                       <button
                         onClick={() => handleCancelAppointment(item.id)}
                         disabled={cancelingId === item.id}
-                        className="rounded-2xl border border-red-300 bg-white px-5 py-3 font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="app-button-danger"
                       >
                         {cancelingId === item.id
                           ? "Cancelando..."
