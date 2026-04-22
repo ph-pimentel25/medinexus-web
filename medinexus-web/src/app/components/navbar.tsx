@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/perfil", label: "Perfil" },
   { href: "/busca", label: "Nova busca" },
   { href: "/solicitacoes", label: "Solicitações" },
   { href: "/clinica/solicitacoes", label: "Clínica" },

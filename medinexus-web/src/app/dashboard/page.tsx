@@ -179,6 +179,12 @@ export default function DashboardPage() {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Link
+  href="/perfil"
+  className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-900 transition hover:bg-slate-100"
+>
+  Meu perfil
+</Link>
+              <Link
                 href="/busca"
                 className="rounded-2xl bg-sky-600 px-5 py-4 font-semibold text-white transition hover:bg-sky-700"
               >
