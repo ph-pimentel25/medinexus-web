@@ -233,10 +233,7 @@ export default function ResultadosPage() {
             ← Voltar para o dashboard
           </Link>
 
-          <Link
-            href="/busca"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
-          >
+          <Link href="/busca" className="app-button-secondary">
             Nova busca
           </Link>
         </div>
@@ -245,11 +242,11 @@ export default function ResultadosPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
             Resultados
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-slate-900">
+          <h1 className="app-section-title mt-3">
             Opções compatíveis com sua busca
           </h1>
-          <p className="mt-2 text-slate-600">
-            Escolha a clínica e solicite a consulta que mais faz sentido para você.
+          <p className="app-section-subtitle">
+            Escolha a melhor opção e envie sua solicitação para a clínica.
           </p>
         </div>
 
@@ -260,7 +257,7 @@ export default function ResultadosPage() {
         )}
 
         {results.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="app-card p-8">
             <p className="text-slate-700">Nenhum resultado compatível foi encontrado.</p>
           </div>
         ) : (
@@ -268,38 +265,46 @@ export default function ResultadosPage() {
             {results.map((result) => (
               <div
                 key={`${result.doctor_id}-${result.clinic_id}`}
-                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+                className="app-card p-8"
               >
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <h2 className="text-3xl font-bold text-slate-900">
-                      {result.doctor_name}
-                    </h2>
-
-                    <div className="mt-4 grid gap-2 text-slate-700">
-                      <p>
-                        <span className="font-semibold">Especialidade:</span>{" "}
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex-1">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <h2 className="text-3xl font-bold text-slate-900">
+                        {result.doctor_name}
+                      </h2>
+                      <span className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200">
                         {result.specialty_name}
-                      </p>
+                      </span>
+                    </div>
 
-                      <p>
-                        <span className="font-semibold">Clínica:</span>{" "}
-                        {result.clinic_name}
-                      </p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="app-card-soft p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Clínica
+                        </p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {result.clinic_name}
+                        </p>
+                      </div>
 
-                      <p>
-                        <span className="font-semibold">Local:</span>{" "}
-                        {result.city || "Cidade não informada"} /{" "}
-                        {result.state || "Estado não informado"}
-                      </p>
+                      <div className="app-card-soft p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Local
+                        </p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {result.city || "Cidade não informada"} /{" "}
+                          {result.state || "Estado não informado"}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="lg:min-w-[220px]">
+                  <div className="lg:w-[240px]">
                     <button
                       onClick={() => handleRequestAppointment(result)}
                       disabled={submittingId === result.doctor_id}
-                      className="w-full rounded-2xl bg-sky-600 px-5 py-4 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-button-primary w-full"
                     >
                       {submittingId === result.doctor_id
                         ? "Solicitando..."

@@ -24,3 +24,79 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@layer base {
+  input,
+  textarea,
+  select {
+    @apply text-slate-900 placeholder:text-slate-400;
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    @apply text-slate-500 bg-slate-100;
+  }
+}
+@layer base {
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="text"],
+  textarea,
+  select {
+    color: #0f172a;
+  }
+}
+@layer base {
+  input,
+  textarea,
+  select {
+    @apply text-slate-900 placeholder:text-slate-400;
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    @apply bg-slate-100 text-slate-500;
+  }
+}
+
+@layer components {
+  .app-card {
+    @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .app-card-soft {
+    @apply rounded-2xl border border-slate-200 bg-slate-50;
+  }
+
+  .app-input {
+    @apply w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100;
+  }
+
+  .app-textarea {
+    @apply min-h-[120px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100;
+  }
+
+  .app-button-primary {
+    @apply rounded-2xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .app-button-secondary {
+    @apply rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .app-button-danger {
+    @apply rounded-2xl border border-red-300 bg-white px-5 py-3 font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .app-section-title {
+    @apply text-4xl font-bold text-slate-900;
+  }
+
+  .app-section-subtitle {
+    @apply mt-2 text-slate-600;
+  }
+}
