@@ -9,6 +9,7 @@ import { supabase } from "../../lib/supabase";
 type DoctorRow = {
   id: string;
   name: string;
+  professional_email: string | null;
   crm: string | null;
   crm_state: string | null;
   bio_short: string | null;
@@ -28,6 +29,7 @@ type Specialty = {
 type DoctorItem = {
   id: string;
   name: string;
+  professionalEmail: string | null;
   crm: string | null;
   crmState: string | null;
   bioShort: string | null;
@@ -105,7 +107,7 @@ export default function ClinicaMedicosPage() {
 
     const { data: doctorsData, error: doctorsError } = await supabase
       .from("doctors")
-      .select("id, name, crm, crm_state, bio_short, is_active")
+      .select("id, name, professional_email, crm, crm_state, bio_short, is_active")
       .eq("clinic_id", member.clinic_id)
       .order("name", { ascending: true });
 
@@ -152,6 +154,7 @@ export default function ClinicaMedicosPage() {
       (doctor) => ({
         id: doctor.id,
         name: doctor.name,
+        professionalEmail: doctor.professional_email,
         crm: doctor.crm,
         crmState: doctor.crm_state,
         bioShort: doctor.bio_short,
@@ -268,7 +271,16 @@ export default function ClinicaMedicosPage() {
                       </span>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="app-card-soft p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          E-mail profissional
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900 break-all">
+                          {doctor.professionalEmail || "Não informado"}
+                        </p>
+                      </div>
+
                       <div className="app-card-soft p-4">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                           CRM

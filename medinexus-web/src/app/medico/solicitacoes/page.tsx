@@ -10,7 +10,7 @@ import { supabase } from "../../lib/supabase";
 type Status = "pending" | "confirmed" | "rejected" | "cancelled" | "completed";
 
 type MemberRow = {
-  clinic_id: string;
+  doctor_id: string | null;
   member_role: "owner" | "admin" | "doctor";
 };
 
@@ -31,8 +31,10 @@ type AppointmentItem = {
     id: string;
     profiles?: ProfileInfo | null;
   } | null;
-  doctors?: {
-    name: string | null;
+  clinics?: {
+    trade_name: string | null;
+    city: string | null;
+    state: string | null;
   } | null;
   specialties?: {
     name: string | null;
@@ -47,7 +49,18 @@ type RawAppointmentItem = {
   confirmed_end_at: string | null;
   rejection_reason: string | null;
   patients?: { id: string } | { id: string }[] | null;
-  doctors?: { name: string | null } | { name: string | null }[] | null;
+  clinics?:
+    | {
+        trade_name: string | null;
+        city: string | null;
+        state: string | null;
+      }
+    | {
+        trade_name: string | null;
+        city: string | null;
+        state: string | null;
+      }[]
+    | null;
   specialties?: { name: string | null } | { name: string | null }[] | null;
 };
 
@@ -56,7 +69,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export default function ClinicaSolicitacoesPage() {
+export default function MedicoSolicitacoesPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -76,10 +89,10 @@ export default function ClinicaSolicitacoesPage() {
   );
 
   useEffect(() => {
-    loadClinicAppointments();
+    loadDoctorAppointments();
   }, []);
 
-  async function loadClinicAppointments() {
+  async function loadDoctorAppointments() {
     setLoading(true);
     setMessage("");
 
@@ -94,19 +107,15 @@ export default function ClinicaSolicitacoesPage() {
 
     const { data: member, error: memberError } = await supabase
       .from("clinic_members")
-      .select("clinic_id, member_role")
+      .select("doctor_id, member_role")
       .eq("user_id", user.id)
+      .eq("member_role", "doctor")
       .single<MemberRow>();
 
-    if (memberError || !member) {
-      setMessage("Você não possui acesso à área da clínica.");
+    if (memberError || !member || !member.doctor_id) {
+      setMessage("Você não possui acesso à área médica.");
       setMessageType("error");
       setLoading(false);
-      return;
-    }
-
-    if (member.member_role === "doctor") {
-      router.push("/medico/solicitacoes");
       return;
     }
 
@@ -122,18 +131,20 @@ export default function ClinicaSolicitacoesPage() {
         patients (
           id
         ),
-        doctors (
-          name
+        clinics (
+          trade_name,
+          city,
+          state
         ),
         specialties (
           name
         )
       `)
-      .eq("clinic_id", member.clinic_id)
+      .eq("doctor_id", member.doctor_id)
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage("Erro ao carregar as solicitações da clínica.");
+      setMessage("Erro ao carregar as solicitações do médico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -167,7 +178,7 @@ export default function ClinicaSolicitacoesPage() {
 
     const mergedAppointments: AppointmentItem[] = rawAppointments.map((item) => {
       const patient = pickOne(item.patients);
-      const doctor = pickOne(item.doctors);
+      const clinic = pickOne(item.clinics);
       const specialty = pickOne(item.specialties);
 
       return {
@@ -183,7 +194,13 @@ export default function ClinicaSolicitacoesPage() {
               profiles: profilesMap[patient.id] || null,
             }
           : null,
-        doctors: doctor ? { name: doctor.name } : null,
+        clinics: clinic
+          ? {
+              trade_name: clinic.trade_name,
+              city: clinic.city,
+              state: clinic.state,
+            }
+          : null,
         specialties: specialty ? { name: specialty.name } : null,
       };
     });
@@ -253,7 +270,7 @@ export default function ClinicaSolicitacoesPage() {
     setMessage("Consulta confirmada com sucesso.");
     setMessageType("success");
     setActingId(null);
-    await loadClinicAppointments();
+    await loadDoctorAppointments();
   }
 
   async function handleReject(appointmentId: string) {
@@ -289,38 +306,39 @@ export default function ClinicaSolicitacoesPage() {
     setMessage("Consulta recusada com sucesso.");
     setMessageType("success");
     setActingId(null);
-    await loadClinicAppointments();
+    await loadDoctorAppointments();
   }
 
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando painel da clínica...</p>
+        <p className="text-slate-600">Carregando solicitações do médico...</p>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8">
+      <section className="app-shell py-8 sm:py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
-            href="/clinica/dashboard"
+            href="/medico/dashboard"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            ← Voltar para o dashboard da clínica
+            ← Voltar para o dashboard médico
           </Link>
         </div>
 
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Painel da clínica
+            Solicitações do médico
           </p>
           <h1 className="mt-3 app-section-title">
-            Gerencie as solicitações recebidas
+            Gerencie apenas as consultas atribuídas a você
           </h1>
           <p className="app-section-subtitle">
-            Confirme ou recuse consultas e acompanhe os pedidos dos pacientes.
+            Confirme, recuse e acompanhe somente as solicitações do seu próprio
+            atendimento.
           </p>
         </div>
 
@@ -333,7 +351,7 @@ export default function ClinicaSolicitacoesPage() {
         {appointments.length === 0 ? (
           <div className="app-card p-8">
             <p className="text-slate-700">
-              Nenhuma solicitação encontrada para esta clínica.
+              Nenhuma solicitação encontrada para este médico.
             </p>
           </div>
         ) : (
@@ -353,8 +371,13 @@ export default function ClinicaSolicitacoesPage() {
                         {item.specialties?.name || "Não informada"}
                       </p>
                       <p>
-                        <span className="font-semibold">Médico:</span>{" "}
-                        {item.doctors?.name || "Não informado"}
+                        <span className="font-semibold">Clínica:</span>{" "}
+                        {item.clinics?.trade_name || "Não informada"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Local:</span>{" "}
+                        {item.clinics?.city || "Cidade não informada"} /{" "}
+                        {item.clinics?.state || "Estado não informado"}
                       </p>
                       <p>
                         <span className="font-semibold">E-mail:</span>{" "}
@@ -481,7 +504,7 @@ export default function ClinicaSolicitacoesPage() {
                                 [item.id]: e.target.value,
                               }))
                             }
-                            placeholder="Ex: agenda indisponível, profissional não atende neste dia, etc."
+                            placeholder="Ex: agenda indisponível, horário não atendido, etc."
                             className="app-textarea"
                           />
                         </div>

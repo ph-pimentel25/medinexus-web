@@ -13,6 +13,7 @@ type Specialty = {
 
 type DoctorForm = {
   name: string;
+  professionalEmail: string;
   crm: string;
   crmState: string;
   bioShort: string;
@@ -22,6 +23,7 @@ type DoctorForm = {
 
 const emptyDoctorForm: DoctorForm = {
   name: "",
+  professionalEmail: "",
   crm: "",
   crmState: "",
   bioShort: "",
@@ -105,7 +107,7 @@ export default function ClinicaEditarMedicoPage() {
 
     const { data: doctorData, error: doctorError } = await supabase
       .from("doctors")
-      .select("id, name, crm, crm_state, bio_short, is_active, clinic_id")
+      .select("id, name, professional_email, crm, crm_state, bio_short, is_active, clinic_id")
       .eq("id", doctorId)
       .eq("clinic_id", member.clinic_id)
       .single();
@@ -131,6 +133,7 @@ export default function ClinicaEditarMedicoPage() {
 
     setForm({
       name: doctorData.name || "",
+      professionalEmail: doctorData.professional_email || "",
       crm: doctorData.crm || "",
       crmState: doctorData.crm_state || "",
       bioShort: doctorData.bio_short || "",
@@ -184,6 +187,7 @@ export default function ClinicaEditarMedicoPage() {
       .from("doctors")
       .update({
         name: form.name,
+        professional_email: form.professionalEmail || null,
         crm: form.crm || null,
         crm_state: form.crmState || null,
         bio_short: form.bioShort || null,
@@ -307,6 +311,23 @@ export default function ClinicaEditarMedicoPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
+                  E-mail profissional
+                </label>
+                <input
+                  name="professionalEmail"
+                  type="email"
+                  value={form.professionalEmail}
+                  onChange={handleChange}
+                  className="app-input"
+                  required
+                  disabled={!canManage}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   CRM
                 </label>
                 <input
@@ -317,9 +338,7 @@ export default function ClinicaEditarMedicoPage() {
                   disabled={!canManage}
                 />
               </div>
-            </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Estado do CRM
@@ -332,21 +351,21 @@ export default function ClinicaEditarMedicoPage() {
                   disabled={!canManage}
                 />
               </div>
+            </div>
 
-              <div className="flex items-end">
-                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={form.isActive}
-                    onChange={handleChange}
-                    disabled={!canManage}
-                  />
-                  <span className="text-sm font-medium text-slate-700">
-                    Médico ativo
-                  </span>
-                </label>
-              </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={form.isActive}
+                  onChange={handleChange}
+                  disabled={!canManage}
+                />
+                <span className="text-sm font-medium text-slate-700">
+                  Médico ativo
+                </span>
+              </label>
             </div>
 
             <div>

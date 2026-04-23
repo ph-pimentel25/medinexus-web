@@ -13,6 +13,7 @@ type Specialty = {
 
 type DoctorForm = {
   name: string;
+  professionalEmail: string;
   crm: string;
   crmState: string;
   bioShort: string;
@@ -22,6 +23,7 @@ type DoctorForm = {
 
 const emptyDoctorForm: DoctorForm = {
   name: "",
+  professionalEmail: "",
   crm: "",
   crmState: "",
   bioShort: "",
@@ -152,6 +154,7 @@ export default function ClinicaNovoMedicoPage() {
         clinic_id: clinicId,
         created_by: user.id,
         name: form.name,
+        professional_email: form.professionalEmail || null,
         crm: form.crm || null,
         crm_state: form.crmState || null,
         bio_short: form.bioShort || null,
@@ -228,7 +231,7 @@ export default function ClinicaNovoMedicoPage() {
             Cadastre um profissional da clínica
           </h1>
           <p className="app-section-subtitle">
-            Preencha os dados básicos do médico e marque as especialidades atendidas.
+            Preencha os dados do médico, incluindo o e-mail que ele usará para criar o próprio login.
           </p>
         </div>
 
@@ -258,6 +261,24 @@ export default function ClinicaNovoMedicoPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
+                  E-mail profissional
+                </label>
+                <input
+                  name="professionalEmail"
+                  type="email"
+                  value={form.professionalEmail}
+                  onChange={handleChange}
+                  className="app-input"
+                  placeholder="email do médico"
+                  required
+                  disabled={!canManage}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   CRM
                 </label>
                 <input
@@ -269,9 +290,7 @@ export default function ClinicaNovoMedicoPage() {
                   disabled={!canManage}
                 />
               </div>
-            </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Estado do CRM
@@ -285,21 +304,21 @@ export default function ClinicaNovoMedicoPage() {
                   disabled={!canManage}
                 />
               </div>
+            </div>
 
-              <div className="flex items-end">
-                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={form.isActive}
-                    onChange={handleChange}
-                    disabled={!canManage}
-                  />
-                  <span className="text-sm font-medium text-slate-700">
-                    Médico ativo
-                  </span>
-                </label>
-              </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={form.isActive}
+                  onChange={handleChange}
+                  disabled={!canManage}
+                />
+                <span className="text-sm font-medium text-slate-700">
+                  Médico ativo
+                </span>
+              </label>
             </div>
 
             <div>
