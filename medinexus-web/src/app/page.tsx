@@ -30,6 +30,12 @@ export default function Home() {
               >
                 Entrar
               </Link>
+              <Link
+  href="/clinica/cadastro"
+  className="app-button-secondary text-center"
+>
+  Cadastrar clínica
+</Link>
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">

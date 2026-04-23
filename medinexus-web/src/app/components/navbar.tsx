@@ -12,6 +12,7 @@ const links = [
   { href: "/busca", label: "Nova busca" },
   { href: "/solicitacoes", label: "Solicitações" },
   { href: "/clinica/dashboard", label: "Clínica" },
+  { href: "/clinica/cadastro", label: "Cadastrar clínica" },
 ];
 
 export default function Navbar() {

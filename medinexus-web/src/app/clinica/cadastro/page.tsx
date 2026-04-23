@@ -36,100 +36,103 @@ export default function ClinicaCadastroPage() {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSubmitting(true);
-    setMessage("");
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  setSubmitting(true);
+  setMessage("");
 
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.tradeName,
-          phone: formData.phone,
-          role: "clinic_admin",
-        },
-      },
-    });
-
-    if (error) {
-      setMessage(error.message);
-      setMessageType("error");
-      setSubmitting(false);
-      return;
-    }
-
-    if (!data.session || !data.user) {
-      setMessage(
-        "Conta criada. Faça a confirmação do e-mail antes de concluir o cadastro da clínica."
-      );
-      setMessageType("info");
-      setSubmitting(false);
-      return;
-    }
-
-    const userId = data.user.id;
-    const clinicId = crypto.randomUUID();
-
-    const { error: profileUpdateError } = await supabase
-      .from("profiles")
-      .update({
+  const { data, error } = await supabase.auth.signUp({
+    email: formData.email,
+    password: formData.password,
+    options: {
+      data: {
         full_name: formData.tradeName,
-        phone: formData.phone || null,
+        phone: formData.phone,
         role: "clinic_admin",
-      })
-      .eq("id", userId);
+      },
+    },
+  });
 
-    if (profileUpdateError) {
-      setMessage("Conta criada, mas não foi possível atualizar o perfil.");
-      setMessageType("error");
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: clinicError } = await supabase.from("clinics").insert({
-      id: clinicId,
-      trade_name: formData.tradeName,
-      contact_phone: formData.phone || null,
-      contact_email: formData.email,
-      address_text: formData.addressText || null,
-      city: formData.city || null,
-      state: formData.state || null,
-      is_verified: false,
-      created_by: userId,
-    });
-
-    if (clinicError) {
-      setMessage("Conta criada, mas houve erro ao criar a clínica.");
-      setMessageType("error");
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: memberError } = await supabase.from("clinic_members").insert({
-      clinic_id: clinicId,
-      user_id: userId,
-      member_role: "owner",
-    });
-
-    if (memberError) {
-      setMessage("Clínica criada, mas houve erro ao vincular o usuário à clínica.");
-      setMessageType("error");
-      setSubmitting(false);
-      return;
-    }
-
-    setMessage("Clínica cadastrada com sucesso! Redirecionando...");
-    setMessageType("success");
-
-    setTimeout(() => {
-      router.push("/clinica/dashboard");
-    }, 1200);
-
+  if (error) {
+    console.error("signUp error:", error);
+    setMessage(`Erro ao criar a conta: ${error.message}`);
+    setMessageType("error");
     setSubmitting(false);
+    return;
   }
 
+  if (!data.session || !data.user) {
+    setMessage(
+      "Conta criada. Faça a confirmação do e-mail antes de concluir o cadastro da clínica."
+    );
+    setMessageType("info");
+    setSubmitting(false);
+    return;
+  }
+
+  const userId = data.user.id;
+const clinicId = userId;
+
+  const { error: profileUpdateError } = await supabase
+    .from("profiles")
+    .update({
+      full_name: formData.tradeName,
+      phone: formData.phone || null,
+      role: "clinic_admin",
+    })
+    .eq("id", userId);
+
+  if (profileUpdateError) {
+    console.error("profileUpdateError:", profileUpdateError);
+    setMessage(`Conta criada, mas houve erro ao atualizar o perfil: ${profileUpdateError.message}`);
+    setMessageType("error");
+    setSubmitting(false);
+    return;
+  }
+
+  const { error: clinicError } = await supabase.from("clinics").insert({
+  id: clinicId,
+  trade_name: formData.tradeName,
+  contact_phone: formData.phone || null,
+  contact_email: formData.email,
+  address_text: formData.addressText || null,
+  city: formData.city || null,
+  state: formData.state || null,
+  is_verified: false,
+  created_by: userId,
+});
+
+  if (clinicError) {
+    console.error("clinicError:", clinicError);
+    setMessage(`Erro ao criar a clínica: ${clinicError.message}`);
+    setMessageType("error");
+    setSubmitting(false);
+    return;
+  }
+
+const { error: memberError } = await supabase.from("clinic_members").insert({
+  clinic_id: clinicId,
+  user_id: userId,
+  member_role: "owner",
+});
+
+  if (memberError) {
+    console.error("memberError:", memberError);
+    setMessage(`Erro ao vincular usuário à clínica: ${memberError.message}`);
+    setMessageType("error");
+    setSubmitting(false);
+    return;
+  }
+
+  setMessage("Clínica cadastrada com sucesso! Redirecionando...");
+  setMessageType("success");
+
+  setTimeout(() => {
+    router.push("/clinica/dashboard");
+  }, 1200);
+
+  setSubmitting(false);
+}
   return (
     <main className="min-h-screen bg-slate-50">
       <section className="mx-auto max-w-7xl px-6 py-12">
