@@ -241,20 +241,27 @@ export default function MedicoDashboardPage() {
             </h2>
 
             <div className="mt-5 grid gap-3">
-              <Link
-                href="/medico/solicitacoes"
-                className="app-button-primary text-center"
-              >
-                Ver minhas solicitações
-              </Link>
+  <Link
+    href="/medico/solicitacoes"
+    className="app-button-primary text-center"
+  >
+    Ver minhas solicitações
+  </Link>
 
-              <Link
-                href="/login"
-                className="app-button-secondary text-center"
-              >
-                Trocar usuário
-              </Link>
-            </div>
+  <Link
+    href="/medico/disponibilidade"
+    className="app-button-secondary text-center"
+  >
+    Configurar disponibilidade
+  </Link>
+
+  <Link
+    href="/login"
+    className="app-button-secondary text-center"
+  >
+    Trocar usuário
+  </Link>
+</div>
 
             <div
               className="mt-6 rounded-2xl border p-4"

@@ -20,6 +20,13 @@ type ProfileInfo = {
   phone: string | null;
 };
 
+type AvailabilityRule = {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+};
+
 type AppointmentItem = {
   id: string;
   status: Status;
@@ -69,6 +76,45 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
+function formatDateTime(value: string | null) {
+  if (!value) return "Ainda não definido";
+
+  return new Date(value).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function getLocalDayOfWeek(dateString: string) {
+  return new Date(`${dateString}T12:00:00`).getDay();
+}
+
+function toMinutes(timeValue: string) {
+  const [hours, minutes] = timeValue.slice(0, 5).split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function isWithinAvailability(
+  date: string,
+  startTime: string,
+  endTime: string,
+  rules: AvailabilityRule[]
+) {
+  const dayOfWeek = getLocalDayOfWeek(date);
+  const start = toMinutes(startTime);
+  const end = toMinutes(endTime);
+
+  return rules.some((rule) => {
+    if (!rule.is_active) return false;
+    if (rule.day_of_week !== dayOfWeek) return false;
+
+    const ruleStart = toMinutes(rule.start_time);
+    const ruleEnd = toMinutes(rule.end_time);
+
+    return start >= ruleStart && end <= ruleEnd;
+  });
+}
+
 export default function MedicoSolicitacoesPage() {
   const router = useRouter();
 
@@ -79,6 +125,9 @@ export default function MedicoSolicitacoesPage() {
   );
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>(
+    []
+  );
 
   const [confirmData, setConfirmData] = useState<{
     [key: string]: { date: string; startTime: string; endTime: string };
@@ -118,6 +167,16 @@ export default function MedicoSolicitacoesPage() {
       setLoading(false);
       return;
     }
+
+    const { data: availabilityData } = await supabase
+      .from("doctor_availability")
+      .select("day_of_week, start_time, end_time, is_active")
+      .eq("doctor_id", member.doctor_id)
+      .eq("is_active", true)
+      .order("day_of_week", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    setAvailabilityRules((availabilityData || []) as AvailabilityRule[]);
 
     const { data, error } = await supabase
       .from("appointments")
@@ -209,15 +268,6 @@ export default function MedicoSolicitacoesPage() {
     setLoading(false);
   }
 
-  function formatDateTime(value: string | null) {
-    if (!value) return "Ainda não definido";
-
-    return new Date(value).toLocaleString("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  }
-
   function handleConfirmFieldChange(
     appointmentId: string,
     field: "date" | "startTime" | "endTime",
@@ -242,6 +292,22 @@ export default function MedicoSolicitacoesPage() {
 
     if (!current?.date || !current?.startTime || !current?.endTime) {
       setMessage("Preencha data, hora inicial e hora final para confirmar.");
+      setMessageType("error");
+      setActingId(null);
+      return;
+    }
+
+    if (
+      !isWithinAvailability(
+        current.date,
+        current.startTime,
+        current.endTime,
+        availabilityRules
+      )
+    ) {
+      setMessage(
+        "Esse horário está fora da sua disponibilidade cadastrada. Ajuste a agenda ou escolha outro horário."
+      );
       setMessageType("error");
       setActingId(null);
       return;
@@ -347,6 +413,30 @@ export default function MedicoSolicitacoesPage() {
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
+
+        <div className="mb-6 app-card p-6">
+          <h2 className="text-xl font-semibold text-slate-900">
+            Disponibilidade ativa
+          </h2>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {availabilityRules.length > 0 ? (
+              availabilityRules.map((rule, index) => (
+                <span
+                  key={`${rule.day_of_week}-${rule.start_time}-${rule.end_time}-${index}`}
+                  className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200"
+                >
+                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][rule.day_of_week]}{" "}
+                  {rule.start_time.slice(0, 5)}–{rule.end_time.slice(0, 5)}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-slate-500">
+                Nenhuma disponibilidade ativa cadastrada.
+              </span>
+            )}
+          </div>
+        </div>
 
         {appointments.length === 0 ? (
           <div className="app-card p-8">

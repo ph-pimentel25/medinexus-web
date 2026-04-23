@@ -70,11 +70,12 @@ export default function Navbar() {
     }
 
     if (navRole === "doctor") {
-      return [
-        { href: "/medico/dashboard", label: "Dashboard médico" },
-        { href: "/medico/solicitacoes", label: "Minhas solicitações" },
-      ];
-    }
+  return [
+    { href: "/medico/dashboard", label: "Dashboard médico" },
+    { href: "/medico/solicitacoes", label: "Minhas solicitações" },
+    { href: "/medico/disponibilidade", label: "Disponibilidade" },
+  ];
+}
 
     return [
       { href: "/login", label: "Entrar" },
