@@ -167,27 +167,34 @@ export default function ClinicaDashboardPage() {
             </h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link
-                href="/clinica/planos"
-                className="app-button-primary text-center"
-              >
-                Gerenciar planos aceitos
-              </Link>
+  <Link
+    href="/clinica/planos"
+    className="app-button-primary text-center"
+  >
+    Gerenciar planos aceitos
+  </Link>
 
-              <Link
-                href="/clinica/solicitacoes"
-                className="app-button-secondary text-center"
-              >
-                Ver solicitações
-              </Link>
+  <Link
+    href="/clinica/solicitacoes"
+    className="app-button-secondary text-center"
+  >
+    Ver solicitações
+  </Link>
 
-              <Link
-                href="/clinica/medicos"
-                className="app-button-secondary text-center sm:col-span-2"
-              >
-                Médicos da clínica
-              </Link>
-            </div>
+  <Link
+    href="/clinica/medicos"
+    className="app-button-secondary text-center"
+  >
+    Ver médicos
+  </Link>
+
+  <Link
+    href="/clinica/medicos/novo"
+    className="app-button-secondary text-center"
+  >
+    Cadastrar médico
+  </Link>
+</div>
           </div>
 
           <div className="app-card p-6">
