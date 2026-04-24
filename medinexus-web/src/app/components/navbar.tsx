@@ -34,7 +34,7 @@ export default function Navbar() {
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
+        .single<{ role: "patient" | "clinic_admin" | "doctor" }>();
 
       if (profile?.role === "doctor") {
         setNavRole("doctor");
@@ -70,18 +70,18 @@ export default function Navbar() {
     }
 
     if (navRole === "doctor") {
-  return [
-    { href: "/medico/dashboard", label: "Dashboard médico" },
-    { href: "/medico/solicitacoes", label: "Minhas solicitações" },
-    { href: "/medico/disponibilidade", label: "Disponibilidade" },
-  ];
-}
+      return [
+        { href: "/medico/dashboard", label: "Dashboard médico" },
+        { href: "/medico/solicitacoes", label: "Minhas solicitações" },
+        { href: "/medico/disponibilidade", label: "Disponibilidade" },
+      ];
+    }
 
     return [
       { href: "/login", label: "Entrar" },
       { href: "/cadastro", label: "Paciente" },
-      { href: "/clinica/cadastro", label: "Clínica" },
       { href: "/medico/cadastro", label: "Médico" },
+      { href: "/sobre", label: "Sobre" },
     ];
   }, [navRole]);
 

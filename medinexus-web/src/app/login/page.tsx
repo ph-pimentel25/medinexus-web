@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
+type ProfileRole = "patient" | "clinic_admin" | "doctor";
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -30,7 +32,36 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setMessage("Sessão não encontrada após o login.");
+      setSubmitting(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single<{ role: ProfileRole }>();
+
+    if (profileError || !profile) {
+      setMessage("Não foi possível identificar o perfil do usuário.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (profile.role === "clinic_admin") {
+      router.push("/clinica/dashboard");
+    } else if (profile.role === "doctor") {
+      router.push("/medico/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+
     setSubmitting(false);
   }
 
@@ -42,28 +73,28 @@ export default function LoginPage() {
             <span className="brand-chip">Acesse sua conta</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-              Entre na MediNexus e acompanhe sua jornada de atendimento.
+              Entre na MediNexus e continue sua jornada.
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              Consulte seus pedidos, acompanhe respostas das clínicas e faça
-              novas buscas de forma centralizada.
+              Pacientes, médicos e clínicas acessam áreas diferentes conforme o
+              perfil da conta.
             </p>
 
             <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
-                O que você pode fazer ao entrar
+                Acessos disponíveis
               </p>
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Buscar consultas por especialidade e disponibilidade
+                  Paciente: busca e acompanhamento de consultas
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Acompanhar solicitações pendentes, confirmadas ou recusadas
+                  Médico: solicitações e disponibilidade
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Acessar rapidamente o painel da clínica para testes do MVP
+                  Clínica: planos, médicos e painel operacional
                 </div>
               </div>
             </div>
@@ -81,7 +112,7 @@ export default function LoginPage() {
 
             <h2 className="text-3xl font-bold text-slate-900">Entrar</h2>
             <p className="mt-2 text-slate-600">
-              Use seu e-mail e senha para acessar sua conta.
+              Use seu e-mail e senha para acessar sua área.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -124,14 +155,19 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 flex items-center justify-between text-sm">
+            <div className="mt-6 grid gap-3 text-sm">
               <Link href="/cadastro" className="text-sky-700 hover:underline">
-                Criar conta
+                Criar conta de paciente
               </Link>
-
-              <button type="button" className="text-slate-500 hover:text-slate-700">
-                Esqueci minha senha
-              </button>
+              <Link
+                href="/medico/cadastro"
+                className="text-sky-700 hover:underline"
+              >
+                Criar conta de médico
+              </Link>
+              <Link href="/sobre" className="text-sky-700 hover:underline">
+                Conheça a MediNexus
+              </Link>
             </div>
           </div>
         </div>

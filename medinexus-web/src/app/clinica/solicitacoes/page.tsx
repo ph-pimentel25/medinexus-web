@@ -8,6 +8,12 @@ import StatusBadge from "../../components/status-badge";
 import { supabase } from "../../lib/supabase";
 
 type Status = "pending" | "confirmed" | "rejected" | "cancelled" | "completed";
+type PatientConfirmationStatus =
+  | "not_required"
+  | "waiting"
+  | "confirmed"
+  | "cancelled_by_patient"
+  | "expired";
 
 type MemberRow = {
   clinic_id: string;
@@ -24,9 +30,16 @@ type AppointmentItem = {
   id: string;
   status: Status;
   created_at: string;
+  requested_start_at: string | null;
+  requested_end_at: string | null;
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
+  short_notice: boolean;
+  patient_confirmation_status: PatientConfirmationStatus;
+  patient_confirmation_requested_at: string | null;
+  patient_confirmation_deadline_at: string | null;
+  patient_confirmed_at: string | null;
   patients?: {
     id: string;
     profiles?: ProfileInfo | null;
@@ -43,9 +56,16 @@ type RawAppointmentItem = {
   id: string;
   status: Status;
   created_at: string;
+  requested_start_at: string | null;
+  requested_end_at: string | null;
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
+  short_notice: boolean;
+  patient_confirmation_status: PatientConfirmationStatus;
+  patient_confirmation_requested_at: string | null;
+  patient_confirmation_deadline_at: string | null;
+  patient_confirmed_at: string | null;
   patients?: { id: string } | { id: string }[] | null;
   doctors?: { name: string | null } | { name: string | null }[] | null;
   specialties?: { name: string | null } | { name: string | null }[] | null;
@@ -54,6 +74,27 @@ type RawAppointmentItem = {
 function pickOne<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? value[0] ?? null : value;
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "Ainda não definido";
+
+  return new Date(value).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function getPatientConfirmationText(
+  status: PatientConfirmationStatus,
+  shortNotice: boolean
+) {
+  if (shortNotice) return "Consulta de encaixe";
+  if (status === "waiting") return "Aguardando confirmação do paciente";
+  if (status === "confirmed") return "Paciente confirmou presença";
+  if (status === "cancelled_by_patient") return "Paciente cancelou";
+  if (status === "expired") return "Confirmação expirada";
+  return "Sem confirmação necessária";
 }
 
 export default function ClinicaSolicitacoesPage() {
@@ -96,16 +137,18 @@ export default function ClinicaSolicitacoesPage() {
       .from("clinic_members")
       .select("clinic_id, member_role")
       .eq("user_id", user.id)
-      .single<MemberRow>();
+      .single();
 
-    if (memberError || !member) {
+    const typedMember = member as MemberRow | null;
+
+    if (memberError || !typedMember) {
       setMessage("Você não possui acesso à área da clínica.");
       setMessageType("error");
       setLoading(false);
       return;
     }
 
-    if (member.member_role === "doctor") {
+    if (typedMember.member_role === "doctor") {
       router.push("/medico/solicitacoes");
       return;
     }
@@ -116,9 +159,16 @@ export default function ClinicaSolicitacoesPage() {
         id,
         status,
         created_at,
+        requested_start_at,
+        requested_end_at,
         confirmed_start_at,
         confirmed_end_at,
         rejection_reason,
+        short_notice,
+        patient_confirmation_status,
+        patient_confirmation_requested_at,
+        patient_confirmation_deadline_at,
+        patient_confirmed_at,
         patients (
           id
         ),
@@ -129,7 +179,7 @@ export default function ClinicaSolicitacoesPage() {
           name
         )
       `)
-      .eq("clinic_id", member.clinic_id)
+      .eq("clinic_id", typedMember.clinic_id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -174,9 +224,16 @@ export default function ClinicaSolicitacoesPage() {
         id: item.id,
         status: item.status,
         created_at: item.created_at,
+        requested_start_at: item.requested_start_at,
+        requested_end_at: item.requested_end_at,
         confirmed_start_at: item.confirmed_start_at,
         confirmed_end_at: item.confirmed_end_at,
         rejection_reason: item.rejection_reason,
+        short_notice: item.short_notice,
+        patient_confirmation_status: item.patient_confirmation_status,
+        patient_confirmation_requested_at: item.patient_confirmation_requested_at,
+        patient_confirmation_deadline_at: item.patient_confirmation_deadline_at,
+        patient_confirmed_at: item.patient_confirmed_at,
         patients: patient
           ? {
               id: patient.id,
@@ -190,15 +247,6 @@ export default function ClinicaSolicitacoesPage() {
 
     setAppointments(mergedAppointments);
     setLoading(false);
-  }
-
-  function formatDateTime(value: string | null) {
-    if (!value) return "Ainda não definido";
-
-    return new Date(value).toLocaleString("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
   }
 
   function handleConfirmFieldChange(
@@ -233,6 +281,11 @@ export default function ClinicaSolicitacoesPage() {
     const confirmedStartAt = `${current.date}T${current.startTime}:00`;
     const confirmedEndAt = `${current.date}T${current.endTime}:00`;
 
+    const startDate = new Date(confirmedStartAt);
+    const now = new Date();
+    const isShortNotice =
+      startDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
+
     const { error } = await supabase
       .from("appointments")
       .update({
@@ -240,6 +293,17 @@ export default function ClinicaSolicitacoesPage() {
         confirmed_start_at: confirmedStartAt,
         confirmed_end_at: confirmedEndAt,
         rejection_reason: null,
+        short_notice: isShortNotice,
+        patient_confirmation_status: isShortNotice ? "not_required" : "waiting",
+        patient_confirmation_requested_at: isShortNotice
+          ? null
+          : new Date().toISOString(),
+        patient_confirmation_deadline_at: isShortNotice
+          ? null
+          : new Date(
+              startDate.getTime() - 24 * 60 * 60 * 1000
+            ).toISOString(),
+        patient_confirmed_at: null,
       })
       .eq("id", appointmentId);
 
@@ -276,6 +340,11 @@ export default function ClinicaSolicitacoesPage() {
         rejection_reason: reason.trim(),
         confirmed_start_at: null,
         confirmed_end_at: null,
+        short_notice: false,
+        patient_confirmation_status: "not_required",
+        patient_confirmation_requested_at: null,
+        patient_confirmation_deadline_at: null,
+        patient_confirmed_at: null,
       })
       .eq("id", appointmentId);
 
@@ -377,15 +446,67 @@ export default function ClinicaSolicitacoesPage() {
                   </p>
 
                   <p>
-                    <span className="font-semibold">Data confirmada:</span>{" "}
-                    {formatDateTime(item.confirmed_start_at)}
+                    <span className="font-semibold">Horário sugerido:</span>{" "}
+                    {item.requested_start_at
+                      ? `${formatDateTime(
+                          item.requested_start_at
+                        )} até ${formatDateTime(item.requested_end_at)}`
+                      : "Ainda não definido"}
                   </p>
+
+                  <p>
+                    <span className="font-semibold">Data confirmada:</span>{" "}
+                    {item.confirmed_start_at
+                      ? `${formatDateTime(
+                          item.confirmed_start_at
+                        )} até ${formatDateTime(item.confirmed_end_at)}`
+                      : "Ainda não definido"}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">
+                      Confirmação do paciente:
+                    </span>{" "}
+                    {getPatientConfirmationText(
+                      item.patient_confirmation_status,
+                      item.short_notice
+                    )}
+                  </p>
+
+                  {item.patient_confirmation_deadline_at && (
+                    <p>
+                      <span className="font-semibold">Prazo:</span>{" "}
+                      {formatDateTime(item.patient_confirmation_deadline_at)}
+                    </p>
+                  )}
+
+                  {item.patient_confirmed_at && (
+                    <p>
+                      <span className="font-semibold">
+                        Confirmado pelo paciente em:
+                      </span>{" "}
+                      {formatDateTime(item.patient_confirmed_at)}
+                    </p>
+                  )}
                 </div>
 
                 {item.status === "rejected" && item.rejection_reason && (
                   <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span className="font-semibold">Motivo da recusa:</span>{" "}
                     {item.rejection_reason}
+                  </div>
+                )}
+
+                {item.short_notice && item.status === "confirmed" && (
+                  <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    Esta consulta foi classificada como <span className="font-semibold">encaixe</span>,
+                    pois foi marcada com menos de 24 horas de antecedência.
+                  </div>
+                )}
+
+                {item.patient_confirmation_status === "cancelled_by_patient" && (
+                  <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-700">
+                    O paciente cancelou esta consulta.
                   </div>
                 )}
 
