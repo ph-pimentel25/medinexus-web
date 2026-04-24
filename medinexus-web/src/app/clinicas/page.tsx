@@ -14,6 +14,9 @@ type ClinicRow = {
   contact_phone: string | null;
   description: string | null;
   website_url: string | null;
+  cover_image_url: string | null;
+  hero_title: string | null;
+  hero_subtitle: string | null;
 };
 
 type PatientRow = {
@@ -51,6 +54,9 @@ type ClinicCard = {
   contactPhone: string | null;
   description: string | null;
   websiteUrl: string | null;
+  coverImageUrl: string | null;
+  heroTitle: string | null;
+  heroSubtitle: string | null;
   acceptedPlanIds: string[];
   acceptedPlanNames: string[];
   doctorCount: number;
@@ -115,7 +121,7 @@ export default function ClinicasPage() {
       supabase
         .from("clinics")
         .select(
-          "id, trade_name, city, state, neighborhood, contact_phone, description, website_url"
+          "id, trade_name, city, state, neighborhood, contact_phone, description, website_url, cover_image_url, hero_title, hero_subtitle"
         )
         .order("trade_name", { ascending: true }),
       supabase
@@ -228,6 +234,9 @@ export default function ClinicasPage() {
         contactPhone: clinic.contact_phone,
         description: clinic.description,
         websiteUrl: clinic.website_url,
+        coverImageUrl: clinic.cover_image_url,
+        heroTitle: clinic.hero_title,
+        heroSubtitle: clinic.hero_subtitle,
         acceptedPlanIds: plans.ids,
         acceptedPlanNames: plans.names,
         doctorCount: clinicDoctors.length,
@@ -378,12 +387,19 @@ export default function ClinicasPage() {
         ) : (
           <div className="grid gap-6">
             {filteredClinics.map((clinic) => (
-              <div key={clinic.id} className="app-card p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex-1">
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div key={clinic.id} className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+                <div
+                  className="relative min-h-[180px] border-b border-slate-200 px-8 py-8"
+                  style={{
+                    background: clinic.coverImageUrl
+                      ? `linear-gradient(135deg, rgba(27,75,88,0.75), rgba(89,78,134,0.65)), url(${clinic.coverImageUrl}) center/cover`
+                      : "linear-gradient(135deg, rgba(27,75,88,0.12), rgba(89,78,134,0.12))",
+                  }}
+                >
+                  <div className="max-w-3xl">
+                    <div className="mb-3 flex flex-wrap items-center gap-3">
                       <h2 className="text-3xl font-bold text-slate-900">
-                        {clinic.tradeName}
+                        {clinic.heroTitle || clinic.tradeName}
                       </h2>
 
                       {clinic.compatibleWithPatientPlan && (
@@ -393,94 +409,105 @@ export default function ClinicasPage() {
                       )}
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Local
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-900">
-                          {clinic.city || "Cidade não informada"} /{" "}
-                          {clinic.state || "Estado não informado"}
-                        </p>
-                        {clinic.neighborhood && (
-                          <p className="mt-1 text-sm text-slate-500">
-                            {clinic.neighborhood}
+                    <p className="max-w-2xl text-slate-700">
+                      {clinic.heroSubtitle ||
+                        clinic.description ||
+                        "Conheça a estrutura da clínica, convênios aceitos e equipe médica disponível na MediNexus."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex-1">
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="app-card-soft p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Local
                           </p>
+                          <p className="mt-2 text-lg font-semibold text-slate-900">
+                            {clinic.city || "Cidade não informada"} /{" "}
+                            {clinic.state || "Estado não informado"}
+                          </p>
+                          {clinic.neighborhood && (
+                            <p className="mt-1 text-sm text-slate-500">
+                              {clinic.neighborhood}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="app-card-soft p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Estrutura
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-slate-900">
+                            {clinic.doctorCount} médico(s)
+                          </p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {clinic.specialtyCount} especialidade(s)
+                          </p>
+                        </div>
+
+                        <div className="app-card-soft p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Contato
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-slate-900">
+                            {clinic.contactPhone || "Não informado"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {clinic.acceptedPlanNames.length > 0 ? (
+                          clinic.acceptedPlanNames.slice(0, 6).map((planName, index) => (
+                            <span
+                              key={`${clinic.id}-${planName}-${index}`}
+                              className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200"
+                            >
+                              {planName}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm text-slate-500">
+                            Convênios ainda não informados
+                          </span>
+                        )}
+
+                        {clinic.acceptedPlanNames.length > 6 && (
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
+                            +{clinic.acceptedPlanNames.length - 6} convênio(s)
+                          </span>
                         )}
                       </div>
-
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Estrutura
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-900">
-                          {clinic.doctorCount} médico(s)
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {clinic.specialtyCount} especialidade(s)
-                        </p>
-                      </div>
-
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Contato
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-900">
-                          {clinic.contactPhone || "Não informado"}
-                        </p>
-                      </div>
                     </div>
 
-                    {clinic.description && (
-                      <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-                        <p className="text-sm text-slate-700">
-                          {clinic.description}
-                        </p>
-                      </div>
-                    )}
+                    <div className="lg:w-[260px]">
+                      <Link
+                        href={`/clinicas/${clinic.id}`}
+                        className="app-button-primary block text-center"
+                      >
+                        Ver clínica
+                      </Link>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {clinic.acceptedPlanNames.length > 0 ? (
-                        clinic.acceptedPlanNames.slice(0, 6).map((planName, index) => (
-                          <span
-                            key={`${clinic.id}-${planName}-${index}`}
-                            className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200"
-                          >
-                            {planName}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-slate-500">
-                          Convênios ainda não informados
-                        </span>
-                      )}
-
-                      {clinic.acceptedPlanNames.length > 6 && (
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-                          +{clinic.acceptedPlanNames.length - 6} convênio(s)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="lg:w-[230px]">
-                    <Link
-                      href={`/clinicas/${clinic.id}`}
-                      className="app-button-primary block text-center"
-                    >
-                      Ver clínica
-                    </Link>
-
-                    {clinic.websiteUrl && (
-                      <a
-                        href={clinic.websiteUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                      <Link
+                        href={`/busca?clinicId=${clinic.id}`}
                         className="mt-3 app-button-secondary block text-center"
                       >
-                        Visitar site
-                      </a>
-                    )}
+                        Agendar nesta clínica
+                      </Link>
+
+                      {clinic.websiteUrl && (
+                        <a
+                          href={clinic.websiteUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 app-button-secondary block text-center"
+                        >
+                          Visitar site
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

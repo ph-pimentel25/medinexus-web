@@ -9,10 +9,18 @@ import { supabase } from "../lib/supabase";
 type SearchPreference = {
   id: string;
   specialty_id: string;
+  preferred_clinic_id: string | null;
 };
 
 type PatientData = {
   default_health_plan_id: string | null;
+};
+
+type ClinicMini = {
+  id: string;
+  trade_name: string | null;
+  city: string | null;
+  state: string | null;
 };
 
 type ResultItem = {
@@ -58,6 +66,7 @@ export default function ResultadosPage() {
   const [searchPreference, setSearchPreference] = useState<SearchPreference | null>(
     null
   );
+  const [selectedClinic, setSelectedClinic] = useState<ClinicMini | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [slotSuggestions, setSlotSuggestions] = useState<
     Record<string, SlotSuggestion | null>
@@ -140,7 +149,7 @@ export default function ResultadosPage() {
 
     const { data: latestSearch, error: searchError } = await supabase
       .from("patient_search_preferences")
-      .select("id, specialty_id")
+      .select("id, specialty_id, preferred_clinic_id")
       .eq("patient_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -154,6 +163,18 @@ export default function ResultadosPage() {
     }
 
     setSearchPreference(latestSearch);
+
+    if (latestSearch.preferred_clinic_id) {
+      const { data: clinicData } = await supabase
+        .from("clinics")
+        .select("id, trade_name, city, state")
+        .eq("id", latestSearch.preferred_clinic_id)
+        .maybeSingle<ClinicMini>();
+
+      setSelectedClinic(clinicData || null);
+    } else {
+      setSelectedClinic(null);
+    }
 
     const { data: existingAppointments } = await supabase
       .from("appointments")
@@ -215,7 +236,7 @@ export default function ResultadosPage() {
       )
       .map((item: any) => item.clinic_id);
 
-    const formattedResults: ResultItem[] = (doctorSpecialties || [])
+    let formattedResults: ResultItem[] = (doctorSpecialties || [])
       .map((item: any) => {
         const doctor = pickOne(item.doctors);
         const clinic = pickOne(doctor?.clinics);
@@ -244,6 +265,12 @@ export default function ResultadosPage() {
           compatibleClinicIds.includes(item.clinic_id)
       )
       .map(({ is_active, ...rest }: any) => rest);
+
+    if (latestSearch.preferred_clinic_id) {
+      formattedResults = formattedResults.filter(
+        (item) => item.clinic_id === latestSearch.preferred_clinic_id
+      );
+    }
 
     if (formattedResults.length === 0) {
       setMessage("Nenhum resultado compatível foi encontrado.");
@@ -358,10 +385,30 @@ export default function ResultadosPage() {
             ← Voltar para o dashboard
           </Link>
 
-          <Link href="/busca" className="app-button-secondary">
-            Nova busca
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/busca" className="app-button-secondary">
+              Nova busca
+            </Link>
+            <Link href="/clinicas" className="app-button-secondary">
+              Ver clínicas
+            </Link>
+          </div>
         </div>
+
+        {selectedClinic && (
+          <div className="mb-6 app-card p-6">
+            <p className="text-sm font-medium text-slate-500">
+              Busca pré-filtrada pela clínica
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">
+              {selectedClinic.trade_name || "Clínica"}
+            </h2>
+            <p className="mt-1 text-slate-600">
+              {selectedClinic.city || "Cidade não informada"} /{" "}
+              {selectedClinic.state || "Estado não informado"}
+            </p>
+          </div>
+        )}
 
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">

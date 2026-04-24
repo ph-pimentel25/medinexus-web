@@ -194,7 +194,15 @@ export default function ClinicaDashboardPage() {
   >
     Cadastrar médico
   </Link>
+
+  <Link
+    href="/clinica/publico"
+    className="app-button-secondary text-center sm:col-span-2"
+  >
+    Editar página pública da clínica
+  </Link>
 </div>
+
           </div>
 
           <div className="app-card p-6">
