@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Alert from "../components/alert";
 import StatusBadge from "../components/status-badge";
 import { supabase } from "../lib/supabase";
@@ -92,8 +93,7 @@ function getConfirmationBadge(
   if (shortNotice) {
     return {
       label: "Consulta de encaixe",
-      className:
-        "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+      className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
     };
   }
 
@@ -101,37 +101,34 @@ function getConfirmationBadge(
     case "waiting":
       return {
         label: "Aguardando sua confirmação",
-        className:
-          "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
+        className: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
       };
     case "confirmed":
       return {
         label: "Presença confirmada",
-        className:
-          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+        className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
       };
     case "cancelled_by_patient":
       return {
         label: "Cancelada por você",
-        className:
-          "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
+        className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
       };
     case "expired":
       return {
         label: "Confirmação expirada",
-        className:
-          "bg-red-50 text-red-700 ring-1 ring-red-200",
+        className: "bg-red-50 text-red-700 ring-1 ring-red-200",
       };
     default:
       return {
         label: "Sem confirmação necessária",
-        className:
-          "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+        className: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
       };
   }
 }
 
 export default function SolicitacoesPage() {
+  const searchParams = useSearchParams();
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
@@ -143,6 +140,66 @@ export default function SolicitacoesPage() {
   useEffect(() => {
     loadAppointments();
   }, []);
+
+  useEffect(() => {
+    const action = searchParams.get("appointmentAction");
+
+    if (!action) return;
+
+    if (action === "email-confirmed") {
+      setMessage("Presença confirmada pelo link do e-mail.");
+      setMessageType("success");
+      return;
+    }
+
+    if (action === "email-cancelled") {
+      setMessage("Consulta cancelada pelo link do e-mail.");
+      setMessageType("success");
+      return;
+    }
+
+    if (action === "expired-token") {
+      setMessage("Esse link expirou.");
+      setMessageType("error");
+      return;
+    }
+
+    if (action === "already-used") {
+      setMessage("Esse link já foi utilizado.");
+      setMessageType("info");
+      return;
+    }
+
+    if (action === "not-available") {
+      setMessage("Essa ação não está mais disponível.");
+      setMessageType("info");
+      return;
+    }
+
+    if (action === "invalid-token") {
+      setMessage("Link inválido.");
+      setMessageType("error");
+      return;
+    }
+
+    if (action === "action-error") {
+      setMessage("Não foi possível processar sua ação.");
+      setMessageType("error");
+      return;
+    }
+
+    if (action === "server-config-error") {
+      setMessage("Erro de configuração do servidor.");
+      setMessageType("error");
+      return;
+    }
+
+    if (action === "appointment-not-found") {
+      setMessage("Consulta não encontrada.");
+      setMessageType("error");
+      return;
+    }
+  }, [searchParams]);
 
   async function loadAppointments() {
     setLoading(true);
@@ -432,9 +489,7 @@ export default function SolicitacoesPage() {
                       item.patient_confirmation_status === "waiting" &&
                       item.patient_confirmation_deadline_at && (
                         <p>
-                          <span className="font-semibold">
-                            Confirme até:
-                          </span>{" "}
+                          <span className="font-semibold">Confirme até:</span>{" "}
                           {formatDateTime(item.patient_confirmation_deadline_at)}
                         </p>
                       )}

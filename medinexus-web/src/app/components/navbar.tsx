@@ -51,14 +51,15 @@ export default function Navbar() {
   }, [pathname]);
 
   const links = useMemo(() => {
-    if (navRole === "patient") {
-      return [
-        { href: "/dashboard", label: "Dashboard" },
-        { href: "/perfil", label: "Perfil" },
-        { href: "/busca", label: "Nova busca" },
-        { href: "/solicitacoes", label: "Solicitações" },
-      ];
-    }
+   if (navRole === "patient") {
+  return [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/perfil", label: "Perfil" },
+    { href: "/busca", label: "Nova busca" },
+    { href: "/clinicas", label: "Clínicas" },
+    { href: "/solicitacoes", label: "Solicitações" },
+  ];
+}
 
     if (navRole === "clinic_admin") {
       return [

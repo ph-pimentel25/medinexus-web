@@ -7,6 +7,7 @@ import Alert from "../../components/alert";
 import StatusBadge from "../../components/status-badge";
 import { supabase } from "../../lib/supabase";
 
+
 type Status = "pending" | "confirmed" | "rejected" | "cancelled" | "completed";
 type PatientConfirmationStatus =
   | "not_required"
