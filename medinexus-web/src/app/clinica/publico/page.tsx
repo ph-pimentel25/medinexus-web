@@ -24,6 +24,33 @@ type ClinicPublicForm = {
   public_highlight_3: string;
 };
 
+type UploadKind = "logo" | "cover";
+
+const STORAGE_BUCKET = "clinic-branding";
+
+const IMAGE_RULES = {
+  logo: {
+    label: "Logo da clínica",
+    maxBytes: 2 * 1024 * 1024,
+    minWidth: 300,
+    minHeight: 300,
+    idealText: "Ideal: 800 x 800 px",
+    ratioText: "Proporção recomendada: 1:1",
+    helpText:
+      "PNG, JPG ou WEBP • máximo 2 MB • mínimo recomendado 300 x 300 px",
+  },
+  cover: {
+    label: "Imagem de capa",
+    maxBytes: 4 * 1024 * 1024,
+    minWidth: 1200,
+    minHeight: 600,
+    idealText: "Ideal: 1600 x 900 px",
+    ratioText: "Proporção recomendada: 16:9",
+    helpText:
+      "PNG, JPG ou WEBP • máximo 4 MB • mínimo recomendado 1200 x 600 px",
+  },
+} as const;
+
 function slugify(value: string) {
   return value
     .normalize("NFD")
@@ -32,6 +59,88 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+function safeFileName(fileName: string) {
+  const dotIndex = fileName.lastIndexOf(".");
+  const base = dotIndex >= 0 ? fileName.slice(0, dotIndex) : fileName;
+  const ext = dotIndex >= 0 ? fileName.slice(dotIndex).toLowerCase() : "";
+  return `${slugify(base) || "arquivo"}${ext}`;
+}
+
+function isAcceptedImageType(file: File) {
+  return ["image/png", "image/jpeg", "image/webp"].includes(file.type);
+}
+
+async function getImageDimensions(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const dimensions = await new Promise<{ width: number; height: number }>(
+      (resolve, reject) => {
+        const img = new Image();
+
+        img.onload = () => {
+          resolve({
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+          });
+        };
+
+        img.onerror = () =>
+          reject(new Error("Não foi possível ler a imagem."));
+        img.src = objectUrl;
+      }
+    );
+
+    return dimensions;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function validateImageFile(file: File, kind: UploadKind) {
+  const rules = IMAGE_RULES[kind];
+
+  if (!isAcceptedImageType(file)) {
+    return "Envie uma imagem em PNG, JPG ou WEBP.";
+  }
+
+  if (file.size > rules.maxBytes) {
+    return `O arquivo excede o tamanho máximo de ${Math.round(
+      rules.maxBytes / (1024 * 1024)
+    )} MB.`;
+  }
+
+  const { width, height } = await getImageDimensions(file);
+
+  if (width < rules.minWidth || height < rules.minHeight) {
+    return `A imagem é muito pequena. Mínimo recomendado: ${rules.minWidth} x ${rules.minHeight} px.`;
+  }
+
+  return null;
+}
+
+function getStoragePathFromPublicUrl(url: string | null) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+    const index = parsed.pathname.indexOf(marker);
+
+    if (index === -1) return null;
+
+    return decodeURIComponent(parsed.pathname.slice(index + marker.length));
+  } catch {
+    return null;
+  }
+}
+
+type UploadState = {
+  kind: UploadKind | null;
+  progress: number;
+  label: string;
+};
 
 export default function ClinicaPublicoPage() {
   const [loading, setLoading] = useState(true);
@@ -56,8 +165,23 @@ export default function ClinicaPublicoPage() {
     public_highlight_3: "",
   });
 
+  const [uploadState, setUploadState] = useState<UploadState>({
+    kind: null,
+    progress: 0,
+    label: "",
+  });
+
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
   useEffect(() => {
     loadPublicProfile();
+
+    return () => {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadPublicProfile() {
@@ -149,6 +273,246 @@ export default function ClinicaPublicoPage() {
     }));
   }
 
+  async function persistImageUrl(kind: UploadKind, url: string | null) {
+    if (!clinicId) return;
+
+    const field = kind === "logo" ? "logo_url" : "cover_image_url";
+
+    const { error } = await supabase
+      .from("clinics")
+      .update({
+        [field]: url,
+      })
+      .eq("id", clinicId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  function clearPreview(kind: UploadKind) {
+    if (kind === "logo") {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+      setLogoPreviewUrl(null);
+      return;
+    }
+
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    setCoverPreviewUrl(null);
+  }
+
+  function setPreview(kind: UploadKind, objectUrl: string) {
+    clearPreview(kind);
+
+    if (kind === "logo") {
+      setLogoPreviewUrl(objectUrl);
+    } else {
+      setCoverPreviewUrl(objectUrl);
+    }
+  }
+
+  async function deleteStorageFileIfManaged(url: string | null) {
+    const storagePath = getStoragePathFromPublicUrl(url);
+
+    if (!storagePath) return;
+
+    await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+  }
+
+  async function handleFileUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: UploadKind
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+
+    if (!file) return;
+
+    if (!clinicId) {
+      setMessage("Clínica não encontrada.");
+      setMessageType("error");
+      return;
+    }
+
+    setMessage("");
+    setUploadState({
+      kind,
+      progress: 10,
+      label: "Validando imagem...",
+    });
+
+    try {
+      const validationError = await validateImageFile(file, kind);
+
+      if (validationError) {
+        setMessage(validationError);
+        setMessageType("error");
+        setUploadState({ kind: null, progress: 0, label: "" });
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      setPreview(kind, objectUrl);
+
+      setUploadState({
+        kind,
+        progress: 30,
+        label: "Preparando upload...",
+      });
+
+      const fileName = safeFileName(file.name);
+      const filePath = `clinics/${clinicId}/${kind}/${Date.now()}-${fileName}`;
+
+      const oldUrl = kind === "logo" ? form.logo_url : form.cover_image_url;
+
+      setUploadState({
+        kind,
+        progress: 60,
+        label: "Enviando arquivo...",
+      });
+
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        setMessage(`Erro no upload: ${uploadError.message}`);
+        setMessageType("error");
+        setUploadState({ kind: null, progress: 0, label: "" });
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(filePath);
+
+      const publicUrl = data.publicUrl;
+
+      setUploadState({
+        kind,
+        progress: 85,
+        label: "Salvando imagem na clínica...",
+      });
+
+      try {
+        await persistImageUrl(kind, publicUrl);
+      } catch (persistError: any) {
+        await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
+        throw persistError;
+      }
+
+      if (kind === "logo") {
+        setForm((prev) => ({
+          ...prev,
+          logo_url: publicUrl,
+        }));
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          cover_image_url: publicUrl,
+        }));
+      }
+
+      setUploadState({
+        kind,
+        progress: 95,
+        label: "Removendo imagem antiga...",
+      });
+
+      if (oldUrl && oldUrl !== publicUrl) {
+        await deleteStorageFileIfManaged(oldUrl);
+      }
+
+      setUploadState({
+        kind,
+        progress: 100,
+        label: "Upload concluído.",
+      });
+
+      clearPreview(kind);
+
+      setMessage(
+        `${kind === "logo" ? "Logo" : "Imagem de capa"} enviada com sucesso.`
+      );
+      setMessageType("success");
+    } catch (error: any) {
+      setMessage(
+        error?.message || "Não foi possível processar a imagem enviada."
+      );
+      setMessageType("error");
+    } finally {
+      setTimeout(() => {
+        setUploadState({ kind: null, progress: 0, label: "" });
+      }, 500);
+    }
+  }
+
+  async function handleRemoveImage(kind: UploadKind) {
+    if (!clinicId) {
+      setMessage("Clínica não encontrada.");
+      setMessageType("error");
+      return;
+    }
+
+    const currentUrl = kind === "logo" ? form.logo_url : form.cover_image_url;
+
+    if (!currentUrl) return;
+
+    setMessage("");
+    setUploadState({
+      kind,
+      progress: 25,
+      label: "Removendo imagem...",
+    });
+
+    try {
+      await persistImageUrl(kind, null);
+
+      setUploadState({
+        kind,
+        progress: 70,
+        label: "Limpando arquivo antigo...",
+      });
+
+      await deleteStorageFileIfManaged(currentUrl);
+
+      if (kind === "logo") {
+        setForm((prev) => ({
+          ...prev,
+          logo_url: "",
+        }));
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          cover_image_url: "",
+        }));
+      }
+
+      clearPreview(kind);
+
+      setUploadState({
+        kind,
+        progress: 100,
+        label: "Imagem removida.",
+      });
+
+      setMessage(
+        `${kind === "logo" ? "Logo" : "Imagem de capa"} removida com sucesso.`
+      );
+      setMessageType("success");
+    } catch (error: any) {
+      setMessage(error?.message || "Não foi possível remover a imagem.");
+      setMessageType("error");
+    } finally {
+      setTimeout(() => {
+        setUploadState({ kind: null, progress: 0, label: "" });
+      }, 500);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
@@ -167,8 +531,6 @@ export default function ClinicaPublicoPage() {
         trade_name: form.trade_name || null,
         description: form.description || null,
         website_url: form.website_url || null,
-        logo_url: form.logo_url || null,
-        cover_image_url: form.cover_image_url || null,
         hero_title: form.hero_title || null,
         hero_subtitle: form.hero_subtitle || null,
         public_slug: form.public_slug || null,
@@ -189,6 +551,9 @@ export default function ClinicaPublicoPage() {
     setMessageType("success");
     setSaving(false);
   }
+
+  const displayedLogo = logoPreviewUrl || form.logo_url || "";
+  const displayedCover = coverPreviewUrl || form.cover_image_url || "";
 
   if (loading) {
     return (
@@ -238,8 +603,151 @@ export default function ClinicaPublicoPage() {
           </div>
         )}
 
+        {(uploadState.kind || saving) && (
+          <div className="mb-6 app-card p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-900">
+                  {uploadState.label || "Salvando alterações..."}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {uploadState.kind
+                    ? `Processando ${uploadState.kind === "logo" ? "logo" : "capa"}`
+                    : "Atualizando conteúdo da página pública"}
+                </p>
+              </div>
+
+              <div className="text-sm font-semibold text-slate-700">
+                {uploadState.progress > 0 ? `${uploadState.progress}%` : "..." }
+              </div>
+            </div>
+
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${uploadState.progress || (saving ? 70 : 0)}%`,
+                  backgroundColor: "var(--brand-petrol)",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="app-card p-8">
-          <form onSubmit={handleSubmit} className="grid gap-6">
+          <form onSubmit={handleSubmit} className="grid gap-8">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  Logo da clínica
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  {IMAGE_RULES.logo.helpText}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {IMAGE_RULES.logo.idealText} • {IMAGE_RULES.logo.ratioText}
+                </p>
+
+                <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-4">
+                  {displayedLogo ? (
+                    <div className="flex h-48 items-center justify-center">
+                      <img
+                        src={displayedLogo}
+                        alt="Preview da logo"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-48 items-center justify-center text-sm text-slate-400">
+                      Nenhuma logo enviada
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <label className="app-button-primary cursor-pointer text-center">
+                    {uploadState.kind === "logo"
+                      ? "Enviando..."
+                      : form.logo_url
+                      ? "Trocar logo"
+                      : "Enviar logo"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, "logo")}
+                      disabled={uploadState.kind !== null || saving}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage("logo")}
+                    disabled={!form.logo_url || uploadState.kind !== null || saving}
+                    className="app-button-secondary"
+                  >
+                    Remover logo
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  Imagem de capa
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  {IMAGE_RULES.cover.helpText}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {IMAGE_RULES.cover.idealText} • {IMAGE_RULES.cover.ratioText}
+                </p>
+
+                <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-2">
+                  {displayedCover ? (
+                    <div className="h-48 overflow-hidden rounded-2xl">
+                      <img
+                        src={displayedCover}
+                        alt="Preview da capa"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-48 items-center justify-center text-sm text-slate-400">
+                      Nenhuma capa enviada
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <label className="app-button-primary cursor-pointer text-center">
+                    {uploadState.kind === "cover"
+                      ? "Enviando..."
+                      : form.cover_image_url
+                      ? "Trocar capa"
+                      : "Enviar capa"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, "cover")}
+                      disabled={uploadState.kind !== null || saving}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage("cover")}
+                    disabled={
+                      !form.cover_image_url || uploadState.kind !== null || saving
+                    }
+                    className="app-button-secondary"
+                  >
+                    Remover capa
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -306,34 +814,6 @@ export default function ClinicaPublicoPage() {
               />
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  URL da logo
-                </label>
-                <input
-                  name="logo_url"
-                  value={form.logo_url}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  URL da imagem de capa
-                </label>
-                <input
-                  name="cover_image_url"
-                  value={form.cover_image_url}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Website
@@ -390,7 +870,7 @@ export default function ClinicaPublicoPage() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploadState.kind !== null}
               className="app-button-primary"
             >
               {saving ? "Salvando..." : "Salvar página pública"}

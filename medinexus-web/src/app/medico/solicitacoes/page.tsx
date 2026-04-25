@@ -7,8 +7,8 @@ import Alert from "../../components/alert";
 import StatusBadge from "../../components/status-badge";
 import { supabase } from "../../lib/supabase";
 
-
 type Status = "pending" | "confirmed" | "rejected" | "cancelled" | "completed";
+
 type PatientConfirmationStatus =
   | "not_required"
   | "waiting"
@@ -89,7 +89,14 @@ type RawAppointmentItem = {
         state: string | null;
       }[]
     | null;
-  specialties?: { name: string | null } | { name: string | null }[] | null;
+  specialties?:
+    | {
+        name: string | null;
+      }
+    | {
+        name: string | null;
+      }[]
+    | null;
 };
 
 function pickOne<T>(value: T | T[] | null | undefined): T | null {
@@ -192,24 +199,33 @@ export default function MedicoSolicitacoesPage() {
       .select("doctor_id, member_role")
       .eq("user_id", user.id)
       .eq("member_role", "doctor")
-      .single();
+      .single<MemberRow>();
 
-    const typedMember = member as MemberRow | null;
-
-    if (memberError || !typedMember || !typedMember.doctor_id) {
+    if (memberError || !member || !member.doctor_id) {
       setMessage("Você não possui acesso à área médica.");
       setMessageType("error");
       setLoading(false);
       return;
     }
 
-    const { data: availabilityData } = await supabase
+    const doctorId = member.doctor_id;
+
+    const { data: availabilityData, error: availabilityError } = await supabase
       .from("doctor_availability")
       .select("day_of_week, start_time, end_time, is_active")
-      .eq("doctor_id", typedMember.doctor_id)
+      .eq("doctor_id", doctorId)
       .eq("is_active", true)
       .order("day_of_week", { ascending: true })
       .order("start_time", { ascending: true });
+
+    if (availabilityError) {
+      setMessage(
+        `Erro ao carregar disponibilidade do médico: ${availabilityError.message}`
+      );
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
 
     setAvailabilityRules((availabilityData || []) as AvailabilityRule[]);
 
@@ -241,11 +257,11 @@ export default function MedicoSolicitacoesPage() {
           name
         )
       `)
-      .eq("doctor_id", typedMember.doctor_id)
+      .eq("doctor_id", doctorId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage("Erro ao carregar as solicitações do médico.");
+      setMessage(`Erro ao carregar as solicitações do médico: ${error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -260,10 +276,17 @@ export default function MedicoSolicitacoesPage() {
     let profilesMap: Record<string, ProfileInfo> = {};
 
     if (patientIds.length > 0) {
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name, email, phone")
         .in("id", patientIds);
+
+      if (profilesError) {
+        setMessage(`Erro ao carregar dados dos pacientes: ${profilesError.message}`);
+        setMessageType("error");
+        setLoading(false);
+        return;
+      }
 
       profilesMap = Object.fromEntries(
         (profilesData || []).map((profile: any) => [
@@ -309,7 +332,11 @@ export default function MedicoSolicitacoesPage() {
               state: clinic.state,
             }
           : null,
-        specialties: specialty ? { name: specialty.name } : null,
+        specialties: specialty
+          ? {
+              name: specialty.name,
+            }
+          : null,
       };
     });
 
@@ -392,7 +419,7 @@ export default function MedicoSolicitacoesPage() {
       .eq("id", appointmentId);
 
     if (error) {
-      setMessage("Erro ao confirmar a consulta.");
+      setMessage(`Erro ao confirmar a consulta: ${error.message}`);
       setMessageType("error");
       setActingId(null);
       return;
@@ -433,7 +460,7 @@ export default function MedicoSolicitacoesPage() {
       .eq("id", appointmentId);
 
     if (error) {
-      setMessage("Erro ao recusar a consulta.");
+      setMessage(`Erro ao recusar a consulta: ${error.message}`);
       setMessageType("error");
       setActingId(null);
       return;
@@ -613,15 +640,27 @@ export default function MedicoSolicitacoesPage() {
 
                 {item.short_notice && item.status === "confirmed" && (
                   <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                    Esta consulta foi tratada como <span className="font-semibold">encaixe</span>,
-                    pois foi marcada com menos de 24 horas de antecedência.
-                    Pode haver maior tempo de espera no atendimento.
+                    Esta consulta foi tratada como{" "}
+                    <span className="font-semibold">encaixe</span>, pois foi marcada
+                    com menos de 24 horas de antecedência. Pode haver maior tempo
+                    de espera no atendimento.
                   </div>
                 )}
 
                 {item.patient_confirmation_status === "cancelled_by_patient" && (
                   <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-700">
                     O paciente cancelou esta consulta.
+                  </div>
+                )}
+
+                {(item.status === "confirmed" || item.status === "completed") && (
+                  <div className="mt-6">
+                    <Link
+                      href={`/medico/consultas/${item.id}`}
+                      className="app-button-secondary"
+                    >
+                      Abrir prontuário
+                    </Link>
                   </div>
                 )}
 
