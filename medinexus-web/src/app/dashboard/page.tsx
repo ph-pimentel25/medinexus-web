@@ -2,121 +2,130 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
-type DashboardData = {
-  fullName: string;
-  email: string;
-  healthPlanName: string;
-  pendingCount: number;
-  confirmedCount: number;
-  rejectedCount: number;
-  cancelledCount: number;
+type ProfileRow = {
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+type PatientRow = {
+  default_health_plan_id: string | null;
+  birth_date: string | null;
+};
+
+type HealthPlanRow = {
+  name: string | null;
+};
+
+type AppointmentRow = {
+  id: string;
+  status: string;
 };
 
 export default function DashboardPage() {
-  const router = useRouter();
-
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [data, setData] = useState<DashboardData>({
-    fullName: "",
-    email: "",
-    healthPlanName: "Não informado",
-    pendingCount: 0,
-    confirmedCount: 0,
-    rejectedCount: 0,
-    cancelledCount: 0,
-  });
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  );
+
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [patient, setPatient] = useState<PatientRow | null>(null);
+  const [healthPlanName, setHealthPlanName] = useState("Não informado");
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
 
   useEffect(() => {
-    async function loadDashboard() {
-      setLoading(true);
-      setMessage("");
+    loadDashboard();
+  }, []);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  async function loadDashboard() {
+    setLoading(true);
+    setMessage("");
 
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !profile) {
-        setMessage("Não foi possível carregar o perfil do usuário.");
-        setLoading(false);
-        return;
-      }
-
-      const { data: patient, error: patientError } = await supabase
-        .from("patients")
-        .select("default_health_plan_id")
-        .eq("id", user.id)
-        .single();
-
-      if (patientError || !patient) {
-        setMessage("Não foi possível carregar os dados do paciente.");
-        setLoading(false);
-        return;
-      }
-
-      let healthPlanName = "Não informado";
-
-      if (patient.default_health_plan_id) {
-        const { data: healthPlan } = await supabase
-          .from("health_plans")
-          .select("name")
-          .eq("id", patient.default_health_plan_id)
-          .single();
-
-        if (healthPlan?.name) {
-          healthPlanName = healthPlan.name;
-        }
-      }
-
-      const { data: appointments, error: appointmentsError } = await supabase
-        .from("appointments")
-        .select("status")
-        .eq("patient_id", user.id);
-
-      if (appointmentsError) {
-        setMessage("Não foi possível carregar as solicitações do paciente.");
-        setLoading(false);
-        return;
-      }
-
-      setData({
-        fullName: profile.full_name || "Paciente",
-        email: profile.email || "",
-        healthPlanName,
-        pendingCount:
-          appointments?.filter((item) => item.status === "pending").length || 0,
-        confirmedCount:
-          appointments?.filter((item) => item.status === "confirmed").length || 0,
-        rejectedCount:
-          appointments?.filter((item) => item.status === "rejected").length || 0,
-        cancelledCount:
-          appointments?.filter((item) => item.status === "cancelled").length || 0,
-      });
-
+    if (!user) {
+      setMessage("Você precisa estar logado para acessar o dashboard.");
+      setMessageType("error");
       setLoading(false);
+      return;
     }
 
-    loadDashboard();
-  }, [router]);
+    const [profileResponse, patientResponse, appointmentsResponse] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, email, phone")
+          .eq("id", user.id)
+          .maybeSingle<ProfileRow>(),
+        supabase
+          .from("patients")
+          .select("default_health_plan_id, birth_date")
+          .eq("id", user.id)
+          .maybeSingle<PatientRow>(),
+        supabase
+          .from("appointments")
+          .select("id, status")
+          .eq("patient_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+
+    if (profileResponse.error) {
+      setMessage(`Erro ao carregar perfil: ${profileResponse.error.message}`);
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    if (patientResponse.error) {
+      setMessage(`Erro ao carregar dados do paciente: ${patientResponse.error.message}`);
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    if (appointmentsResponse.error) {
+      setMessage(
+        `Erro ao carregar solicitações: ${appointmentsResponse.error.message}`
+      );
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    setProfile(profileResponse.data || null);
+    setPatient(patientResponse.data || null);
+    setAppointments((appointmentsResponse.data || []) as AppointmentRow[]);
+
+    if (patientResponse.data?.default_health_plan_id) {
+      const { data: planData } = await supabase
+        .from("health_plans")
+        .select("name")
+        .eq("id", patientResponse.data.default_health_plan_id)
+        .maybeSingle<HealthPlanRow>();
+
+      setHealthPlanName(planData?.name || "Não informado");
+    }
+
+    setLoading(false);
+  }
+
+  const pendingCount = appointments.filter((item) => item.status === "pending").length;
+  const confirmedCount = appointments.filter(
+    (item) => item.status === "confirmed"
+  ).length;
+  const completedCount = appointments.filter(
+    (item) => item.status === "completed"
+  ).length;
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-600">Carregando dashboard...</p>
       </main>
     );
@@ -124,115 +133,144 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="app-shell py-8 sm:py-10">
-        <div
-          className="mb-8 rounded-[32px] border border-slate-200 p-8 shadow-sm"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(27,75,88,0.08) 0%, rgba(122,157,141,0.10) 100%)",
-          }}
-        >
+      <section className="app-shell py-10">
+        <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Dashboard do paciente
+            Área do paciente
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-slate-900">
-            Olá, {data.fullName} 👋
+          <h1 className="mt-3 app-section-title">
+            Olá, {profile?.full_name || "paciente"}
           </h1>
-          <p className="mt-2 text-slate-600">{data.email}</p>
+          <p className="app-section-subtitle">
+            Acompanhe suas solicitações, consulte clínicas e veja seu histórico clínico.
+          </p>
         </div>
 
         {message && (
           <div className="mb-6">
-            <Alert variant="info">{message}</Alert>
+            <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
           <div className="metric-card metric-card--neutral">
             <p className="text-sm text-slate-500">Plano atual</p>
-            <h3 className="mt-3 text-2xl font-bold text-slate-900">
-              {data.healthPlanName}
+            <h3 className="mt-3 text-xl font-bold text-slate-900">
+              {healthPlanName}
             </h3>
           </div>
 
           <div className="metric-card metric-card--warning">
             <p className="text-sm text-yellow-700">Pendentes</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {data.pendingCount}
+              {pendingCount}
             </h3>
           </div>
 
           <div className="metric-card metric-card--success">
             <p className="text-sm text-green-700">Confirmadas</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {data.confirmedCount}
+              {confirmedCount}
             </h3>
           </div>
 
-          <div className="metric-card metric-card--danger">
-            <p className="text-sm text-red-700">Recusadas</p>
+          <div className="metric-card metric-card--neutral">
+            <p className="text-sm text-slate-500">Histórico</p>
             <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {data.rejectedCount}
+              {completedCount}
             </h3>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="app-card p-6">
-            <h2 className="text-xl font-semibold text-slate-900">
+        <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <div className="app-card p-8">
+            <h2 className="text-2xl font-bold text-slate-900">
               Ações rápidas
             </h2>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Link href="/busca" className="app-button-primary text-center">
-                Nova busca de consulta
-              </Link>
-
-              <Link
-                href="/perfil"
-                className="app-button-secondary text-center"
-              >
-                Meu perfil
+                Nova busca
               </Link>
 
               <Link
                 href="/solicitacoes"
                 className="app-button-secondary text-center"
               >
-                Ver minhas solicitações
+                Ver solicitações
               </Link>
 
               <Link
-                href="/resultados"
+                href="/clinicas"
                 className="app-button-secondary text-center"
               >
-                Ver resultados
+                Ver clínicas
               </Link>
 
               <Link
-                href="/clinica/solicitacoes"
+                href="/historico-clinico"
+                className="app-button-secondary text-center"
+              >
+                Histórico clínico
+              </Link>
+
+              <Link
+                href="/perfil"
                 className="app-button-secondary text-center sm:col-span-2"
               >
-                Painel da clínica
+                Editar perfil
               </Link>
             </div>
           </div>
 
-          <div className="app-card p-6">
-            <p className="text-sm text-slate-500">Canceladas</p>
-            <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {data.cancelledCount}
-            </h3>
+          <div className="app-card p-8">
+            <h2 className="text-2xl font-bold text-slate-900">
+              Seus dados
+            </h2>
 
-            <div className="mt-6 rounded-2xl border p-4" style={{ borderColor: "rgba(27,75,88,0.12)", backgroundColor: "rgba(27,75,88,0.05)" }}>
-              <p className="text-sm font-medium" style={{ color: "var(--brand-petrol)" }}>
-                Resumo do momento
+            <div className="mt-6 grid gap-3 text-slate-700">
+              <p>
+                <span className="font-semibold">Nome:</span>{" "}
+                {profile?.full_name || "Não informado"}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Você pode iniciar novas buscas, acompanhar retornos das clínicas
-                e validar o fluxo completo da MediNexus.
+              <p>
+                <span className="font-semibold">E-mail:</span>{" "}
+                {profile?.email || "Não informado"}
+              </p>
+              <p>
+                <span className="font-semibold">Telefone:</span>{" "}
+                {profile?.phone || "Não informado"}
+              </p>
+              <p>
+                <span className="font-semibold">Data de nascimento:</span>{" "}
+                {patient?.birth_date
+                  ? new Date(`${patient.birth_date}T12:00:00`).toLocaleDateString(
+                      "pt-BR"
+                    )
+                  : "Não informada"}
+              </p>
+              <p>
+                <span className="font-semibold">Plano:</span>{" "}
+                {healthPlanName}
               </p>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 app-card p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Histórico clínico
+              </h2>
+              <p className="mt-2 text-slate-600">
+                Consulte registros de atendimentos concluídos, resumos clínicos e documentos médicos.
+              </p>
+            </div>
+
+            <Link href="/historico-clinico" className="app-button-primary text-center">
+              Abrir histórico
+            </Link>
           </div>
         </div>
       </section>

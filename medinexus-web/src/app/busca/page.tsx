@@ -186,6 +186,7 @@ export default function BuscaPage() {
         preferred_start_date: preferredStartDate || null,
         preferred_end_date: preferredEndDate || null,
         preferred_clinic_id: selectedClinic?.id || null,
+        max_radius_km: selectedClinic?.id ? 100 : 30,
       })
       .select("id")
       .single();

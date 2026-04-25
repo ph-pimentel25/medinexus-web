@@ -6,210 +6,198 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type NavRole = "guest" | "patient" | "clinic_admin" | "doctor";
+type LinkItem = {
+  href: string;
+  label: string;
+};
+
+type AreaType = "public" | "patient" | "doctor" | "clinic";
+
+const publicLinks: LinkItem[] = [
+  { href: "/", label: "Início" },
+  { href: "/sobre", label: "Sobre" },
+  { href: "/login", label: "Entrar" },
+];
+
+const patientLinks: LinkItem[] = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/perfil", label: "Perfil" },
+  { href: "/busca", label: "Nova busca" },
+  { href: "/solicitacoes", label: "Solicitações" },
+  { href: "/clinicas", label: "Clínicas" },
+  { href: "/historico-clinico", label: "Histórico" },
+];
+
+const doctorLinks: LinkItem[] = [
+  { href: "/medico/dashboard", label: "Dashboard" },
+  { href: "/medico/solicitacoes", label: "Solicitações" },
+  { href: "/medico/disponibilidade", label: "Disponibilidade" },
+];
+
+const clinicLinks: LinkItem[] = [
+  { href: "/clinica/dashboard", label: "Dashboard" },
+  { href: "/clinica/solicitacoes", label: "Solicitações" },
+  { href: "/clinica/medicos", label: "Médicos" },
+  { href: "/clinica/planos", label: "Planos" },
+  { href: "/clinica/publico", label: "Página pública" },
+];
+
+function getAreaFromPath(pathname: string): AreaType {
+  if (pathname.startsWith("/medico")) return "doctor";
+  if (pathname.startsWith("/clinica")) return "clinic";
+
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/perfil") ||
+    pathname.startsWith("/busca") ||
+    pathname.startsWith("/resultados") ||
+    pathname.startsWith("/solicitacoes") ||
+    pathname.startsWith("/clinicas") ||
+    pathname.startsWith("/historico-clinico")
+  ) {
+    return "patient";
+  }
+
+  return "public";
+}
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [navRole, setNavRole] = useState<NavRole>("guest");
-  const [loadingRole, setLoadingRole] = useState(true);
+  const [isLogged, setIsLogged] = useState(false);
+
+  const area = getAreaFromPath(pathname || "/");
+
+  const links = useMemo<LinkItem[]>(() => {
+    if (area === "doctor") return doctorLinks;
+    if (area === "clinic") return clinicLinks;
+    if (area === "patient") return patientLinks;
+    return publicLinks;
+  }, [area]);
 
   useEffect(() => {
-    async function loadRole() {
-      setLoadingRole(true);
+    let mounted = true;
 
+    async function checkAuth() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        setNavRole("guest");
-        setLoadingRole(false);
-        return;
+      if (mounted) {
+        setIsLogged(Boolean(user));
       }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single<{ role: "patient" | "clinic_admin" | "doctor" }>();
-
-      if (profile?.role === "doctor") {
-        setNavRole("doctor");
-      } else if (profile?.role === "clinic_admin") {
-        setNavRole("clinic_admin");
-      } else {
-        setNavRole("patient");
-      }
-
-      setLoadingRole(false);
     }
 
-    loadRole();
+    checkAuth();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLogged(Boolean(session?.user));
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
   }, [pathname]);
-
-  const links = useMemo(() => {
-   if (navRole === "patient") {
-  return [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/perfil", label: "Perfil" },
-    { href: "/busca", label: "Nova busca" },
-    { href: "/clinicas", label: "Clínicas" },
-    { href: "/solicitacoes", label: "Solicitações" },
-  ];
-}
-
-    if (navRole === "clinic_admin") {
-      return [
-        { href: "/clinica/dashboard", label: "Clínica" },
-        { href: "/clinica/planos", label: "Planos" },
-        { href: "/clinica/medicos", label: "Médicos" },
-        { href: "/clinica/solicitacoes", label: "Solicitações" },
-      ];
-    }
-
-    if (navRole === "doctor") {
-      return [
-        { href: "/medico/dashboard", label: "Dashboard médico" },
-        { href: "/medico/solicitacoes", label: "Minhas solicitações" },
-        { href: "/medico/disponibilidade", label: "Disponibilidade" },
-      ];
-    }
-
-    return [
-      { href: "/login", label: "Entrar" },
-      { href: "/cadastro", label: "Paciente" },
-      { href: "/medico/cadastro", label: "Médico" },
-      { href: "/sobre", label: "Sobre" },
-    ];
-  }, [navRole]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    setMobileOpen(false);
     router.push("/login");
+    router.refresh();
   }
 
-  function handleNavigate() {
-    setMobileOpen(false);
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname?.startsWith(`${href}/`);
   }
+
+  const showLogout = isLogged && area !== "public";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
-      <div className="app-shell">
-        <div className="flex min-h-[96px] items-center justify-between gap-6">
-          <Link
-            href="/"
-            onClick={handleNavigate}
-            className="flex min-w-0 items-center"
-          >
-            <Image
-              src="/brand/medinexus-logo-v2.png"
-              alt="MediNexus"
-              width={620}
-              height={160}
-              className="h-[72px] w-auto object-contain sm:h-20 lg:h-24"
-              priority
-            />
-          </Link>
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+      <nav className="app-shell flex min-h-[86px] items-center justify-between py-3">
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/brand/medinexus-logo.png"
+            alt="MediNexus"
+            width={210}
+            height={64}
+            priority
+            className="h-14 w-auto object-contain"
+          />
+        </Link>
 
-          <div className="hidden items-center gap-3 md:flex">
-            <nav className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white/90 p-1.5 shadow-sm">
-              {!loadingRole &&
-                links.map((link) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href));
+        <div className="hidden items-center gap-2 lg:flex">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                isActive(link.href)
+                  ? "bg-slate-100 text-[var(--brand-petrol,#1B4B58)]"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-[var(--brand-petrol,#1B4B58)]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
 
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                        isActive
-                          ? "text-white shadow-sm"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                      }`}
-                      style={
-                        isActive
-                          ? { backgroundColor: "var(--brand-petrol)" }
-                          : undefined
-                      }
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })}
-            </nav>
+          {showLogout && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="ml-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--brand-petrol,#1B4B58)] hover:text-[var(--brand-petrol,#1B4B58)]"
+            >
+              Sair
+            </button>
+          )}
+        </div>
 
-            {navRole !== "guest" && !loadingRole && (
+        <button
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-700 lg:hidden"
+          aria-label="Abrir menu"
+        >
+          <span className="text-2xl leading-none">{mobileOpen ? "×" : "☰"}</span>
+        </button>
+      </nav>
+
+      {mobileOpen && (
+        <div className="border-t border-slate-200 bg-white lg:hidden">
+          <div className="app-shell grid gap-2 py-4">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  isActive(link.href)
+                    ? "bg-slate-100 text-[var(--brand-petrol,#1B4B58)]"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            {showLogout && (
               <button
+                type="button"
                 onClick={handleLogout}
-                className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                className="rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700"
               >
                 Sair
               </button>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 md:hidden"
-            aria-label="Abrir menu"
-          >
-            <span className="text-xl leading-none">
-              {mobileOpen ? "✕" : "☰"}
-            </span>
-          </button>
         </div>
-
-        {mobileOpen && (
-          <div className="pb-4 md:hidden">
-            <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/60">
-              <nav className="flex flex-col gap-2">
-                {!loadingRole &&
-                  links.map((link) => {
-                    const isActive =
-                      pathname === link.href ||
-                      (link.href !== "/" && pathname.startsWith(link.href));
-
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={handleNavigate}
-                        className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                          isActive
-                            ? "text-white"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                        style={
-                          isActive
-                            ? { backgroundColor: "var(--brand-petrol)" }
-                            : undefined
-                        }
-                      >
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-
-                {navRole !== "guest" && !loadingRole && (
-                  <button
-                    onClick={handleLogout}
-                    className="rounded-2xl border border-slate-300 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Sair
-                  </button>
-                )}
-              </nav>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </header>
   );
 }

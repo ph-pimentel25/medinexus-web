@@ -653,16 +653,16 @@ export default function MedicoSolicitacoesPage() {
                   </div>
                 )}
 
-                {(item.status === "confirmed" || item.status === "completed") && (
-                  <div className="mt-6">
-                    <Link
-                      href={`/medico/consultas/${item.id}`}
-                      className="app-button-secondary"
-                    >
-                      Abrir prontuário
-                    </Link>
-                  </div>
-                )}
+                {item.status === "confirmed" && (
+  <div className="mt-6">
+    <Link
+      href={`/medico/consultas/${item.id}`}
+      className="app-button-secondary"
+    >
+      Abrir prontuário
+    </Link>
+  </div>
+)}
 
                 {item.status === "pending" && (
                   <div className="mt-6 grid gap-6 lg:grid-cols-2">
