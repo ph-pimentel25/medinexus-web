@@ -15,6 +15,7 @@ type AreaType = "public" | "patient" | "doctor" | "clinic";
 const publicLinks: LinkItem[] = [
   { href: "/", label: "Início" },
   { href: "/sobre", label: "Sobre" },
+  { href: "/pacotes", label: "Pacotes" },
   { href: "/login", label: "Entrar" },
 ];
 
