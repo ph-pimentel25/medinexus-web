@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
 type LinkItem = {
@@ -26,6 +25,7 @@ const patientLinks: LinkItem[] = [
   { href: "/solicitacoes", label: "Solicitações" },
   { href: "/clinicas", label: "Clínicas" },
   { href: "/historico-clinico", label: "Histórico" },
+  { href: "/documentos-medicos", label: "Documentos" },
 ];
 
 const doctorLinks: LinkItem[] = [
@@ -53,7 +53,8 @@ function getAreaFromPath(pathname: string): AreaType {
     pathname.startsWith("/resultados") ||
     pathname.startsWith("/solicitacoes") ||
     pathname.startsWith("/clinicas") ||
-    pathname.startsWith("/historico-clinico")
+    pathname.startsWith("/historico-clinico") ||
+    pathname.startsWith("/documentos-medicos")
   ) {
     return "patient";
   }
@@ -68,7 +69,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
 
-  const area = getAreaFromPath(pathname || "/");
+  const currentPath = pathname || "/";
+  const area = getAreaFromPath(currentPath);
 
   const links = useMemo<LinkItem[]>(() => {
     if (area === "doctor") return doctorLinks;
@@ -113,46 +115,52 @@ export default function Navbar() {
   }
 
   function isActive(href: string) {
-    if (href === "/") return pathname === "/";
-    return pathname === href || pathname?.startsWith(`${href}/`);
+    if (href === "/") return currentPath === "/";
+    return currentPath === href || currentPath.startsWith(`${href}/`);
   }
 
   const showLogout = isLogged && area !== "public";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
-      <nav className="app-shell flex min-h-[86px] items-center justify-between py-3">
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/brand/medinexus-logo.png"
-            alt="MediNexus"
-            width={210}
-            height={64}
-            priority
-            className="h-14 w-auto object-contain"
-          />
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 shadow-[0_12px_40px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+      <nav className="mx-auto flex min-h-[104px] w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <Link href="/" className="group flex items-center">
+          <div className="flex h-[78px] min-w-[250px] items-center">
+            <img
+              src="/brand/medinexus-logo.png"
+              alt="MediNexus"
+              className="h-[68px] w-auto object-contain transition duration-200 group-hover:scale-[1.015] sm:h-[72px] lg:h-[76px]"
+            />
+          </div>
         </Link>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                isActive(link.href)
-                  ? "bg-slate-100 text-[var(--brand-petrol,#1B4B58)]"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-[var(--brand-petrol,#1B4B58)]"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          <div className="flex items-center gap-1 rounded-[26px] border border-slate-200/80 bg-slate-50/80 p-1.5">
+            {links.map((link) => {
+              const active = isActive(link.href);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={[
+                    "rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200",
+                    active
+                      ? "bg-white text-[#1B4B58] shadow-sm ring-1 ring-slate-200"
+                      : "text-slate-600 hover:bg-white/80 hover:text-[#1B4B58]",
+                  ].join(" ")}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
 
           {showLogout && (
             <button
               type="button"
               onClick={handleLogout}
-              className="ml-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--brand-petrol,#1B4B58)] hover:text-[var(--brand-petrol,#1B4B58)]"
+              className="ml-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1B4B58]/30 hover:text-[#1B4B58]"
             >
               Sair
             </button>
@@ -162,7 +170,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-700 lg:hidden"
+          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 lg:hidden"
           aria-label="Abrir menu"
         >
           <span className="text-2xl leading-none">{mobileOpen ? "×" : "☰"}</span>
@@ -171,26 +179,31 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="border-t border-slate-200 bg-white lg:hidden">
-          <div className="app-shell grid gap-2 py-4">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                  isActive(link.href)
-                    ? "bg-slate-100 text-[var(--brand-petrol,#1B4B58)]"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="mx-auto grid max-w-7xl gap-2 px-4 py-4 sm:px-6">
+            {links.map((link) => {
+              const active = isActive(link.href);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={[
+                    "rounded-2xl px-4 py-3 text-sm font-semibold transition",
+                    active
+                      ? "bg-[#EAF1F0] text-[#1B4B58] ring-1 ring-[#D7E6E2]"
+                      : "text-slate-700 hover:bg-slate-50",
+                  ].join(" ")}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
 
             {showLogout && (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700"
+                className="rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Sair
               </button>
