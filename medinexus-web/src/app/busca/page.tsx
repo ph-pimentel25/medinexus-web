@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
@@ -35,7 +35,7 @@ const weekdayOptions = [
   { value: "6", label: "Sábado" },
 ];
 
-export default function BuscaPage() {
+function BuscaPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -64,6 +64,7 @@ export default function BuscaPage() {
 
   useEffect(() => {
     loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clinicIdFromQuery]);
 
   async function loadPage() {
@@ -356,7 +357,7 @@ export default function BuscaPage() {
               <div className="grid gap-4">
                 {timeWindows.map((window, index) => (
                   <div
-                    key={index}
+                    key={`${window.weekday}-${index}`}
                     className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
                   >
                     <div className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
@@ -367,7 +368,11 @@ export default function BuscaPage() {
                         <select
                           value={window.weekday}
                           onChange={(e) =>
-                            handleTimeWindowChange(index, "weekday", e.target.value)
+                            handleTimeWindowChange(
+                              index,
+                              "weekday",
+                              e.target.value
+                            )
                           }
                           className="app-input"
                         >
@@ -387,7 +392,11 @@ export default function BuscaPage() {
                           type="time"
                           value={window.startTime}
                           onChange={(e) =>
-                            handleTimeWindowChange(index, "startTime", e.target.value)
+                            handleTimeWindowChange(
+                              index,
+                              "startTime",
+                              e.target.value
+                            )
                           }
                           className="app-input"
                         />
@@ -401,7 +410,11 @@ export default function BuscaPage() {
                           type="time"
                           value={window.endTime}
                           onChange={(e) =>
-                            handleTimeWindowChange(index, "endTime", e.target.value)
+                            handleTimeWindowChange(
+                              index,
+                              "endTime",
+                              e.target.value
+                            )
                           }
                           className="app-input"
                         />
@@ -434,5 +447,19 @@ export default function BuscaPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function BuscaPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <p className="text-slate-600">Carregando busca...</p>
+        </main>
+      }
+    >
+      <BuscaPageContent />
+    </Suspense>
   );
 }

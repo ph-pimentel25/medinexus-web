@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Alert from "../../components/alert";
 import StatusBadge from "../../components/status-badge";
 import { supabase } from "../../lib/supabase";
@@ -43,8 +43,8 @@ type AppointmentItem = {
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
-  short_notice: boolean;
-  patient_confirmation_status: PatientConfirmationStatus;
+  short_notice: boolean | null;
+  patient_confirmation_status: PatientConfirmationStatus | null;
   patient_confirmation_requested_at: string | null;
   patient_confirmation_deadline_at: string | null;
   patient_confirmed_at: string | null;
@@ -71,8 +71,8 @@ type RawAppointmentItem = {
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
-  short_notice: boolean;
-  patient_confirmation_status: PatientConfirmationStatus;
+  short_notice: boolean | null;
+  patient_confirmation_status: PatientConfirmationStatus | null;
   patient_confirmation_requested_at: string | null;
   patient_confirmation_deadline_at: string | null;
   patient_confirmed_at: string | null;
@@ -144,8 +144,8 @@ function isWithinAvailability(
 }
 
 function getPatientConfirmationText(
-  status: PatientConfirmationStatus,
-  shortNotice: boolean
+  status: PatientConfirmationStatus | null,
+  shortNotice: boolean | null
 ) {
   if (shortNotice) return "Consulta de encaixe";
   if (status === "waiting") return "Aguardando confirmação do paciente";
@@ -155,8 +155,28 @@ function getPatientConfirmationText(
   return "Sem confirmação necessária";
 }
 
-export default function MedicoSolicitacoesPage() {
+function getStatusDescription(status: Status) {
+  switch (status) {
+    case "pending":
+      return "Solicitação recebida e aguardando decisão do médico.";
+    case "confirmed":
+      return "Consulta confirmada. O prontuário está disponível para atendimento.";
+    case "rejected":
+      return "Consulta recusada.";
+    case "cancelled":
+      return "Consulta cancelada.";
+    case "completed":
+      return "Atendimento concluído. O prontuário foi bloqueado.";
+    default:
+      return "Status atualizado.";
+  }
+}
+
+function MedicoSolicitacoesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const successParam = searchParams.get("success");
 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -178,12 +198,21 @@ export default function MedicoSolicitacoesPage() {
   );
 
   useEffect(() => {
+    if (successParam === "1") {
+      setMessage("Ação realizada com sucesso.");
+      setMessageType("success");
+    }
+
     loadDoctorAppointments();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successParam]);
 
   async function loadDoctorAppointments() {
     setLoading(true);
-    setMessage("");
+
+    if (successParam !== "1") {
+      setMessage("");
+    }
 
     const {
       data: { user },
@@ -411,9 +440,7 @@ export default function MedicoSolicitacoesPage() {
           : new Date().toISOString(),
         patient_confirmation_deadline_at: isShortNotice
           ? null
-          : new Date(
-              startDate.getTime() - 24 * 60 * 60 * 1000
-            ).toISOString(),
+          : new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString(),
         patient_confirmed_at: null,
       })
       .eq("id", appointmentId);
@@ -472,6 +499,17 @@ export default function MedicoSolicitacoesPage() {
     await loadDoctorAppointments();
   }
 
+  const counters = useMemo(() => {
+    return {
+      total: appointments.length,
+      pending: appointments.filter((item) => item.status === "pending").length,
+      confirmed: appointments.filter((item) => item.status === "confirmed")
+        .length,
+      completed: appointments.filter((item) => item.status === "completed")
+        .length,
+    };
+  }, [appointments]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -500,8 +538,7 @@ export default function MedicoSolicitacoesPage() {
             Gerencie apenas as consultas atribuídas a você
           </h1>
           <p className="app-section-subtitle">
-            Confirme, recuse e acompanhe somente as solicitações do seu próprio
-            atendimento.
+            Confirme, recuse, abra prontuários e acompanhe solicitações do seu atendimento.
           </p>
         </div>
 
@@ -511,10 +548,54 @@ export default function MedicoSolicitacoesPage() {
           </div>
         )}
 
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
+          <div className="metric-card metric-card--neutral">
+            <p className="text-sm text-slate-500">Total</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.total}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--warning">
+            <p className="text-sm text-yellow-700">Pendentes</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.pending}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--success">
+            <p className="text-sm text-green-700">Confirmadas</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.confirmed}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--neutral">
+            <p className="text-sm text-slate-500">Concluídas</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.completed}
+            </h3>
+          </div>
+        </div>
+
         <div className="mb-6 app-card p-6">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Disponibilidade ativa
-          </h2>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">
+                Disponibilidade ativa
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                As confirmações precisam respeitar os horários cadastrados.
+              </p>
+            </div>
+
+            <Link
+              href="/medico/disponibilidade"
+              className="app-button-secondary text-center"
+            >
+              Editar disponibilidade
+            </Link>
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {availabilityRules.length > 0 ? (
@@ -523,7 +604,11 @@ export default function MedicoSolicitacoesPage() {
                   key={`${rule.day_of_week}-${rule.start_time}-${rule.end_time}-${index}`}
                   className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200"
                 >
-                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][rule.day_of_week]}{" "}
+                  {
+                    ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][
+                      rule.day_of_week
+                    ]
+                  }{" "}
                   {rule.start_time.slice(0, 5)}–{rule.end_time.slice(0, 5)}
                 </span>
               ))
@@ -547,16 +632,24 @@ export default function MedicoSolicitacoesPage() {
               <div key={item.id} className="app-card p-8">
                 <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 ring-1 ring-sky-200">
+                        {item.specialties?.name || "Especialidade"}
+                      </span>
+
+                      {item.short_notice && (
+                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-700 ring-1 ring-amber-200">
+                          Encaixe
+                        </span>
+                      )}
+                    </div>
+
                     <h2 className="text-3xl font-bold text-slate-900">
                       {item.patients?.profiles?.full_name ||
                         "Paciente não identificado"}
                     </h2>
 
                     <div className="mt-4 grid gap-2 text-slate-700">
-                      <p>
-                        <span className="font-semibold">Especialidade:</span>{" "}
-                        {item.specialties?.name || "Não informada"}
-                      </p>
                       <p>
                         <span className="font-semibold">Clínica:</span>{" "}
                         {item.clinics?.trade_name || "Não informada"}
@@ -631,6 +724,10 @@ export default function MedicoSolicitacoesPage() {
                   )}
                 </div>
 
+                <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  {getStatusDescription(item.status)}
+                </div>
+
                 {item.status === "rejected" && item.rejection_reason && (
                   <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
                     <span className="font-semibold">Motivo da recusa:</span>{" "}
@@ -654,15 +751,21 @@ export default function MedicoSolicitacoesPage() {
                 )}
 
                 {item.status === "confirmed" && (
-  <div className="mt-6">
-    <Link
-      href={`/medico/consultas/${item.id}`}
-      className="app-button-secondary"
-    >
-      Abrir prontuário
-    </Link>
-  </div>
-)}
+                  <div className="mt-6">
+                    <Link
+                      href={`/medico/consultas/${item.id}`}
+                      className="app-button-primary"
+                    >
+                      Abrir prontuário
+                    </Link>
+                  </div>
+                )}
+
+                {item.status === "completed" && (
+                  <div className="mt-6 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    Atendimento concluído. O prontuário desta consulta está bloqueado.
+                  </div>
+                )}
 
                 {item.status === "pending" && (
                   <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -780,5 +883,19 @@ export default function MedicoSolicitacoesPage() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function MedicoSolicitacoesPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <p className="text-slate-600">Carregando solicitações do médico...</p>
+        </main>
+      }
+    >
+      <MedicoSolicitacoesPageContent />
+    </Suspense>
   );
 }

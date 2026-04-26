@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "../components/alert";
 import StatusBadge from "../components/status-badge";
 import { supabase } from "../lib/supabase";
 
-type Status = "pending" | "confirmed" | "rejected" | "cancelled" | "completed";
+type AppointmentStatus =
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "cancelled"
+  | "completed";
+
 type PatientConfirmationStatus =
   | "not_required"
   | "waiting"
@@ -15,17 +20,23 @@ type PatientConfirmationStatus =
   | "cancelled_by_patient"
   | "expired";
 
+type ProfileInfo = {
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
 type AppointmentItem = {
   id: string;
-  status: Status;
+  status: AppointmentStatus;
   created_at: string;
   requested_start_at: string | null;
   requested_end_at: string | null;
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
-  short_notice: boolean;
-  patient_confirmation_status: PatientConfirmationStatus;
+  short_notice: boolean | null;
+  patient_confirmation_status: PatientConfirmationStatus | null;
   patient_confirmation_requested_at: string | null;
   patient_confirmation_deadline_at: string | null;
   patient_confirmed_at: string | null;
@@ -36,6 +47,8 @@ type AppointmentItem = {
   } | null;
   doctors?: {
     name: string | null;
+    crm: string | null;
+    crm_state: string | null;
   } | null;
   specialties?: {
     name: string | null;
@@ -44,15 +57,15 @@ type AppointmentItem = {
 
 type RawAppointmentItem = {
   id: string;
-  status: Status;
+  status: AppointmentStatus;
   created_at: string;
   requested_start_at: string | null;
   requested_end_at: string | null;
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
   rejection_reason: string | null;
-  short_notice: boolean;
-  patient_confirmation_status: PatientConfirmationStatus;
+  short_notice: boolean | null;
+  patient_confirmation_status: PatientConfirmationStatus | null;
   patient_confirmation_requested_at: string | null;
   patient_confirmation_deadline_at: string | null;
   patient_confirmed_at: string | null;
@@ -68,8 +81,26 @@ type RawAppointmentItem = {
         state: string | null;
       }[]
     | null;
-  doctors?: { name: string | null } | { name: string | null }[] | null;
-  specialties?: { name: string | null } | { name: string | null }[] | null;
+  doctors?:
+    | {
+        name: string | null;
+        crm: string | null;
+        crm_state: string | null;
+      }
+    | {
+        name: string | null;
+        crm: string | null;
+        crm_state: string | null;
+      }[]
+    | null;
+  specialties?:
+    | {
+        name: string | null;
+      }
+    | {
+        name: string | null;
+      }[]
+    | null;
 };
 
 function pickOne<T>(value: T | T[] | null | undefined): T | null {
@@ -86,120 +117,50 @@ function formatDateTime(value: string | null) {
   });
 }
 
-function getConfirmationBadge(
-  status: PatientConfirmationStatus,
-  shortNotice: boolean
+function getPatientConfirmationText(
+  status: PatientConfirmationStatus | null,
+  shortNotice: boolean | null
 ) {
-  if (shortNotice) {
-    return {
-      label: "Consulta de encaixe",
-      className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    };
-  }
+  if (shortNotice) return "Consulta de encaixe";
+  if (status === "waiting") return "Aguardando sua confirmação";
+  if (status === "confirmed") return "Presença confirmada por você";
+  if (status === "cancelled_by_patient") return "Cancelada por você";
+  if (status === "expired") return "Confirmação expirada";
+  return "Sem confirmação necessária";
+}
 
+function getStatusDescription(status: AppointmentStatus) {
   switch (status) {
-    case "waiting":
-      return {
-        label: "Aguardando sua confirmação",
-        className: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
-      };
+    case "pending":
+      return "Sua solicitação foi enviada e aguarda análise.";
     case "confirmed":
-      return {
-        label: "Presença confirmada",
-        className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-      };
-    case "cancelled_by_patient":
-      return {
-        label: "Cancelada por você",
-        className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-      };
-    case "expired":
-      return {
-        label: "Confirmação expirada",
-        className: "bg-red-50 text-red-700 ring-1 ring-red-200",
-      };
+      return "Sua consulta foi confirmada pela clínica ou pelo médico.";
+    case "rejected":
+      return "Sua solicitação foi recusada.";
+    case "cancelled":
+      return "Sua consulta foi cancelada.";
+    case "completed":
+      return "Seu atendimento foi concluído.";
     default:
-      return {
-        label: "Sem confirmação necessária",
-        className: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-      };
+      return "Status atualizado.";
   }
 }
 
 export default function SolicitacoesPage() {
-  const searchParams = useSearchParams();
-
   const [loading, setLoading] = useState(true);
+  const [actingId, setActingId] = useState<string | null>(null);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
     "info"
   );
+
+  const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
-  const [actingId, setActingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAppointments();
   }, []);
-
-  useEffect(() => {
-    const action = searchParams.get("appointmentAction");
-
-    if (!action) return;
-
-    if (action === "email-confirmed") {
-      setMessage("Presença confirmada pelo link do e-mail.");
-      setMessageType("success");
-      return;
-    }
-
-    if (action === "email-cancelled") {
-      setMessage("Consulta cancelada pelo link do e-mail.");
-      setMessageType("success");
-      return;
-    }
-
-    if (action === "expired-token") {
-      setMessage("Esse link expirou.");
-      setMessageType("error");
-      return;
-    }
-
-    if (action === "already-used") {
-      setMessage("Esse link já foi utilizado.");
-      setMessageType("info");
-      return;
-    }
-
-    if (action === "not-available") {
-      setMessage("Essa ação não está mais disponível.");
-      setMessageType("info");
-      return;
-    }
-
-    if (action === "invalid-token") {
-      setMessage("Link inválido.");
-      setMessageType("error");
-      return;
-    }
-
-    if (action === "action-error") {
-      setMessage("Não foi possível processar sua ação.");
-      setMessageType("error");
-      return;
-    }
-
-    if (action === "server-config-error") {
-      setMessage("Erro de configuração do servidor.");
-      setMessageType("error");
-      return;
-    }
-
-    if (action === "appointment-not-found") {
-      setMessage("Consulta não encontrada.");
-      setMessageType("error");
-      return;
-    }
-  }, [searchParams]);
 
   async function loadAppointments() {
     setLoading(true);
@@ -215,6 +176,14 @@ export default function SolicitacoesPage() {
       setLoading(false);
       return;
     }
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("full_name, email, phone")
+      .eq("id", user.id)
+      .maybeSingle<ProfileInfo>();
+
+    setProfile(profileData || null);
 
     const { data, error } = await supabase
       .from("appointments")
@@ -238,7 +207,9 @@ export default function SolicitacoesPage() {
           state
         ),
         doctors (
-          name
+          name,
+          crm,
+          crm_state
         ),
         specialties (
           name
@@ -285,8 +256,18 @@ export default function SolicitacoesPage() {
                 state: clinic.state,
               }
             : null,
-          doctors: doctor ? { name: doctor.name } : null,
-          specialties: specialty ? { name: specialty.name } : null,
+          doctors: doctor
+            ? {
+                name: doctor.name,
+                crm: doctor.crm,
+                crm_state: doctor.crm_state,
+              }
+            : null,
+          specialties: specialty
+            ? {
+                name: specialty.name,
+              }
+            : null,
         };
       }
     );
@@ -295,40 +276,17 @@ export default function SolicitacoesPage() {
     setLoading(false);
   }
 
-  async function handleCancelPendingRequest(appointmentId: string) {
-    setMessage("");
+  async function handleConfirmPresence(appointmentId: string) {
     setActingId(appointmentId);
-
-    const { error } = await supabase
-      .from("appointments")
-      .update({
-        status: "cancelled",
-        patient_confirmation_status: "cancelled_by_patient",
-      })
-      .eq("id", appointmentId);
-
-    if (error) {
-      setMessage(`Erro ao cancelar solicitação: ${error.message}`);
-      setMessageType("error");
-      setActingId(null);
-      return;
-    }
-
-    setMessage("Solicitação cancelada com sucesso.");
-    setMessageType("success");
-    setActingId(null);
-    await loadAppointments();
-  }
-
-  async function handlePatientConfirm(appointmentId: string) {
     setMessage("");
-    setActingId(appointmentId);
+
+    const nowIso = new Date().toISOString();
 
     const { error } = await supabase
       .from("appointments")
       .update({
         patient_confirmation_status: "confirmed",
-        patient_confirmed_at: new Date().toISOString(),
+        patient_confirmed_at: nowIso,
       })
       .eq("id", appointmentId);
 
@@ -339,21 +297,28 @@ export default function SolicitacoesPage() {
       return;
     }
 
-    setMessage("Sua presença foi confirmada com sucesso.");
+    setMessage("Presença confirmada com sucesso.");
     setMessageType("success");
     setActingId(null);
     await loadAppointments();
   }
 
-  async function handlePatientCancelConfirmed(appointmentId: string) {
-    setMessage("");
+  async function handleCancelByPatient(appointmentId: string) {
+    const confirmed = window.confirm(
+      "Tem certeza que deseja cancelar esta consulta?"
+    );
+
+    if (!confirmed) return;
+
     setActingId(appointmentId);
+    setMessage("");
 
     const { error } = await supabase
       .from("appointments")
       .update({
         status: "cancelled",
         patient_confirmation_status: "cancelled_by_patient",
+        patient_confirmed_at: null,
       })
       .eq("id", appointmentId);
 
@@ -370,40 +335,49 @@ export default function SolicitacoesPage() {
     await loadAppointments();
   }
 
+  const counters = useMemo(() => {
+    return {
+      total: appointments.length,
+      pending: appointments.filter((item) => item.status === "pending").length,
+      confirmed: appointments.filter((item) => item.status === "confirmed")
+        .length,
+      completed: appointments.filter((item) => item.status === "completed")
+        .length,
+    };
+  }, [appointments]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando suas solicitações...</p>
+        <p className="text-slate-600">Carregando solicitações...</p>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-sky-700 hover:underline"
-          >
-            ← Voltar para o dashboard
-          </Link>
+      <section className="app-shell py-10">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
+              Minhas solicitações
+            </p>
+            <h1 className="mt-3 app-section-title">
+              Acompanhe seus pedidos de consulta
+            </h1>
+            <p className="app-section-subtitle">
+              Veja o status de cada solicitação, confirme presença e acompanhe o retorno.
+            </p>
+          </div>
 
-          <Link href="/busca" className="app-button-secondary">
-            Nova busca
-          </Link>
-        </div>
-
-        <div className="mb-8">
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Minhas solicitações
-          </p>
-          <h1 className="mt-3 app-section-title">
-            Acompanhe seus pedidos de consulta
-          </h1>
-          <p className="app-section-subtitle">
-            Veja o status de cada solicitação e acompanhe a resposta das clínicas.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/dashboard" className="app-button-secondary text-center">
+              Voltar ao dashboard
+            </Link>
+            <Link href="/busca" className="app-button-primary text-center">
+              Nova busca
+            </Link>
+          </div>
         </div>
 
         {message && (
@@ -412,56 +386,106 @@ export default function SolicitacoesPage() {
           </div>
         )}
 
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
+          <div className="metric-card metric-card--neutral">
+            <p className="text-sm text-slate-500">Total</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.total}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--warning">
+            <p className="text-sm text-yellow-700">Pendentes</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.pending}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--success">
+            <p className="text-sm text-green-700">Confirmadas</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.confirmed}
+            </h3>
+          </div>
+
+          <div className="metric-card metric-card--neutral">
+            <p className="text-sm text-slate-500">Concluídas</p>
+            <h3 className="mt-3 text-3xl font-bold text-slate-900">
+              {counters.completed}
+            </h3>
+          </div>
+        </div>
+
         {appointments.length === 0 ? (
           <div className="app-card p-8">
             <p className="text-slate-700">
               Você ainda não possui solicitações cadastradas.
             </p>
+
+            <div className="mt-6">
+              <Link href="/busca" className="app-button-primary">
+                Criar primeira busca
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid gap-6">
             {appointments.map((item) => {
-              const confirmationBadge = getConfirmationBadge(
-                item.patient_confirmation_status,
-                item.short_notice
-              );
+              const canConfirmPresence =
+                item.status === "confirmed" &&
+                item.patient_confirmation_status === "waiting" &&
+                !item.short_notice;
+
+              const canCancel =
+                item.status === "confirmed" || item.status === "pending";
 
               return (
                 <div key={item.id} className="app-card p-8">
                   <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 ring-1 ring-sky-200">
+                          {item.specialties?.name || "Especialidade"}
+                        </span>
+
+                        {item.short_notice && (
+                          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-700 ring-1 ring-amber-200">
+                            Encaixe
+                          </span>
+                        )}
+                      </div>
+
                       <h2 className="text-3xl font-bold text-slate-900">
                         {item.clinics?.trade_name || "Clínica não informada"}
                       </h2>
 
-                      <div className="mt-4 grid gap-2 text-slate-700">
-                        <p>
-                          <span className="font-semibold">Especialidade:</span>{" "}
-                          {item.specialties?.name || "Não informada"}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Médico:</span>{" "}
-                          {item.doctors?.name || "Não informado"}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Local:</span>{" "}
-                          {item.clinics?.city || "Cidade não informada"} /{" "}
-                          {item.clinics?.state || "Estado não informado"}
-                        </p>
-                      </div>
+                      <p className="mt-2 text-slate-600">
+                        {item.clinics?.city || "Cidade não informada"} /{" "}
+                        {item.clinics?.state || "Estado não informado"}
+                      </p>
                     </div>
 
-                    <div className="flex flex-col items-start gap-3 lg:items-end">
-                      <StatusBadge status={item.status} />
-                      <span
-                        className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${confirmationBadge.className}`}
-                      >
-                        {confirmationBadge.label}
-                      </span>
-                    </div>
+                    <StatusBadge status={item.status} />
                   </div>
 
-                  <div className="grid gap-2 text-slate-700">
+                  <div className="grid gap-3 text-slate-700">
+                    <p>
+                      <span className="font-semibold">Paciente:</span>{" "}
+                      {profile?.full_name || "Não informado"}
+                    </p>
+
+                    <p>
+                      <span className="font-semibold">Médico:</span>{" "}
+                      {item.doctors?.name || "Ainda não informado"}
+                      {item.doctors?.crm
+                        ? ` • CRM ${item.doctors.crm}${
+                            item.doctors.crm_state
+                              ? ` / ${item.doctors.crm_state}`
+                              : ""
+                          }`
+                        : ""}
+                    </p>
+
                     <p>
                       <span className="font-semibold">Solicitada em:</span>{" "}
                       {formatDateTime(item.created_at)}
@@ -485,33 +509,36 @@ export default function SolicitacoesPage() {
                         : "Ainda não confirmado"}
                     </p>
 
-                    {!item.short_notice &&
-                      item.patient_confirmation_status === "waiting" &&
-                      item.patient_confirmation_deadline_at && (
-                        <p>
-                          <span className="font-semibold">Confirme até:</span>{" "}
-                          {formatDateTime(item.patient_confirmation_deadline_at)}
-                        </p>
+                    <p>
+                      <span className="font-semibold">Confirmação:</span>{" "}
+                      {getPatientConfirmationText(
+                        item.patient_confirmation_status,
+                        item.short_notice
                       )}
+                    </p>
 
-                    {item.patient_confirmation_status === "confirmed" &&
-                      item.patient_confirmed_at && (
-                        <p>
-                          <span className="font-semibold">
-                            Presença confirmada em:
-                          </span>{" "}
-                          {formatDateTime(item.patient_confirmed_at)}
-                        </p>
-                      )}
+                    {item.patient_confirmation_deadline_at && (
+                      <p>
+                        <span className="font-semibold">
+                          Prazo para confirmar:
+                        </span>{" "}
+                        {formatDateTime(item.patient_confirmation_deadline_at)}
+                      </p>
+                    )}
+
+                    {item.patient_confirmed_at && (
+                      <p>
+                        <span className="font-semibold">
+                          Confirmado por você em:
+                        </span>{" "}
+                        {formatDateTime(item.patient_confirmed_at)}
+                      </p>
+                    )}
                   </div>
 
-                  {item.short_notice && item.status === "confirmed" && (
-                    <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                      Esta consulta foi tratada como <span className="font-semibold">encaixe</span>,
-                      pois foi marcada com menos de 24 horas de antecedência.
-                      Pode haver maior tempo de espera no atendimento.
-                    </div>
-                  )}
+                  <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    {getStatusDescription(item.status)}
+                  </div>
 
                   {item.status === "rejected" && item.rejection_reason && (
                     <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -520,48 +547,51 @@ export default function SolicitacoesPage() {
                     </div>
                   )}
 
-                  {item.status === "pending" && (
-                    <div className="mt-6">
-                      <button
-                        type="button"
-                        onClick={() => handleCancelPendingRequest(item.id)}
-                        disabled={actingId === item.id}
-                        className="app-button-danger"
-                      >
-                        {actingId === item.id
-                          ? "Cancelando..."
-                          : "Cancelar solicitação"}
-                      </button>
+                  {item.short_notice && item.status === "confirmed" && (
+                    <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                      Esta consulta foi marcada como{" "}
+                      <span className="font-semibold">encaixe</span>, pois foi
+                      confirmada com menos de 24 horas de antecedência. Pode
+                      haver maior tempo de espera no atendimento.
                     </div>
                   )}
 
-                  {item.status === "confirmed" &&
-                    !item.short_notice &&
-                    item.patient_confirmation_status === "waiting" && (
-                      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                        <button
-                          type="button"
-                          onClick={() => handlePatientConfirm(item.id)}
-                          disabled={actingId === item.id}
-                          className="app-button-primary"
-                        >
-                          {actingId === item.id
-                            ? "Confirmando..."
-                            : "Confirmar presença"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handlePatientCancelConfirmed(item.id)}
-                          disabled={actingId === item.id}
-                          className="app-button-danger"
-                        >
-                          {actingId === item.id
-                            ? "Cancelando..."
-                            : "Cancelar consulta"}
-                        </button>
-                      </div>
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    {canConfirmPresence && (
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmPresence(item.id)}
+                        disabled={actingId === item.id}
+                        className="app-button-primary"
+                      >
+                        {actingId === item.id
+                          ? "Confirmando..."
+                          : "Confirmar presença"}
+                      </button>
                     )}
+
+                    {canCancel && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancelByPatient(item.id)}
+                        disabled={actingId === item.id}
+                        className="app-button-secondary"
+                      >
+                        {actingId === item.id
+                          ? "Processando..."
+                          : "Cancelar consulta"}
+                      </button>
+                    )}
+
+                    {item.status === "completed" && (
+                      <Link
+                        href="/historico-clinico"
+                        className="app-button-secondary text-center"
+                      >
+                        Ver no histórico clínico
+                      </Link>
+                    )}
+                  </div>
                 </div>
               );
             })}
