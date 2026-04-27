@@ -33,6 +33,7 @@ const doctorLinks: LinkItem[] = [
   { href: "/medico/dashboard", label: "Dashboard" },
   { href: "/medico/solicitacoes", label: "Solicitações" },
   { href: "/medico/disponibilidade", label: "Disponibilidade" },
+  { href: "/medico/perfil", label: "Perfil" },
 ];
 
 const clinicLinks: LinkItem[] = [
@@ -41,6 +42,7 @@ const clinicLinks: LinkItem[] = [
   { href: "/clinica/medicos", label: "Médicos" },
   { href: "/clinica/planos", label: "Planos" },
   { href: "/clinica/publico", label: "Página pública" },
+  { href: "/clinica/configuracoes", label: "Configurações" },
 ];
 
 function getAreaFromPath(pathname: string): AreaType {
