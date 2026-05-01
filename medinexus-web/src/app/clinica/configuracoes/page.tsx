@@ -9,6 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import Alert from "../../components/alert";
+import { geocodeBrazilAddress } from "../../lib/geocode";
 import { supabase } from "../../lib/supabase";
 
 type ClinicRow = {
@@ -33,6 +34,8 @@ type ClinicRow = {
   address_city: string | null;
   address_state: string | null;
   address_country: string | null;
+  latitude: number | null;
+  longitude: number | null;
   accepts_private_consultation: boolean | null;
   base_private_price_cents: number | null;
   average_response_minutes: number | null;
@@ -77,9 +80,21 @@ function centsToMoney(value: number | null) {
   });
 }
 
+function parseCoordinate(value: string) {
+  const normalized = value.replace(",", ".").trim();
+  if (!normalized) return null;
+
+  const number = Number(normalized);
+
+  if (Number.isNaN(number)) return null;
+
+  return number;
+}
+
 export default function ClinicaConfiguracoesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [capturingLocation, setCapturingLocation] = useState(false);
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
@@ -109,6 +124,8 @@ export default function ClinicaConfiguracoesPage() {
     address_city: "",
     address_state: "",
     address_country: "Brasil",
+    latitude: "",
+    longitude: "",
     accepts_private_consultation: true,
     base_private_price: "",
     average_response_minutes: "60",
@@ -117,6 +134,44 @@ export default function ClinicaConfiguracoesPage() {
   useEffect(() => {
     loadClinic();
   }, []);
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setMessage("Seu navegador não permite capturar localização.");
+      setMessageType("error");
+      return;
+    }
+
+    setCapturingLocation(true);
+    setMessage("Capturando localização precisa da clínica...");
+    setMessageType("info");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((prev) => ({
+          ...prev,
+          latitude: String(position.coords.latitude),
+          longitude: String(position.coords.longitude),
+        }));
+
+        setMessage("Localização precisa da clínica capturada com sucesso.");
+        setMessageType("success");
+        setCapturingLocation(false);
+      },
+      () => {
+        setMessage(
+          "Não foi possível capturar a localização. Verifique a permissão do navegador."
+        );
+        setMessageType("error");
+        setCapturingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  }
 
   async function loadClinic() {
     setLoading(true);
@@ -174,6 +229,8 @@ export default function ClinicaConfiguracoesPage() {
         address_city,
         address_state,
         address_country,
+        latitude,
+        longitude,
         accepts_private_consultation,
         base_private_price_cents,
         average_response_minutes,
@@ -185,7 +242,9 @@ export default function ClinicaConfiguracoesPage() {
 
     if (clinicError || !clinic) {
       setMessage(
-        `Erro ao carregar clínica: ${clinicError?.message || "clínica não encontrada"}`
+        `Erro ao carregar clínica: ${
+          clinicError?.message || "clínica não encontrada"
+        }`
       );
       setMessageType("error");
       setLoading(false);
@@ -213,6 +272,8 @@ export default function ClinicaConfiguracoesPage() {
       address_city: clinic.address_city || "",
       address_state: clinic.address_state || "",
       address_country: clinic.address_country || "Brasil",
+      latitude: clinic.latitude !== null ? String(clinic.latitude) : "",
+      longitude: clinic.longitude !== null ? String(clinic.longitude) : "",
       accepts_private_consultation:
         clinic.accepts_private_consultation ?? true,
       base_private_price: centsToMoney(clinic.base_private_price_cents),
@@ -222,9 +283,7 @@ export default function ClinicaConfiguracoesPage() {
     setLoading(false);
   }
 
-  function handleChange(
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) {
+  function handleChange(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value, type } = e.target;
 
     if (type === "checkbox") {
@@ -280,6 +339,14 @@ export default function ClinicaConfiguracoesPage() {
       missing.push("UF do CRM do diretor técnico");
     }
 
+    if (form.latitude && parseCoordinate(form.latitude) === null) {
+      missing.push("Latitude válida");
+    }
+
+    if (form.longitude && parseCoordinate(form.longitude) === null) {
+      missing.push("Longitude válida");
+    }
+
     return missing;
   }, [form]);
 
@@ -309,6 +376,30 @@ export default function ClinicaConfiguracoesPage() {
       ? moneyToCents(form.base_private_price)
       : null;
 
+    const manualLatitude = parseCoordinate(form.latitude);
+    const manualLongitude = parseCoordinate(form.longitude);
+
+    const fallbackCoordinates =
+      manualLatitude !== null && manualLongitude !== null
+        ? {
+            latitude: manualLatitude,
+            longitude: manualLongitude,
+          }
+        : await geocodeBrazilAddress({
+            zipcode: form.address_zipcode,
+            street: form.address_street,
+            number: form.address_number,
+            neighborhood: form.address_neighborhood,
+            city: form.address_city,
+            state: form.address_state,
+          });
+
+    const finalLatitude =
+      manualLatitude !== null ? manualLatitude : fallbackCoordinates.latitude;
+
+    const finalLongitude =
+      manualLongitude !== null ? manualLongitude : fallbackCoordinates.longitude;
+
     const { error } = await supabase
       .from("clinics")
       .update({
@@ -327,7 +418,7 @@ export default function ClinicaConfiguracoesPage() {
         technical_director_crm_state:
           form.technical_director_crm_state.trim().toUpperCase() || null,
         cnes: form.cnes.trim() || null,
-        address_zipcode: form.address_zipcode.trim(),
+        address_zipcode: onlyDigits(form.address_zipcode),
         address_street: form.address_street.trim(),
         address_number: form.address_number.trim(),
         address_complement: form.address_complement.trim() || null,
@@ -335,6 +426,8 @@ export default function ClinicaConfiguracoesPage() {
         address_city: form.address_city.trim(),
         address_state: form.address_state.trim().toUpperCase(),
         address_country: form.address_country.trim() || "Brasil",
+        latitude: finalLatitude,
+        longitude: finalLongitude,
         accepts_private_consultation: form.accepts_private_consultation,
         base_private_price_cents: privatePriceCents,
         average_response_minutes: Number(form.average_response_minutes || 60),
@@ -348,6 +441,12 @@ export default function ClinicaConfiguracoesPage() {
       setSaving(false);
       return;
     }
+
+    setForm((prev) => ({
+      ...prev,
+      latitude: finalLatitude !== null ? String(finalLatitude) : "",
+      longitude: finalLongitude !== null ? String(finalLongitude) : "",
+    }));
 
     setMessage("Configurações da clínica salvas com sucesso.");
     setMessageType("success");
@@ -594,13 +693,28 @@ export default function ClinicaConfiguracoesPage() {
           </div>
 
           <div className="app-card p-8">
-            <h2 className="text-2xl font-black text-slate-950">
-              Endereço completo
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Esse endereço será usado futuramente para busca por raio,
-              localização e página pública da clínica.
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-950">
+                  Endereço e localização
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  A localização será usada para busca por raio. Você pode usar a
+                  localização atual ou preencher latitude e longitude manualmente.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={capturingLocation}
+                className="rounded-2xl border border-[#1B4B58]/20 bg-[#EAF1F0] px-5 py-3 text-sm font-bold text-[#1B4B58] transition hover:bg-[#DDEBE8] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {capturingLocation
+                  ? "Capturando localização..."
+                  : "Usar localização atual"}
+              </button>
+            </div>
 
             <div className="mt-6 grid gap-5 md:grid-cols-3">
               <div>
@@ -706,6 +820,32 @@ export default function ClinicaConfiguracoesPage() {
                   className="app-input"
                 />
               </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Latitude
+                </label>
+                <input
+                  name="latitude"
+                  value={form.latitude}
+                  onChange={handleChange}
+                  className="app-input"
+                  placeholder="-22.906847"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Longitude
+                </label>
+                <input
+                  name="longitude"
+                  value={form.longitude}
+                  onChange={handleChange}
+                  className="app-input"
+                  placeholder="-43.172897"
+                />
+              </div>
             </div>
           </div>
 
@@ -770,7 +910,7 @@ export default function ClinicaConfiguracoesPage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || capturingLocation}
               className="app-button-primary"
             >
               {saving ? "Salvando..." : "Salvar configurações"}

@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import Alert from "../components/alert";
+import { geocodeBrazilAddress } from "../lib/geocode";
 import { supabase } from "../lib/supabase";
 
 type ProfileRow = {
@@ -18,6 +25,8 @@ type ProfileRow = {
   address_city: string | null;
   address_state: string | null;
   address_country: string | null;
+  latitude: number | null;
+  longitude: number | null;
   data_usage_consent: boolean | null;
   profile_completed: boolean | null;
 };
@@ -42,6 +51,13 @@ type HealthPlanRow = {
   name: string | null;
 };
 
+type PaymentMode = "" | "health_plan" | "private";
+
+type Coordinates = {
+  latitude: number | null;
+  longitude: number | null;
+};
+
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -50,9 +66,28 @@ function validateCpf(value: string) {
   return onlyDigits(value).length === 11;
 }
 
+function formatCoordinate(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "-";
+  return value.toFixed(6);
+}
+
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [capturingLocation, setCapturingLocation] = useState(false);
+
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("");
+
+  const [savedCoordinates, setSavedCoordinates] = useState<Coordinates>({
+    latitude: null,
+    longitude: null,
+  });
+
+  const [deviceCoordinates, setDeviceCoordinates] = useState<Coordinates>({
+    latitude: null,
+    longitude: null,
+  });
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
@@ -92,6 +127,90 @@ export default function PerfilPage() {
     loadPage();
   }, []);
 
+  useEffect(() => {
+    const zip = onlyDigits(form.address_zipcode);
+
+    if (zip.length !== 8) return;
+
+    const timeout = window.setTimeout(() => {
+      fetchAddressByZipcode(zip);
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.address_zipcode]);
+
+  async function fetchAddressByZipcode(zipcode: string) {
+    setLoadingCep(true);
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${zipcode}/json/`);
+      const data = await response.json();
+
+      if (data?.erro) {
+        setMessage("CEP não encontrado. Preencha o endereço manualmente.");
+        setMessageType("error");
+        setLoadingCep(false);
+        return;
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        address_zipcode: zipcode,
+        address_street: data.logradouro || prev.address_street,
+        address_neighborhood: data.bairro || prev.address_neighborhood,
+        address_city: data.localidade || prev.address_city,
+        address_state: data.uf || prev.address_state,
+        address_country: "Brasil",
+      }));
+    } catch {
+      setMessage("Não foi possível buscar o CEP agora. Preencha manualmente.");
+      setMessageType("error");
+    } finally {
+      setLoadingCep(false);
+    }
+  }
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setMessage("Seu navegador não permite capturar localização.");
+      setMessageType("error");
+      return;
+    }
+
+    setCapturingLocation(true);
+    setMessage("Capturando sua localização precisa...");
+    setMessageType("info");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        setDeviceCoordinates({
+          latitude,
+          longitude,
+        });
+
+        setMessage("Localização precisa capturada com sucesso.");
+        setMessageType("success");
+        setCapturingLocation(false);
+      },
+      () => {
+        setMessage(
+          "Não foi possível capturar sua localização. Verifique a permissão do navegador."
+        );
+        setMessageType("error");
+        setCapturingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  }
+
   async function loadPage() {
     setLoading(true);
     setMessage("");
@@ -110,7 +229,8 @@ export default function PerfilPage() {
     const [profileResponse, patientResponse, plansResponse] = await Promise.all([
       supabase
         .from("profiles")
-        .select(`
+        .select(
+          `
           full_name,
           email,
           phone,
@@ -123,14 +243,18 @@ export default function PerfilPage() {
           address_city,
           address_state,
           address_country,
+          latitude,
+          longitude,
           data_usage_consent,
           profile_completed
-        `)
+        `
+        )
         .eq("id", user.id)
         .maybeSingle<ProfileRow>(),
       supabase
         .from("patients")
-        .select(`
+        .select(
+          `
           birth_date,
           default_health_plan_id,
           cpf,
@@ -143,7 +267,8 @@ export default function PerfilPage() {
           health_plan_extra_info,
           accepts_private_consultation,
           patient_notes
-        `)
+        `
+        )
         .eq("id", user.id)
         .maybeSingle<PatientRow>(),
       supabase.from("health_plans").select("id, name").order("name"),
@@ -157,7 +282,9 @@ export default function PerfilPage() {
     }
 
     if (patientResponse.error) {
-      setMessage(`Erro ao carregar dados do paciente: ${patientResponse.error.message}`);
+      setMessage(
+        `Erro ao carregar dados do paciente: ${patientResponse.error.message}`
+      );
       setMessageType("error");
       setLoading(false);
       return;
@@ -172,6 +299,31 @@ export default function PerfilPage() {
 
     const profile = profileResponse.data;
     const patient = patientResponse.data;
+
+    const hasPlanData = Boolean(
+      patient?.default_health_plan_id ||
+        patient?.health_plan_operator ||
+        patient?.health_plan_product_name ||
+        patient?.health_plan_card_number
+    );
+
+    if (hasPlanData) {
+      setPaymentMode("health_plan");
+    } else if (patient?.accepts_private_consultation) {
+      setPaymentMode("private");
+    } else {
+      setPaymentMode("");
+    }
+
+    setSavedCoordinates({
+      latitude: profile?.latitude ?? null,
+      longitude: profile?.longitude ?? null,
+    });
+
+    setDeviceCoordinates({
+      latitude: null,
+      longitude: null,
+    });
 
     setHealthPlans((plansResponse.data || []) as HealthPlanRow[]);
 
@@ -207,7 +359,7 @@ export default function PerfilPage() {
   }
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value, type } = e.target;
 
@@ -226,6 +378,32 @@ export default function PerfilPage() {
       ...prev,
       [name]: value,
     }));
+  }
+
+  function handlePaymentModeChange(mode: PaymentMode) {
+    setPaymentMode(mode);
+
+    if (mode === "private") {
+      setForm((prev) => ({
+        ...prev,
+        default_health_plan_id: "",
+        health_plan_card_number: "",
+        health_plan_operator: "",
+        health_plan_product_name: "",
+        health_plan_accommodation: "",
+        health_plan_network: "",
+        health_plan_segment: "",
+        health_plan_extra_info: "",
+        accepts_private_consultation: true,
+      }));
+    }
+
+    if (mode === "health_plan") {
+      setForm((prev) => ({
+        ...prev,
+        accepts_private_consultation: false,
+      }));
+    }
   }
 
   const requiredMissing = useMemo(() => {
@@ -250,24 +428,22 @@ export default function PerfilPage() {
       missing.push("CPF válido com 11 dígitos");
     }
 
-    const hasHealthPlan =
-      form.default_health_plan_id ||
-      form.health_plan_operator ||
-      form.health_plan_product_name ||
-      form.health_plan_card_number;
+    if (!paymentMode) {
+      missing.push("Tipo de atendimento: plano de saúde ou particular");
+    }
 
-    if (hasHealthPlan) {
-      if (!form.health_plan_operator.trim()) missing.push("Operadora do plano");
+    if (paymentMode === "health_plan") {
+      if (!form.health_plan_operator.trim()) {
+        missing.push("Operadora do plano");
+      }
+
       if (!form.health_plan_product_name.trim()) {
         missing.push("Modelo exato do plano");
       }
+
       if (!form.health_plan_card_number.trim()) {
         missing.push("Número da carteirinha");
       }
-    }
-
-    if (!hasHealthPlan && !form.accepts_private_consultation) {
-      missing.push("Plano de saúde ou aceite de consulta particular");
     }
 
     if (!form.data_usage_consent) {
@@ -275,15 +451,17 @@ export default function PerfilPage() {
     }
 
     return missing;
-  }, [form]);
+  }, [form, paymentMode]);
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
     setMessage("");
 
     if (requiredMissing.length > 0) {
-      setMessage(`Preencha os campos obrigatórios: ${requiredMissing.join(", ")}.`);
+      setMessage(
+        `Preencha os campos obrigatórios: ${requiredMissing.join(", ")}.`
+      );
       setMessageType("error");
       setSaving(false);
       return;
@@ -301,7 +479,24 @@ export default function PerfilPage() {
     }
 
     const normalizedCpf = onlyDigits(form.cpf);
-    const profileCompleted = requiredMissing.length === 0;
+
+    const isPrivate = paymentMode === "private";
+    const hasHealthPlan = paymentMode === "health_plan";
+
+    const fallbackCoordinates = await geocodeBrazilAddress({
+      zipcode: form.address_zipcode,
+      street: form.address_street,
+      number: form.address_number,
+      neighborhood: form.address_neighborhood,
+      city: form.address_city,
+      state: form.address_state,
+    });
+
+    const finalLatitude =
+      deviceCoordinates.latitude ?? fallbackCoordinates.latitude;
+
+    const finalLongitude =
+      deviceCoordinates.longitude ?? fallbackCoordinates.longitude;
 
     const { error: profileError } = await supabase
       .from("profiles")
@@ -309,7 +504,7 @@ export default function PerfilPage() {
         full_name: form.full_name.trim(),
         phone: form.phone.trim(),
         cpf: normalizedCpf,
-        address_zipcode: form.address_zipcode.trim(),
+        address_zipcode: onlyDigits(form.address_zipcode),
         address_street: form.address_street.trim(),
         address_number: form.address_number.trim(),
         address_complement: form.address_complement.trim() || null,
@@ -317,8 +512,10 @@ export default function PerfilPage() {
         address_city: form.address_city.trim(),
         address_state: form.address_state.trim().toUpperCase(),
         address_country: form.address_country.trim() || "Brasil",
+        latitude: finalLatitude,
+        longitude: finalLongitude,
         data_usage_consent: form.data_usage_consent,
-        profile_completed: profileCompleted,
+        profile_completed: true,
       })
       .eq("id", user.id);
 
@@ -333,19 +530,32 @@ export default function PerfilPage() {
       {
         id: user.id,
         birth_date: form.birth_date,
-        default_health_plan_id: form.default_health_plan_id || null,
+        default_health_plan_id: hasHealthPlan
+          ? form.default_health_plan_id || null
+          : null,
         cpf: normalizedCpf,
-        health_plan_card_number:
-          form.health_plan_card_number.trim() || null,
-        health_plan_operator: form.health_plan_operator.trim() || null,
-        health_plan_product_name:
-          form.health_plan_product_name.trim() || null,
-        health_plan_accommodation:
-          form.health_plan_accommodation.trim() || null,
-        health_plan_network: form.health_plan_network.trim() || null,
-        health_plan_segment: form.health_plan_segment.trim() || null,
-        health_plan_extra_info: form.health_plan_extra_info.trim() || null,
-        accepts_private_consultation: form.accepts_private_consultation,
+        health_plan_card_number: hasHealthPlan
+          ? form.health_plan_card_number.trim()
+          : null,
+        health_plan_operator: hasHealthPlan
+          ? form.health_plan_operator.trim()
+          : null,
+        health_plan_product_name: hasHealthPlan
+          ? form.health_plan_product_name.trim()
+          : null,
+        health_plan_accommodation: hasHealthPlan
+          ? form.health_plan_accommodation.trim() || null
+          : null,
+        health_plan_network: hasHealthPlan
+          ? form.health_plan_network.trim() || null
+          : null,
+        health_plan_segment: hasHealthPlan
+          ? form.health_plan_segment.trim() || null
+          : null,
+        health_plan_extra_info: hasHealthPlan
+          ? form.health_plan_extra_info.trim() || null
+          : null,
+        accepts_private_consultation: isPrivate,
         patient_notes: form.patient_notes.trim() || null,
       },
       {
@@ -359,6 +569,11 @@ export default function PerfilPage() {
       setSaving(false);
       return;
     }
+
+    setSavedCoordinates({
+      latitude: finalLatitude,
+      longitude: finalLongitude,
+    });
 
     setMessage("Perfil atualizado com sucesso.");
     setMessageType("success");
@@ -385,7 +600,8 @@ export default function PerfilPage() {
               Complete seu cadastro MediNexus
             </h1>
             <p className="app-section-subtitle">
-              Esses dados permitem buscar clínicas próximas, validar planos e organizar sua ficha.
+              Esses dados permitem buscar clínicas próximas, validar planos e
+              organizar sua ficha.
             </p>
           </div>
 
@@ -485,9 +701,51 @@ export default function PerfilPage() {
           </div>
 
           <div className="app-card p-8">
-            <h2 className="text-2xl font-black text-slate-950">
-              Endereço completo
-            </h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-950">
+                  Endereço e localização
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  O CEP preenche o endereço. Para busca por raio com precisão,
+                  use a localização atual do dispositivo.
+                </p>
+              </div>
+
+              {loadingCep && (
+                <span className="rounded-full bg-sky-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 ring-1 ring-sky-200">
+                  Buscando CEP...
+                </span>
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={capturingLocation}
+                className="rounded-2xl border border-[#1B4B58]/20 bg-[#EAF1F0] px-5 py-3 text-sm font-bold text-[#1B4B58] transition hover:bg-[#DDEBE8] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {capturingLocation
+                  ? "Capturando localização..."
+                  : "Usar minha localização atual"}
+              </button>
+
+              {deviceCoordinates.latitude && deviceCoordinates.longitude ? (
+                <p className="text-sm font-semibold text-emerald-700">
+                  Localização precisa capturada.
+                </p>
+              ) : savedCoordinates.latitude && savedCoordinates.longitude ? (
+                <p className="text-sm text-slate-500">
+                  Localização salva: {formatCoordinate(savedCoordinates.latitude)}
+                  , {formatCoordinate(savedCoordinates.longitude)}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  Nenhuma localização precisa salva ainda.
+                </p>
+              )}
+            </div>
 
             <div className="mt-6 grid gap-5 md:grid-cols-3">
               <div>
@@ -499,6 +757,7 @@ export default function PerfilPage() {
                   value={form.address_zipcode}
                   onChange={handleChange}
                   className="app-input"
+                  placeholder="Ex: 25000000"
                   required
                 />
               </div>
@@ -598,150 +857,188 @@ export default function PerfilPage() {
 
           <div className="app-card p-8">
             <h2 className="text-2xl font-black text-slate-950">
-              Plano de saúde e atendimento particular
+              Forma de atendimento
             </h2>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Plano cadastrado na MediNexus
-                </label>
-                <select
-                  name="default_health_plan_id"
-                  value={form.default_health_plan_id}
-                  onChange={handleChange}
-                  className="app-input"
-                >
-                  <option value="">Não selecionar</option>
-                  {healthPlans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => handlePaymentModeChange("health_plan")}
+                className={`rounded-3xl border p-6 text-left transition ${
+                  paymentMode === "health_plan"
+                    ? "border-[#1B4B58] bg-[#EAF1F0] text-[#1B4B58]"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-lg font-black">Tenho plano de saúde</p>
+                <p className="mt-2 text-sm">
+                  Quero buscar clínicas e médicos compatíveis com meu convênio.
+                </p>
+              </button>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Operadora
-                </label>
-                <input
-                  name="health_plan_operator"
-                  value={form.health_plan_operator}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Ex: Bradesco Saúde"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Modelo exato do plano
-                </label>
-                <input
-                  name="health_plan_product_name"
-                  value={form.health_plan_product_name}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Ex: Top Quarto Rede Ideal I"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Número da carteirinha
-                </label>
-                <input
-                  name="health_plan_card_number"
-                  value={form.health_plan_card_number}
-                  onChange={handleChange}
-                  className="app-input"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Acomodação
-                </label>
-                <select
-                  name="health_plan_accommodation"
-                  value={form.health_plan_accommodation}
-                  onChange={handleChange}
-                  className="app-input"
-                >
-                  <option value="">Não informado</option>
-                  <option value="Enfermaria">Enfermaria</option>
-                  <option value="Apartamento/Quarto">Apartamento/Quarto</option>
-                  <option value="Sem internação">Sem internação</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Rede
-                </label>
-                <input
-                  name="health_plan_network"
-                  value={form.health_plan_network}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Ex: Rede Ideal, Nacional, Preferencial"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Segmentação
-                </label>
-                <select
-                  name="health_plan_segment"
-                  value={form.health_plan_segment}
-                  onChange={handleChange}
-                  className="app-input"
-                >
-                  <option value="">Não informado</option>
-                  <option value="Ambulatorial">Ambulatorial</option>
-                  <option value="Hospitalar">Hospitalar</option>
-                  <option value="Hospitalar com obstetrícia">
-                    Hospitalar com obstetrícia
-                  </option>
-                  <option value="Referência">Referência</option>
-                  <option value="Odontológico">Odontológico</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Complementos do plano
-                </label>
-                <textarea
-                  name="health_plan_extra_info"
-                  value={form.health_plan_extra_info}
-                  onChange={handleChange}
-                  className="app-textarea"
-                  placeholder="Ex: coparticipação, reembolso, restrições, observações..."
-                />
-              </div>
-
-              <label className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:col-span-2">
-                <input
-                  type="checkbox"
-                  name="accepts_private_consultation"
-                  checked={form.accepts_private_consultation}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="block font-semibold text-slate-900">
-                    Aceito receber opções de consulta particular
-                  </span>
-                  <span className="mt-1 block text-sm text-slate-600">
-                    Isso permite que a busca mostre clínicas/médicos mesmo quando o plano não for aceito.
-                  </span>
-                </span>
-              </label>
+              <button
+                type="button"
+                onClick={() => handlePaymentModeChange("private")}
+                className={`rounded-3xl border p-6 text-left transition ${
+                  paymentMode === "private"
+                    ? "border-[#594E86] bg-[#F4F1FB] text-[#594E86]"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-lg font-black">Consulta particular</p>
+                <p className="mt-2 text-sm">
+                  Não tenho plano ou prefiro receber opções de atendimento
+                  particular.
+                </p>
+              </button>
             </div>
           </div>
+
+          {paymentMode === "health_plan" && (
+            <div className="app-card p-8">
+              <h2 className="text-2xl font-black text-slate-950">
+                Plano de saúde
+              </h2>
+
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Plano cadastrado na MediNexus
+                  </label>
+                  <select
+                    name="default_health_plan_id"
+                    value={form.default_health_plan_id}
+                    onChange={handleChange}
+                    className="app-input"
+                  >
+                    <option value="">Não selecionar</option>
+                    {healthPlans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Operadora *
+                  </label>
+                  <input
+                    name="health_plan_operator"
+                    value={form.health_plan_operator}
+                    onChange={handleChange}
+                    className="app-input"
+                    placeholder="Ex: Bradesco Saúde"
+                    required={paymentMode === "health_plan"}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Modelo exato do plano *
+                  </label>
+                  <input
+                    name="health_plan_product_name"
+                    value={form.health_plan_product_name}
+                    onChange={handleChange}
+                    className="app-input"
+                    placeholder="Ex: Top Quarto Rede Ideal I"
+                    required={paymentMode === "health_plan"}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Número da carteirinha *
+                  </label>
+                  <input
+                    name="health_plan_card_number"
+                    value={form.health_plan_card_number}
+                    onChange={handleChange}
+                    className="app-input"
+                    required={paymentMode === "health_plan"}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Acomodação
+                  </label>
+                  <select
+                    name="health_plan_accommodation"
+                    value={form.health_plan_accommodation}
+                    onChange={handleChange}
+                    className="app-input"
+                  >
+                    <option value="">Não informado</option>
+                    <option value="Enfermaria">Enfermaria</option>
+                    <option value="Apartamento/Quarto">
+                      Apartamento/Quarto
+                    </option>
+                    <option value="Sem internação">Sem internação</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Rede
+                  </label>
+                  <input
+                    name="health_plan_network"
+                    value={form.health_plan_network}
+                    onChange={handleChange}
+                    className="app-input"
+                    placeholder="Ex: Rede Ideal, Nacional, Preferencial"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Segmentação
+                  </label>
+                  <select
+                    name="health_plan_segment"
+                    value={form.health_plan_segment}
+                    onChange={handleChange}
+                    className="app-input"
+                  >
+                    <option value="">Não informado</option>
+                    <option value="Ambulatorial">Ambulatorial</option>
+                    <option value="Hospitalar">Hospitalar</option>
+                    <option value="Hospitalar com obstetrícia">
+                      Hospitalar com obstetrícia
+                    </option>
+                    <option value="Referência">Referência</option>
+                    <option value="Odontológico">Odontológico</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Complementos do plano
+                  </label>
+                  <textarea
+                    name="health_plan_extra_info"
+                    value={form.health_plan_extra_info}
+                    onChange={handleChange}
+                    className="app-textarea"
+                    placeholder="Ex: coparticipação, reembolso, restrições, observações..."
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {paymentMode === "private" && (
+            <div className="rounded-3xl border border-purple-200 bg-purple-50 p-6 text-purple-800">
+              <p className="font-black">Atendimento particular selecionado</p>
+              <p className="mt-2 text-sm leading-6">
+                Os campos de plano de saúde não serão exigidos. A busca poderá
+                mostrar clínicas e médicos que aceitam consulta particular.
+              </p>
+            </div>
+          )}
 
           <div className="app-card p-8">
             <h2 className="text-2xl font-black text-slate-950">
@@ -773,10 +1070,13 @@ export default function PerfilPage() {
                 />
                 <span>
                   <span className="block font-semibold text-slate-900">
-                    Autorizo o uso dos meus dados para funcionamento da MediNexus *
+                    Autorizo o uso dos meus dados para funcionamento da
+                    MediNexus *
                   </span>
                   <span className="mt-1 block text-sm text-slate-600">
-                    Os dados serão usados para busca de consultas, compatibilidade com clínicas, documentos médicos e atendimento.
+                    Os dados serão usados para busca de consultas,
+                    compatibilidade com clínicas, documentos médicos e
+                    atendimento.
                   </span>
                 </span>
               </label>
@@ -786,7 +1086,7 @@ export default function PerfilPage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || loadingCep || capturingLocation}
               className="app-button-primary"
             >
               {saving ? "Salvando..." : "Salvar perfil completo"}
