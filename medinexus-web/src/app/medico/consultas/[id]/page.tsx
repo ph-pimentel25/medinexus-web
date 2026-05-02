@@ -1289,9 +1289,12 @@ export default function MedicoConsultaPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6E56CF]">
                       {getDocumentLabel(document.document_type)}
                     </p>
-                    <h3 className="mt-2 text-xl font-bold text-slate-950">
-                      {document.title || "Documento médico"}
-                    </h3>
+                    <Link
+  href={`/documentos-medicos/${document.id}`}
+  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#6E56CF]"
+>
+  {document.title || "Documento médico"}
+</Link>
                     <p className="mt-1 text-sm text-slate-500">
                       Emitido em:{" "}
                       {formatDateTime(document.issued_at || document.created_at)}
