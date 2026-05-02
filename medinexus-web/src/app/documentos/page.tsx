@@ -2,73 +2,37 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
-
-type DocumentType =
-  | "prescription"
-  | "exam_request"
-  | "medical_certificate"
-  | "attendance_declaration"
-  | "clinical_summary";
 
 type MedicalDocumentRow = {
   id: string;
-  document_type: DocumentType;
-  status: "draft" | "issued" | "cancelled";
-  patient_id: string;
-  doctor_id: string | null;
-  clinic_id: string | null;
-  appointment_id: string | null;
-  title: string | null;
-  clinical_indication: string | null;
-  plain_text: string | null;
-  released_to_patient: boolean;
-  released_at: string | null;
-  doctor_name: string | null;
-  doctor_crm: string | null;
-  doctor_crm_state: string | null;
-  clinic_name: string | null;
-  created_at: string;
-  issued_at: string | null;
+  patient_id?: string | null;
+  doctor_id?: string | null;
+  clinic_id?: string | null;
+  appointment_id?: string | null;
+  document_type?: string | null;
+  type?: string | null;
+  title?: string | null;
+  content?: string | null;
+  description?: string | null;
+  is_released_to_patient?: boolean | null;
+  released_to_patient?: boolean | null;
+  created_at?: string | null;
+  issued_at?: string | null;
+  [key: string]: unknown;
 };
 
-type FilterType = "all" | DocumentType;
+type FilterType = "all" | "receita" | "exame" | "atestado" | "declaracao";
 
-const documentFilters: { value: FilterType; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "prescription", label: "Receitas" },
-  { value: "exam_request", label: "Exames" },
-  { value: "medical_certificate", label: "Atestados" },
-  { value: "attendance_declaration", label: "Declarações" },
-  { value: "clinical_summary", label: "Resumos" },
-];
-
-function getDocumentLabel(type: DocumentType) {
-  const labels: Record<DocumentType, string> = {
-    prescription: "Receita médica",
-    exam_request: "Solicitação de exame",
-    medical_certificate: "Atestado médico",
-    attendance_declaration: "Declaração de comparecimento",
-    clinical_summary: "Resumo clínico",
-  };
-
-  return labels[type] || "Documento médico";
+function normalize(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
 }
 
-function getDocumentDescription(type: DocumentType) {
-  const labels: Record<DocumentType, string> = {
-    prescription: "Prescrição, medicamento e orientações terapêuticas.",
-    exam_request: "Pedido médico para realização de exame.",
-    medical_certificate: "Documento médico para afastamento ou comprovação.",
-    attendance_declaration: "Comprovação de comparecimento ao atendimento.",
-    clinical_summary: "Resumo clínico do atendimento realizado.",
-  };
-
-  return labels[type] || "Documento emitido pela MediNexus.";
-}
-
-function formatDateTime(value?: string | null) {
+function formatDate(value?: string | null) {
   if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
@@ -77,65 +41,66 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-function normalize(value?: string | null) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
+function getDocumentType(item: MedicalDocumentRow) {
+  return String(item.document_type || item.type || "documento");
 }
 
-function getDocumentTone(type: DocumentType) {
-  if (type === "prescription") {
-    return {
-      badge: "bg-blue-50 text-blue-700 ring-blue-200",
-      card: "from-[#F1F5FF] to-white",
-      icon: "R",
-    };
+function getDocumentTypeLabel(item: MedicalDocumentRow) {
+  const type = normalize(getDocumentType(item));
+
+  if (type.includes("receita")) return "Receita";
+  if (type.includes("prescription")) return "Receita";
+  if (type.includes("exame")) return "Solicitação de exame";
+  if (type.includes("exam")) return "Solicitação de exame";
+  if (type.includes("atestado")) return "Atestado";
+  if (type.includes("declaracao")) return "Declaração";
+  if (type.includes("declaração")) return "Declaração";
+
+  return "Documento médico";
+}
+
+function matchesType(item: MedicalDocumentRow, filter: FilterType) {
+  if (filter === "all") return true;
+
+  const type = normalize(getDocumentType(item));
+
+  if (filter === "receita") {
+    return type.includes("receita") || type.includes("prescription");
   }
 
-  if (type === "exam_request") {
-    return {
-      badge: "bg-violet-50 text-violet-700 ring-violet-200",
-      card: "from-[#F6F3FF] to-white",
-      icon: "E",
-    };
+  if (filter === "exame") {
+    return type.includes("exame") || type.includes("exam");
   }
 
-  if (type === "medical_certificate") {
-    return {
-      badge: "bg-amber-50 text-amber-700 ring-amber-200",
-      card: "from-[#FFF7ED] to-white",
-      icon: "A",
-    };
+  if (filter === "atestado") {
+    return type.includes("atestado");
   }
 
-  if (type === "attendance_declaration") {
-    return {
-      badge: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-      card: "from-[#ECFDF5] to-white",
-      icon: "D",
-    };
+  if (filter === "declaracao") {
+    return type.includes("declaracao") || type.includes("declaração");
   }
 
-  return {
-    badge: "bg-slate-100 text-slate-700 ring-slate-200",
-    card: "from-[#F8FAFC] to-white",
-    icon: "S",
-  };
+  return true;
+}
+
+function getDocumentTitle(item: MedicalDocumentRow) {
+  return item.title || getDocumentTypeLabel(item);
+}
+
+function getDocumentDescription(item: MedicalDocumentRow) {
+  return (
+    item.description ||
+    (typeof item.content === "string" ? item.content.slice(0, 140) : "") ||
+    "Documento médico liberado para visualização."
+  );
 }
 
 export default function DocumentosPage() {
   const [loading, setLoading] = useState(true);
-  const [documents, setDocuments] = useState<MedicalDocumentRow[]>([]);
-
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterType>("all");
-
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
-  );
+  const [documents, setDocuments] = useState<MedicalDocumentRow[]>([]);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     loadDocuments();
@@ -150,216 +115,160 @@ export default function DocumentosPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para acessar seus documentos.");
-      setMessageType("error");
+      setMessage("Você precisa estar logado para visualizar documentos.");
+      setDocuments([]);
       setLoading(false);
       return;
     }
 
     const { data, error } = await supabase
       .from("medical_documents")
-      .select(
-        `
-        id,
-        document_type,
-        status,
-        patient_id,
-        doctor_id,
-        clinic_id,
-        appointment_id,
-        title,
-        clinical_indication,
-        plain_text,
-        released_to_patient,
-        released_at,
-        doctor_name,
-        doctor_crm,
-        doctor_crm_state,
-        clinic_name,
-        created_at,
-        issued_at
-      `
-      )
+      .select("*")
       .eq("patient_id", user.id)
-      .eq("status", "issued")
-      .eq("released_to_patient", true)
-      .order("issued_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (error) {
       setMessage(`Erro ao carregar documentos: ${error.message}`);
-      setMessageType("error");
+      setDocuments([]);
       setLoading(false);
       return;
     }
 
-    setDocuments((data || []) as MedicalDocumentRow[]);
+    const safeDocs = ((data as MedicalDocumentRow[]) || []).filter((item) => {
+      const released =
+        item.is_released_to_patient ?? item.released_to_patient ?? true;
+      return released !== false;
+    });
+
+    setDocuments(safeDocs);
     setLoading(false);
   }
 
-  const filteredDocuments = useMemo(() => {
-    const query = normalize(search);
-
-    return documents.filter((document) => {
-      const matchesType =
-        filter === "all" || document.document_type === filter;
-
-      const searchable = normalize(
-        [
-          document.title,
-          getDocumentLabel(document.document_type),
-          document.doctor_name,
-          document.clinic_name,
-          document.clinical_indication,
-          document.plain_text,
-        ]
-          .filter(Boolean)
-          .join(" ")
-      );
-
-      const matchesSearch = !query || searchable.includes(query);
-
-      return matchesType && matchesSearch;
-    });
-  }, [documents, search, filter]);
-
-  const stats = useMemo(() => {
+  const summary = useMemo(() => {
     return {
       total: documents.length,
-      prescriptions: documents.filter(
-        (item) => item.document_type === "prescription"
-      ).length,
-      exams: documents.filter((item) => item.document_type === "exam_request")
-        .length,
-      certificates: documents.filter(
-        (item) => item.document_type === "medical_certificate"
-      ).length,
+      receitas: documents.filter((item) => matchesType(item, "receita")).length,
+      exames: documents.filter((item) => matchesType(item, "exame")).length,
+      atestados: documents.filter((item) => matchesType(item, "atestado")).length,
+      declaracoes: documents.filter((item) => matchesType(item, "declaracao")).length,
     };
   }, [documents]);
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-slate-600">Carregando documentos...</p>
-        </section>
-      </main>
-    );
-  }
+  const filteredDocuments = useMemo(() => {
+    const normalizedQuery = normalize(query);
+
+    return documents.filter((item) => {
+      const searchable = normalize(
+        [
+          getDocumentTitle(item),
+          getDocumentDescription(item),
+          getDocumentTypeLabel(item),
+        ].join(" ")
+      );
+
+      const matchesSearch =
+        !normalizedQuery || searchable.includes(normalizedQuery);
+
+      return matchesSearch && matchesType(item, filter);
+    });
+  }, [documents, filter, query]);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
-      <section className="relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <section className="border-b border-[#E8EAF4] bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+          <div>
+            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
+              Documentos médicos
+            </span>
 
-        <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="inline-flex rounded-full border border-[#D9D6F4] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#283C7A] shadow-sm">
-                Documentos do paciente
-              </p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Meus documentos
+            </h1>
 
-              <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
-                Seus documentos médicos em um só lugar
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Acesse receitas, solicitações de exame, atestados, declarações e
-                resumos clínicos liberados pelo médico.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-7 py-4 text-sm font-bold text-[#5E4B9A] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
-                >
-                  Voltar ao dashboard
-                </Link>
-
-                <Link
-                  href="/solicitacoes"
-                  className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#213366]"
-                >
-                  Minhas solicitações
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-[38px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-7 text-white shadow-[0_28px_90px_-65px_rgba(40,60,122,0.9)]">
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-white/60">
-                Visão geral
-              </p>
-
-              <div className="mt-6 grid gap-3">
-                <div className="rounded-[28px] bg-white/12 p-5 ring-1 ring-white/15">
-                  <p className="text-4xl font-bold">{stats.total}</p>
-                  <p className="mt-1 text-sm text-white/70">
-                    documentos liberados
-                  </p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.prescriptions}</p>
-                    <p className="mt-1 text-xs text-white/70">receitas</p>
-                  </div>
-
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.exams}</p>
-                    <p className="mt-1 text-xs text-white/70">exames</p>
-                  </div>
-
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.certificates}</p>
-                    <p className="mt-1 text-xs text-white/70">atestados</p>
-                  </div>
-                </div>
-
-                <div className="rounded-[28px] bg-white p-5 text-[#283C7A]">
-                  <p className="font-bold">
-                    Documentos emitidos aparecem aqui quando liberados pelo médico.
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Use o botão imprimir/salvar PDF dentro de cada documento.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Consulte receitas, solicitações de exame, atestados e declarações
+              emitidas pelos profissionais.
+            </p>
           </div>
-        </section>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard"
+              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/solicitacoes"
+              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+            >
+              Minhas consultas
+            </Link>
+          </div>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
-          <div className="mb-6">
-            <Alert variant={messageType}>{message}</Alert>
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {message}
           </div>
         )}
 
-        <div className="rounded-[38px] border border-[#D9D6F4] bg-white p-6 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {[
+            { label: "Total", value: summary.total, tone: "text-slate-950" },
+            { label: "Receitas", value: summary.receitas, tone: "text-[#283C7A]" },
+            { label: "Exames", value: summary.exames, tone: "text-[#0F8A5F]" },
+            { label: "Atestados", value: summary.atestados, tone: "text-[#B26B00]" },
+            { label: "Declarações", value: summary.declaracoes, tone: "text-[#5E4B9A]" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-[#E3E8F4] bg-white p-5 shadow-sm"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {item.label}
+              </p>
+              <p className={`mt-3 text-3xl font-bold ${item.tone}`}>
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="w-full xl:max-w-xl">
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Buscar documento
               </label>
               <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:bg-white"
-                placeholder="Busque por título, médico, clínica ou conteúdo"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Busque por receita, exame, atestado ou declaração"
+                className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {documentFilters.map((item) => (
+              {[
+                { key: "all", label: "Todos" },
+                { key: "receita", label: "Receitas" },
+                { key: "exame", label: "Exames" },
+                { key: "atestado", label: "Atestados" },
+                { key: "declaracao", label: "Declarações" },
+              ].map((item) => (
                 <button
-                  key={item.value}
+                  key={item.key}
                   type="button"
-                  onClick={() => setFilter(item.value)}
-                  className={`rounded-2xl px-5 py-4 text-sm font-bold transition ${
-                    filter === item.value
+                  onClick={() => setFilter(item.key as FilterType)}
+                  className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                    filter === item.key
                       ? "bg-[#283C7A] text-white"
-                      : "border border-[#D9D6F4] bg-white text-[#5E4B9A] hover:bg-[#F6F3FF]"
+                      : "border border-[#D9DDF0] bg-white text-[#5E4B9A] hover:bg-[#F8FAFF]"
                   }`}
                 >
                   {item.label}
@@ -369,100 +278,60 @@ export default function DocumentosPage() {
           </div>
         </div>
 
-        {filteredDocuments.length === 0 ? (
-          <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white px-6 py-12 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F6F3FF] text-2xl">
-              📄
+        <div className="mt-6 grid gap-4">
+          {loading ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+              Carregando documentos...
             </div>
-            <h2 className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
-              Nenhum documento encontrado
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
-              Quando um médico emitir e liberar receitas, atestados, declarações
-              ou solicitações de exame, eles aparecerão aqui.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredDocuments.map((document) => {
-              const tone = getDocumentTone(document.document_type);
-              const label = getDocumentLabel(document.document_type);
-              const title = document.title || label;
+          ) : filteredDocuments.length === 0 ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-10 text-center shadow-sm">
+              <h2 className="text-xl font-bold text-slate-950">
+                Nenhum documento encontrado
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Quando um documento for liberado para você, ele aparecerá aqui.
+              </p>
+            </div>
+          ) : (
+            filteredDocuments.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#283C7A]">
+                        {getDocumentTypeLabel(item)}
+                      </span>
 
-              return (
-                <article
-                  key={document.id}
-                  className={`group overflow-hidden rounded-[34px] border border-[#D9D6F4] bg-gradient-to-br ${tone.card} shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)] transition hover:-translate-y-1.5 hover:shadow-[0_32px_90px_-70px_rgba(40,60,122,0.65)]`}
-                >
-                  <div className="p-6">
-                    <div className="mb-5 flex items-start justify-between gap-4">
-                      <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#283C7A] to-[#6E56CF] text-lg font-bold text-white`}
-                      >
-                        {tone.icon}
-                      </div>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] ring-1 ${tone.badge}`}
-                      >
-                        {label}
+                      <span className="text-xs text-slate-400">
+                        Emitido em {formatDate(item.issued_at || item.created_at)}
                       </span>
                     </div>
 
-                    <h2 className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
-                      {title}
-                    </h2>
+                    <h3 className="text-lg font-bold text-slate-950">
+                      {getDocumentTitle(item)}
+                    </h3>
 
-                    <p className="mt-3 text-sm leading-7 text-slate-500">
-                      {getDocumentDescription(document.document_type)}
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                      {getDocumentDescription(item)}
                     </p>
+                  </div>
 
-                    <div className="mt-5 rounded-2xl border border-[#E0E7FF] bg-white/75 p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                        Emitido por
-                      </p>
-                      <p className="mt-2 font-semibold text-slate-800">
-                        {document.doctor_name || "Médico não informado"}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {document.clinic_name || "Clínica não informada"}
-                      </p>
-                    </div>
-
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-white/70 p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                          Emitido em
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-700">
-                          {formatDateTime(
-                            document.issued_at || document.created_at
-                          )}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl bg-white/70 p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                          Liberação
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-emerald-700">
-                          Liberado
-                        </p>
-                      </div>
-                    </div>
-
+                  <div className="flex shrink-0 flex-wrap gap-2">
                     <Link
-                      href={`/documentos-medicos/${document.id}`}
-                      className="mt-6 inline-flex w-full justify-center rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(40,60,122,0.22)] transition hover:bg-[#213366]"
+                      href={`/documentos-medicos/${item.id}`}
+                      className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
                     >
                       Abrir documento
                     </Link>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                </div>
+              </article>
+            ))
+          )}
+        </div>
       </section>
     </main>
   );

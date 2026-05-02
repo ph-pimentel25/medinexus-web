@@ -2,55 +2,108 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
 type ProfileRow = {
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-};
-
-type PatientRow = {
-  default_health_plan_id: string | null;
-  birth_date: string | null;
-};
-
-type HealthPlanRow = {
-  name: string | null;
+  id: string;
+  full_name?: string | null;
 };
 
 type AppointmentRow = {
   id: string;
-  status: string;
+  status: string | null;
+  doctor_id: string | null;
+  clinic_id: string | null;
+  requested_start_at: string | null;
+  confirmed_start_at: string | null;
+  patient_confirmation_status: string | null;
+  created_at: string | null;
 };
 
-type DocumentRow = {
+type DoctorRow = {
   id: string;
+  name: string | null;
 };
 
-function formatBirthDate(value: string | null) {
-  if (!value) return "Não informado";
-  return new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR");
+type ClinicRow = {
+  id: string;
+  name: string | null;
+  city: string | null;
+  state: string | null;
+};
+
+type NotificationRow = {
+  id: string;
+  title?: string | null;
+  message?: string | null;
+  type?: string | null;
+  is_read?: boolean | null;
+  created_at?: string | null;
+  appointment_id?: string | null;
+  document_id?: string | null;
+  link_href?: string | null;
+  resource_type?: string | null;
+  resource_id?: string | null;
+};
+
+type DashboardAppointment = AppointmentRow & {
+  doctor_name?: string;
+  clinic_name?: string;
+  clinic_location?: string;
+};
+
+function getFirstName(fullName?: string | null) {
+  const cleaned = (fullName || "").trim();
+  if (!cleaned) return "Paciente";
+  return cleaned.split(" ")[0];
 }
 
-function getFirstName(value: string | null | undefined) {
-  if (!value) return "Paciente";
-  return value.trim().split(" ")[0] || "Paciente";
+function formatDate(dateString?: string | null) {
+  if (!dateString) return "Não informado";
+
+  const date = new Date(dateString);
+  return date.toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function formatShortDate(dateString?: string | null) {
+  if (!dateString) return "Sem data";
+  const date = new Date(dateString);
+  return date.toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function getBestAppointmentDate(appointment: AppointmentRow) {
+  return appointment.confirmed_start_at || appointment.requested_start_at || appointment.created_at;
+}
+
+function getAppointmentHref() {
+  return "/solicitacoes";
+}
+
+function getNotificationHref(item: NotificationRow) {
+  if (item.link_href) return item.link_href;
+  if (item.document_id) return `/documentos-medicos/${item.document_id}`;
+  if (item.resource_type === "document" && item.resource_id) {
+    return `/documentos-medicos/${item.resource_id}`;
+  }
+  if (item.appointment_id) return "/solicitacoes";
+  if (item.resource_type === "appointment" && item.resource_id) {
+    return "/solicitacoes";
+  }
+  return "/notificacoes";
 }
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
-  );
-
+  const [errorMessage, setErrorMessage] = useState("");
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [patient, setPatient] = useState<PatientRow | null>(null);
-  const [healthPlanName, setHealthPlanName] = useState("Não informado");
-  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
-  const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
 
   useEffect(() => {
     loadDashboard();
@@ -58,470 +111,472 @@ export default function DashboardPage() {
 
   async function loadDashboard() {
     setLoading(true);
-    setMessage("");
+    setErrorMessage("");
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para acessar o dashboard.");
-      setMessageType("error");
+      setErrorMessage("Você precisa estar logado para visualizar o dashboard.");
       setLoading(false);
       return;
     }
 
-    const [
-      profileResponse,
-      patientResponse,
-      appointmentsResponse,
-      documentsResponse,
-    ] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("full_name, email, phone")
-        .eq("id", user.id)
-        .maybeSingle<ProfileRow>(),
-      supabase
-        .from("patients")
-        .select("default_health_plan_id, birth_date")
-        .eq("id", user.id)
-        .maybeSingle<PatientRow>(),
-      supabase
-        .from("appointments")
-        .select("id, status")
-        .eq("patient_id", user.id),
-      supabase
-        .from("prescriptions")
-        .select("id")
-        .eq("patient_id", user.id),
-    ]);
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    if (profileResponse.error) {
-      setMessage(`Erro ao carregar perfil: ${profileResponse.error.message}`);
-      setMessageType("error");
+    if (profileError) {
+      setErrorMessage(`Erro ao carregar perfil: ${profileError.message}`);
       setLoading(false);
       return;
     }
 
-    if (patientResponse.error) {
-      setMessage(`Erro ao carregar dados do paciente: ${patientResponse.error.message}`);
-      setMessageType("error");
+    const { data: appointmentsData, error: appointmentsError } = await supabase
+      .from("appointments")
+      .select(
+        "id, status, doctor_id, clinic_id, requested_start_at, confirmed_start_at, patient_confirmation_status, created_at"
+      )
+      .eq("patient_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (appointmentsError) {
+      setErrorMessage(`Erro ao carregar consultas: ${appointmentsError.message}`);
       setLoading(false);
       return;
     }
 
-    if (appointmentsResponse.error) {
-      setMessage(
-        `Erro ao carregar solicitações: ${appointmentsResponse.error.message}`
+    const safeAppointments = (appointmentsData as AppointmentRow[]) || [];
+
+    const doctorIds = Array.from(
+      new Set(safeAppointments.map((item) => item.doctor_id).filter(Boolean))
+    ) as string[];
+
+    const clinicIds = Array.from(
+      new Set(safeAppointments.map((item) => item.clinic_id).filter(Boolean))
+    ) as string[];
+
+    let doctorsMap = new Map<string, DoctorRow>();
+    let clinicsMap = new Map<string, ClinicRow>();
+
+    if (doctorIds.length > 0) {
+      const { data: doctorsData } = await supabase
+        .from("doctors")
+        .select("id, name")
+        .in("id", doctorIds);
+
+      doctorsMap = new Map(
+        ((doctorsData as DoctorRow[]) || []).map((item) => [item.id, item])
       );
-      setMessageType("error");
-      setLoading(false);
-      return;
     }
 
-    setProfile(profileResponse.data || null);
-    setPatient(patientResponse.data || null);
-    setAppointments((appointmentsResponse.data || []) as AppointmentRow[]);
-    setDocuments((documentsResponse.data || []) as DocumentRow[]);
+    if (clinicIds.length > 0) {
+      const { data: clinicsData } = await supabase
+        .from("clinics")
+        .select("id, name, city, state")
+        .in("id", clinicIds);
 
-    if (patientResponse.data?.default_health_plan_id) {
-      const { data: planData } = await supabase
-        .from("health_plans")
-        .select("name")
-        .eq("id", patientResponse.data.default_health_plan_id)
-        .maybeSingle<HealthPlanRow>();
-
-      setHealthPlanName(planData?.name || "Não informado");
-    } else {
-      setHealthPlanName("Não informado");
+      clinicsMap = new Map(
+        ((clinicsData as ClinicRow[]) || []).map((item) => [item.id, item])
+      );
     }
 
+    const enrichedAppointments: DashboardAppointment[] = safeAppointments.map(
+      (item) => {
+        const doctor = item.doctor_id ? doctorsMap.get(item.doctor_id) : undefined;
+        const clinic = item.clinic_id ? clinicsMap.get(item.clinic_id) : undefined;
+
+        return {
+          ...item,
+          doctor_name: doctor?.name || "Médico não informado",
+          clinic_name: clinic?.name || "Clínica não informada",
+          clinic_location:
+            clinic?.city && clinic?.state
+              ? `${clinic.city} / ${clinic.state}`
+              : "Local não informado",
+        };
+      }
+    );
+
+    const { data: notificationsData } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    setProfile(profileData as ProfileRow);
+    setAppointments(enrichedAppointments);
+    setNotifications((notificationsData as NotificationRow[]) || []);
     setLoading(false);
   }
 
-  const firstName = useMemo(
-    () => getFirstName(profile?.full_name),
-    [profile?.full_name]
-  );
+  const firstName = getFirstName(profile?.full_name);
 
-  const pendingCount = appointments.filter((item) => item.status === "pending").length;
-  const confirmedCount = appointments.filter(
-    (item) => item.status === "confirmed"
-  ).length;
-  const completedCount = appointments.filter(
-    (item) => item.status === "completed"
-  ).length;
+  const summary = useMemo(() => {
+    const total = appointments.length;
+    const pending = appointments.filter((item) => item.status === "pending").length;
+    const confirmed = appointments.filter((item) => item.status === "confirmed").length;
+    const completed = appointments.filter((item) => item.status === "completed").length;
+    const unread = notifications.filter((item) => !item.is_read).length;
 
-  const quickActions = [
-    {
-      href: "/busca",
-      title: "Nova busca",
-      description: "Encontre horários e clínicas compatíveis com sua necessidade.",
-      tone: "primary",
-      icon: "＋",
-    },
-    {
-      href: "/solicitacoes",
-      title: "Solicitações",
-      description: "Acompanhe pedidos, confirmações e respostas das clínicas.",
-      tone: "neutral",
-      icon: "⌁",
-    },
-    {
-      href: "/clinicas",
-      title: "Clínicas",
-      description: "Veja clínicas conveniadas, especialidades e informações.",
-      tone: "neutral",
-      icon: "⌂",
-    },
-    {
-      href: "/historico-clinico",
-      title: "Histórico clínico",
-      description: "Consulte resumos de consultas e evolução dos atendimentos.",
-      tone: "plum",
-      icon: "☤",
-    },
-    {
-      href: "/documentos-medicos",
-      title: "Documentos médicos",
-      description: "Acesse receitas, exames e documentos emitidos.",
-      tone: "sage",
-      icon: "□",
-    },
-    {
-      href: "/perfil",
-      title: "Editar perfil",
-      description: "Atualize seus dados pessoais e informações de contato.",
-      tone: "neutral",
-      icon: "◌",
-    },
-  ];
+    return {
+      total,
+      pending,
+      confirmed,
+      completed,
+      unread,
+    };
+  }, [appointments, notifications]);
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F6F8FA]">
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-sm">
-            <p className="text-slate-600">Carregando dashboard...</p>
-          </div>
-        </section>
-      </main>
-    );
-  }
+  const nextAppointments = useMemo(() => {
+    const now = new Date();
+
+    return [...appointments]
+      .filter((item) => {
+        const bestDate = getBestAppointmentDate(item);
+        return bestDate ? new Date(bestDate) >= now : false;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(getBestAppointmentDate(a) || 0).getTime();
+        const dateB = new Date(getBestAppointmentDate(b) || 0).getTime();
+        return dateA - dateB;
+      })
+      .slice(0, 3);
+  }, [appointments]);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EAF1F0_0,#F6F8FA_32%,#F8FAFC_100%)]">
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <section className="border-b border-[#E8EAF4] bg-white">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.6fr_1fr] lg:px-8">
+          <div className="rounded-[32px] border border-[#E3E8F4] bg-gradient-to-r from-[#F4F8FF] to-[#F8F5FF] p-8">
+            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4660A9]">
+              Área do paciente
+            </span>
+
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Olá, {firstName}
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Acompanhe suas consultas, veja documentos liberados, confira suas
+              notificações e continue sua jornada de atendimento com mais
+              praticidade.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/busca"
+                className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+              >
+                Nova busca
+              </Link>
+
+              <Link
+                href="/solicitacoes"
+                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+              >
+                Ver solicitações
+              </Link>
+
+              <Link
+                href="/documentos"
+                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+              >
+                Meus documentos
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
+              Resumo rápido
+            </p>
+
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                <p className="text-3xl font-bold">{summary.total}</p>
+                <p className="mt-1 text-sm text-white/80">consultas no total</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                  <p className="text-2xl font-bold">{summary.pending}</p>
+                  <p className="mt-1 text-sm text-white/80">pendentes</p>
+                </div>
+
+                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                  <p className="text-2xl font-bold">{summary.confirmed}</p>
+                  <p className="mt-1 text-sm text-white/80">confirmadas</p>
+                </div>
+
+                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                  <p className="text-2xl font-bold">{summary.completed}</p>
+                  <p className="mt-1 text-sm text-white/80">concluídas</p>
+                </div>
+
+                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                  <p className="text-2xl font-bold">{summary.unread}</p>
+                  <p className="mt-1 text-sm text-white/80">não lidas</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {message && (
-          <div className="mb-6">
-            <Alert variant={messageType}>{message}</Alert>
+        {errorMessage && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[1.55fr_0.9fr]">
-          <div className="relative overflow-hidden rounded-[38px] bg-[#1B4B58] p-8 text-white shadow-[0_30px_90px_-45px_rgba(27,75,88,0.75)] sm:p-10">
-            <div className="absolute right-[-80px] top-[-80px] h-64 w-64 rounded-full bg-white/10 blur-2xl" />
-            <div className="absolute bottom-[-110px] left-[20%] h-72 w-72 rounded-full bg-[#594E86]/25 blur-3xl" />
-
-            <div className="relative">
-              <div className="mb-6 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/90">
-                Painel do paciente
-              </div>
-
-              <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-[-0.04em] sm:text-5xl">
-                Olá, {firstName}. Sua saúde organizada em uma única plataforma.
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-base leading-8 text-white/82">
-                Acompanhe solicitações, encontre clínicas, acesse seu histórico
-                clínico e mantenha documentos médicos disponíveis em poucos cliques.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/busca"
-                  className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-[#1B4B58] shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100"
-                >
-                  Buscar consulta
-                </Link>
-
-                <Link
-                  href="/documentos-medicos"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15"
-                >
-                  Ver documentos
-                </Link>
-              </div>
-
-              <div className="mt-10 grid gap-4 sm:grid-cols-4">
-                <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/65">
-                    Plano
-                  </p>
-                  <p className="mt-3 text-xl font-black">{healthPlanName}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/65">
-                    Pendentes
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{pendingCount}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/65">
-                    Confirmadas
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{confirmedCount}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/65">
-                    Documentos
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{documents.length}</p>
-                </div>
-              </div>
-            </div>
+        {loading ? (
+          <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+            Carregando dashboard...
           </div>
-
-          <div className="rounded-[38px] border border-slate-200 bg-white/95 p-8 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-[#1B4B58]">
-                  Seus dados
-                </p>
-                <h2 className="mt-3 text-2xl font-black text-slate-950">
-                  Perfil do paciente
-                </h2>
-              </div>
-
-              <Link
-                href="/perfil"
-                className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-[#1B4B58]/25 hover:text-[#1B4B58]"
-              >
-                Editar
-              </Link>
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-[24px] bg-slate-50 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                  Nome
-                </p>
-                <p className="mt-2 text-base font-bold text-slate-950">
-                  {profile?.full_name || "Não informado"}
-                </p>
-              </div>
-
-              <div className="rounded-[24px] bg-slate-50 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                  E-mail
-                </p>
-                <p className="mt-2 text-base font-semibold text-slate-800">
-                  {profile?.email || "Não informado"}
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[24px] bg-slate-50 p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                    Telefone
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-slate-800">
-                    {profile?.phone || "Não informado"}
-                  </p>
-                </div>
-
-                <div className="rounded-[24px] bg-slate-50 p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                    Nascimento
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-slate-800">
-                    {formatBirthDate(patient?.birth_date || null)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] bg-[#EAF1F0] p-5">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1B4B58]/70">
-                  Plano de saúde
-                </p>
-                <p className="mt-2 text-lg font-black text-[#1B4B58]">
-                  {healthPlanName}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-[38px] border border-slate-200 bg-white/95 p-8 shadow-[0_24px_80px_-52px_rgba(15,23,42,0.4)] backdrop-blur">
-          <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#1B4B58]">
-                Ações rápidas
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">
-                Acesse o que mais importa
-              </h2>
-              <p className="mt-2 max-w-2xl text-slate-600">
-                Fluxos principais organizados para consulta, acompanhamento,
-                histórico e documentos médicos.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {quickActions.map((action) => {
-              const isPrimary = action.tone === "primary";
-              const isPlum = action.tone === "plum";
-              const isSage = action.tone === "sage";
-
-              return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className={[
-                    "group rounded-[30px] border p-6 transition-all duration-200 hover:-translate-y-1",
-                    isPrimary
-                      ? "border-[#1B4B58]/15 bg-[#1B4B58] text-white shadow-[0_18px_50px_-30px_rgba(27,75,88,0.75)]"
-                      : isPlum
-                      ? "border-[#D8D0EC] bg-[#F6F3FC] text-slate-950 hover:shadow-[0_18px_50px_-36px_rgba(89,78,134,0.5)]"
-                      : isSage
-                      ? "border-[#D9E8E1] bg-[#F2F8F5] text-slate-950 hover:shadow-[0_18px_50px_-36px_rgba(122,157,141,0.5)]"
-                      : "border-slate-200 bg-white text-slate-950 hover:border-[#C8D7D4] hover:shadow-[0_18px_50px_-38px_rgba(15,23,42,0.4)]",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div
-                      className={[
-                        "flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black",
-                        isPrimary
-                          ? "bg-white/12 text-white"
-                          : isPlum
-                          ? "bg-white text-[#594E86]"
-                          : isSage
-                          ? "bg-white text-[#7A9D8D]"
-                          : "bg-slate-100 text-[#1B4B58]",
-                      ].join(" ")}
-                    >
-                      {action.icon}
-                    </div>
-
-                    <div
-                      className={[
-                        "rounded-full p-2 transition",
-                        isPrimary
-                          ? "bg-white/10 text-white/80 group-hover:bg-white/15"
-                          : "bg-slate-100 text-slate-500 group-hover:bg-[#EAF1F0] group-hover:text-[#1B4B58]",
-                      ].join(" ")}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 12h14M13 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
+            {/* COLUNA ESQUERDA */}
+            <div className="space-y-6">
+              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">
+                      Próximas consultas
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Seus próximos atendimentos agendados.
+                    </p>
                   </div>
 
-                  <h3
-                    className={[
-                      "mt-6 text-xl font-black",
-                      isPrimary ? "text-white" : "text-slate-950",
-                    ].join(" ")}
+                  <Link
+                    href="/solicitacoes"
+                    className="text-sm font-semibold text-[#4660A9] hover:underline"
                   >
-                    {action.title}
-                  </h3>
+                    Ver tudo
+                  </Link>
+                </div>
 
-                  <p
-                    className={[
-                      "mt-2 text-sm leading-6",
-                      isPrimary ? "text-white/78" : "text-slate-600",
-                    ].join(" ")}
+                {nextAppointments.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
+                    Você ainda não tem próximas consultas agendadas.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {nextAppointments.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-5"
+                      >
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <div className="mb-2 flex flex-wrap gap-2">
+                              <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#283C7A]">
+                                {item.status || "sem status"}
+                              </span>
+
+                              {item.patient_confirmation_status && (
+                                <span className="rounded-full bg-[#F4F1FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#6E56CF]">
+                                  {item.patient_confirmation_status}
+                                </span>
+                              )}
+                            </div>
+
+                            <h3 className="text-lg font-bold text-slate-950">
+                              {item.clinic_name}
+                            </h3>
+
+                            <p className="mt-1 text-sm text-slate-600">
+                              Médico: {item.doctor_name}
+                            </p>
+
+                            <p className="mt-1 text-sm text-slate-500">
+                              {item.clinic_location}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl bg-[#F5F7FD] px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Data
+                            </p>
+                            <p className="mt-1 text-sm font-bold text-slate-950">
+                              {formatShortDate(getBestAppointmentDate(item))}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <Link
+                            href={getAppointmentHref()}
+                            className="inline-flex rounded-2xl bg-[#283C7A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                          >
+                            Abrir solicitações
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">
+                      Ações rápidas
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Atalhos principais da sua conta.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/busca"
+                    className="rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#22356E]"
                   >
-                    {action.description}
+                    Nova busca
+                  </Link>
+
+                  <Link
+                    href="/solicitacoes"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                  >
+                    Ver solicitações
+                  </Link>
+
+                  <Link
+                    href="/documentos"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                  >
+                    Abrir documentos
+                  </Link>
+
+                  <Link
+                    href="/perfil"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                  >
+                    Editar perfil
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* COLUNA DIREITA */}
+            <div className="space-y-6">
+              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">
+                      Notificações recentes
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Últimos avisos da plataforma.
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/notificacoes"
+                    className="text-sm font-semibold text-[#4660A9] hover:underline"
+                  >
+                    Ver tudo
+                  </Link>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
+                    Nenhuma notificação por enquanto.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={getNotificationHref(item)}
+                        className="block rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-4 transition hover:bg-white"
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-bold text-[#283C7A]">
+                            {item.type || "aviso"}
+                          </span>
+
+                          {!item.is_read && (
+                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#0F8A5F]">
+                              Nova
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm font-bold text-slate-950">
+                          {item.title || "Nova notificação"}
+                        </p>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                          {item.message || "Você recebeu uma atualização."}
+                        </p>
+
+                        <p className="mt-2 text-xs text-slate-400">
+                          {formatDate(item.created_at)}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-slate-950">
+                  Sua conta
+                </h2>
+
+                <div className="mt-4 rounded-2xl bg-[#F7F9FD] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Nome cadastrado
                   </p>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-[38px] border border-slate-200 bg-white shadow-[0_24px_80px_-52px_rgba(15,23,42,0.38)]">
-            <div className="h-2 bg-[#1B4B58]" />
-            <div className="p-8">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#1B4B58]">
-                Histórico clínico
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">
-                Seus atendimentos organizados
-              </h2>
-              <p className="mt-3 text-slate-600">
-                Consulte registros de atendimentos concluídos, resumos clínicos
-                e informações importantes para futuras consultas.
-              </p>
-
-              <div className="mt-7 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Atendimentos concluídos</p>
-                  <p className="mt-1 text-3xl font-black text-slate-950">
-                    {completedCount}
+                  <p className="mt-1 text-base font-bold text-slate-950">
+                    {profile?.full_name || "Paciente não informado"}
                   </p>
                 </div>
 
-                <Link
-                  href="/historico-clinico"
-                  className="rounded-2xl bg-[#1B4B58] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#163F4A]"
-                >
-                  Abrir histórico
-                </Link>
-              </div>
-            </div>
-          </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Consultas pendentes
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-[#B26B00]">
+                      {summary.pending}
+                    </p>
+                  </div>
 
-          <div className="overflow-hidden rounded-[38px] border border-[#D8D0EC] bg-[#F8F5FF] shadow-[0_24px_80px_-52px_rgba(89,78,134,0.35)]">
-            <div className="h-2 bg-[#594E86]" />
-            <div className="p-8">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#594E86]">
-                Documentos médicos
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">
-                Receitas, exames e documentos
-              </h2>
-              <p className="mt-3 text-slate-600">
-                Baixe ou imprima documentos emitidos pelo médico durante seus
-                atendimentos na MediNexus.
-              </p>
-
-              <div className="mt-7 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Documentos disponíveis</p>
-                  <p className="mt-1 text-3xl font-black text-slate-950">
-                    {documents.length}
-                  </p>
+                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Não lidas
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-[#283C7A]">
+                      {summary.unread}
+                    </p>
+                  </div>
                 </div>
 
-                <Link
-                  href="/documentos-medicos"
-                  className="rounded-2xl bg-[#594E86] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#4D4278]"
-                >
-                  Abrir documentos
-                </Link>
+                <div className="mt-4">
+                  <Link
+                    href="/perfil"
+                    className="inline-flex rounded-2xl border border-[#D9DDF0] bg-white px-4 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                  >
+                    Atualizar meus dados
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
     </main>
   );
