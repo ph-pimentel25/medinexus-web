@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -75,9 +76,18 @@ function formatDateTime(value?: string | null) {
   });
 }
 
+function formatLongDate(value?: string | null) {
+  const date = value ? new Date(value) : new Date();
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "Não informado";
-
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
@@ -112,22 +122,22 @@ function getDocumentLabel(type: DocumentType) {
   return labels[type] || "Documento médico";
 }
 
-function getDocumentSubtitle(type: DocumentType) {
-  const subtitles: Record<DocumentType, string> = {
-    prescription: "Prescrição e orientações terapêuticas",
-    exam_request: "Pedido médico para realização de exame",
-    medical_certificate: "Documento médico para afastamento ou comprovação",
-    attendance_declaration: "Comprovação de comparecimento ao atendimento",
-    clinical_summary: "Resumo clínico do atendimento realizado",
+function getOfficialTitle(type: DocumentType) {
+  const labels: Record<DocumentType, string> = {
+    prescription: "RECEITA MÉDICA",
+    exam_request: "SOLICITAÇÃO DE EXAME",
+    medical_certificate: "ATESTADO MÉDICO",
+    attendance_declaration: "DECLARAÇÃO DE COMPARECIMENTO",
+    clinical_summary: "RESUMO CLÍNICO",
   };
 
-  return subtitles[type] || "Documento emitido pela MediNexus";
+  return labels[type] || "DOCUMENTO MÉDICO";
 }
 
 function getContentText(content: Record<string, unknown> | null, key: string) {
   const value = content?.[key];
 
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
 
   return "";
@@ -162,6 +172,25 @@ function normalizeFileName(value: string) {
     .replace(/\p{Diacritic}/gu, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function getDocumentNumber(id: string) {
+  return id.slice(0, 8).toUpperCase();
+}
+
+function getDaysText(days?: number | null) {
+  if (!days || days <= 0) return "0 dia";
+  if (days === 1) return "1 dia";
+  return `${days} dias`;
+}
+
+function getPatientPlan(patient: PatientRow | null) {
+  const operator = patient?.health_plan_operator?.trim();
+  const product = patient?.health_plan_product_name?.trim();
+
+  if (!operator && !product) return "Particular / não informado";
+
+  return [operator, product].filter(Boolean).join(" — ");
 }
 
 export default function DocumentoMedicoPage() {
@@ -273,6 +302,20 @@ export default function DocumentoMedicoPage() {
         : Promise.resolve({ data: null, error: null }),
     ]);
 
+    if (patientResponse.error) {
+      setMessage(`Erro ao carregar paciente: ${patientResponse.error.message}`);
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    if (clinicResponse.error) {
+      setMessage(`Erro ao carregar clínica: ${clinicResponse.error.message}`);
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
     setDocument(documentData);
     setPatient(patientResponse.data || null);
     setClinic((clinicResponse.data || null) as ClinicRow | null);
@@ -286,15 +329,19 @@ export default function DocumentoMedicoPage() {
     clinic?.legal_name ||
     "Clínica não informada";
 
-  const documentTitle = document
+  const officialTitle = document
+    ? getOfficialTitle(document.document_type)
+    : "DOCUMENTO MÉDICO";
+
+  const screenTitle = document
     ? document.title || getDocumentLabel(document.document_type)
     : "Documento médico";
 
   const issuedAt = document?.issued_at || document?.created_at;
 
   const fileName = useMemo(() => {
-    return normalizeFileName(`${documentTitle}-${patientName || "paciente"}`);
-  }, [documentTitle, patientName]);
+    return normalizeFileName(`${officialTitle}-${patientName || "paciente"}`);
+  }, [officialTitle, patientName]);
 
   function handlePrint() {
     window.print();
@@ -302,7 +349,7 @@ export default function DocumentoMedicoPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-[#F3F5FB]">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-slate-600">Carregando documento médico...</p>
         </section>
@@ -312,7 +359,7 @@ export default function DocumentoMedicoPage() {
 
   if (!document) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-[#F3F5FB]">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           {message && <Alert variant={messageType}>{message}</Alert>}
 
@@ -327,55 +374,80 @@ export default function DocumentoMedicoPage() {
     );
   }
 
+  const medicationName = getContentText(document.content, "medication_name");
+  const medicationUse = getContentText(document.content, "medication_use");
+  const examName = getContentText(document.content, "exam_name");
+  const examObservation = getContentText(document.content, "exam_observation");
+  const notes = getContentText(document.content, "notes");
+
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-[#F3F5FB]">
       <style jsx global>{`
+        @page {
+          size: A4;
+          margin: 0;
+        }
+
         @media print {
+          html,
           body {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 !important;
+            padding: 0 !important;
             background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
 
-          header,
+          body > header,
           .document-actions,
           .no-print {
             display: none !important;
           }
 
-          .document-shell {
+          .document-stage {
             padding: 0 !important;
             margin: 0 !important;
-            max-width: 100% !important;
+            background: #ffffff !important;
           }
 
-          .document-paper {
-            box-shadow: none !important;
+          .medical-paper {
+            width: 210mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            padding: 18mm 20mm 15mm 20mm !important;
             border: none !important;
             border-radius: 0 !important;
-            min-height: 100vh !important;
+            box-shadow: none !important;
           }
 
-          .document-page-break {
-            page-break-before: always;
+          .screen-only-shadow {
+            box-shadow: none !important;
           }
         }
       `}</style>
 
-      <section className="document-shell mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="document-actions mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="document-actions mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 rounded-[28px] border border-[#D9D6F4] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
-              Documento médico
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#283C7A]">
+              Visualização do documento
             </p>
-            <h1 className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
-              {documentTitle}
+            <h1 className="mt-1 text-2xl font-bold text-slate-950">
+              {screenTitle}
             </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Para o PDF ficar limpo, desative “Cabeçalhos e rodapés” na tela de
+              impressão.
+            </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
             {document.appointment_id && (
               <Link
                 href={`/medico/consultas/${document.appointment_id}`}
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5E4B9A] shadow-sm transition hover:bg-[#F6F3FF]"
+                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-bold text-[#5E4B9A] transition hover:bg-[#F6F3FF]"
               >
                 Voltar ao prontuário
               </Link>
@@ -384,254 +456,217 @@ export default function DocumentoMedicoPage() {
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#213366]"
+              className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#213366]"
             >
               Imprimir / salvar PDF
             </button>
           </div>
         </div>
+      </section>
 
-        {message && (
-          <div className="document-actions mb-6">
-            <Alert variant={messageType}>{message}</Alert>
-          </div>
-        )}
-
-        <article className="document-paper overflow-hidden rounded-[34px] border border-[#D9D6F4] bg-white shadow-[0_34px_110px_-75px_rgba(40,60,122,0.55)]">
-          <section className="relative bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] px-8 py-8 text-white sm:px-12">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_38%)]" />
-
-            <div className="relative grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
+      <section className="document-stage flex justify-center px-4 pb-12 sm:px-6 lg:px-8">
+        <article className="medical-paper screen-only-shadow relative flex min-h-[1122px] w-full max-w-[794px] flex-col bg-white px-16 py-14 text-slate-950 shadow-[0_30px_100px_-70px_rgba(15,23,42,0.65)]">
+          <div className="border-b border-slate-300 pb-5">
+            <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.26em] text-white/65">
+                <p className="text-[22px] font-bold leading-tight text-[#283C7A]">
+                  {clinicName}
+                </p>
+
+                <div className="mt-2 max-w-[480px] space-y-1 text-[11px] leading-5 text-slate-600">
+                  <p>{buildClinicAddress(clinic)}</p>
+                  {clinic?.phone && <p>Telefone: {clinic.phone}</p>}
+                  {clinic?.email && <p>E-mail: {clinic.email}</p>}
+                </div>
+              </div>
+
+              <div className="text-right text-[11px] leading-5 text-slate-500">
+                <p className="font-bold uppercase tracking-[0.14em] text-slate-500">
                   MediNexus
                 </p>
-                <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white">
-                  {documentTitle}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">
-                  {getDocumentSubtitle(document.document_type)}
-                </p>
+                <p>Documento Nº {getDocumentNumber(document.id)}</p>
+                <p>Emitido em {formatDateTime(issuedAt)}</p>
               </div>
+            </div>
+          </div>
 
-              <div className="rounded-[24px] border border-white/20 bg-white/12 p-5 text-sm backdrop-blur">
-                <p className="font-bold text-white">Emitido em</p>
-                <p className="mt-1 text-white/75">{formatDateTime(issuedAt)}</p>
+          <section className="mt-10 text-center">
+            <h2 className="text-[20px] font-bold uppercase tracking-[0.04em] text-slate-950">
+              {officialTitle}
+            </h2>
+          </section>
 
-                <p className="mt-4 font-bold text-white">Status</p>
-                <p className="mt-1 text-white/75">
-                  {document.status === "issued"
-                    ? "Emitido"
-                    : document.status === "draft"
-                      ? "Rascunho"
-                      : "Cancelado"}
-                </p>
-              </div>
+          <section className="mt-9 border border-slate-300">
+            <div className="border-b border-slate-300 bg-slate-50 px-4 py-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                Identificação do paciente
+              </p>
+            </div>
+
+            <div className="grid text-[13px] leading-6">
+              <PatientCell label="Paciente" value={patientName} />
+              <PatientCell label="CPF" value={patient?.cpf || "Não informado"} />
+              <PatientCell
+                label="Nascimento"
+                value={`${formatDate(patient?.birth_date)} • ${getAge(
+                  patient?.birth_date
+                )}`}
+              />
+              <PatientCell
+                label="Telefone"
+                value={patient?.phone || "Não informado"}
+              />
+              <PatientCell label="Convênio" value={getPatientPlan(patient)} />
+              <PatientCell
+                label="Carteirinha"
+                value={patient?.health_plan_card_number || "Não informado"}
+              />
             </div>
           </section>
 
-          <section className="grid border-b border-[#E0E7FF] bg-[#F8FAFC] md:grid-cols-3">
-            <div className="border-b border-[#E0E7FF] p-6 md:border-b-0 md:border-r">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                Paciente
-              </p>
-              <p className="mt-2 text-lg font-bold text-slate-950">
-                {patientName}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                CPF: {patient?.cpf || "Não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Nascimento: {formatDate(patient?.birth_date)} •{" "}
-                {getAge(patient?.birth_date)}
-              </p>
-            </div>
-
-            <div className="border-b border-[#E0E7FF] p-6 md:border-b-0 md:border-r">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                Médico
-              </p>
-              <p className="mt-2 text-lg font-bold text-slate-950">
-                {document.doctor_name || "Médico não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                CRM {document.doctor_crm || "não informado"}
-                {document.doctor_crm_state
-                  ? ` / ${document.doctor_crm_state}`
-                  : ""}
-              </p>
-            </div>
-
-            <div className="p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                Unidade
-              </p>
-              <p className="mt-2 text-lg font-bold text-slate-950">
-                {clinicName}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                {buildClinicAddress(clinic)}
-              </p>
-            </div>
-          </section>
-
-          <section className="px-8 py-8 sm:px-12">
+          <section className="mt-11 flex-1">
             {document.document_type === "prescription" && (
-              <div className="space-y-6">
-                <DocumentBlock
-                  title="Prescrição"
-                  content={
-                    getContentText(document.content, "medication_name") ||
-                    "Medicamento não informado."
-                  }
-                />
+              <div>
+                <PaperSectionTitle>Prescrição</PaperSectionTitle>
 
-                <DocumentBlock
-                  title="Modo de uso"
-                  content={
-                    getContentText(document.content, "medication_use") ||
-                    "Modo de uso não informado."
-                  }
-                />
+                <div className="mt-6 space-y-7">
+                  <PaperItem
+                    title="Medicamento"
+                    content={medicationName || "Medicamento não informado."}
+                  />
 
-                {document.plain_text && (
-                  <DocumentBlock title="Orientações" content={document.plain_text} />
-                )}
+                  <PaperItem
+                    title="Modo de uso"
+                    content={medicationUse || "Modo de uso não informado."}
+                  />
+
+                  {notes && <PaperItem title="Orientações" content={notes} />}
+                </div>
               </div>
             )}
 
             {document.document_type === "exam_request" && (
-              <div className="space-y-6">
-                <DocumentBlock
-                  title="Exame solicitado"
-                  content={
-                    getContentText(document.content, "exam_name") ||
-                    "Exame não informado."
-                  }
-                />
+              <div>
+                <PaperSectionTitle>Exame solicitado</PaperSectionTitle>
 
-                <DocumentBlock
-                  title="Indicação clínica"
-                  content={
-                    document.clinical_indication ||
-                    "Indicação clínica não informada."
-                  }
-                />
-
-                {getContentText(document.content, "exam_observation") && (
-                  <DocumentBlock
-                    title="Observação"
-                    content={getContentText(
-                      document.content,
-                      "exam_observation"
-                    )}
+                <div className="mt-6 space-y-7">
+                  <PaperItem
+                    title="Exame"
+                    content={examName || "Exame não informado."}
                   />
-                )}
 
-                {document.cid_code && (
-                  <DocumentBlock
-                    title="CID"
-                    content={`${document.cid_code}${
-                      document.cid_description
-                        ? ` — ${document.cid_description}`
-                        : ""
-                    }`}
+                  <PaperItem
+                    title="Indicação clínica"
+                    content={
+                      document.clinical_indication ||
+                      "Indicação clínica não informada."
+                    }
                   />
-                )}
+
+                  {examObservation && (
+                    <PaperItem title="Observações" content={examObservation} />
+                  )}
+
+                  {document.cid_code && (
+                    <PaperItem
+                      title="CID"
+                      content={`${document.cid_code}${
+                        document.cid_description
+                          ? ` — ${document.cid_description}`
+                          : ""
+                      }`}
+                    />
+                  )}
+                </div>
               </div>
             )}
 
             {document.document_type === "medical_certificate" && (
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-[#E0E7FF] bg-white p-6">
-                  <p className="text-lg leading-9 text-slate-800">
-                    Atesto, para os devidos fins, que{" "}
-                    <strong>{patientName}</strong> necessita de afastamento por{" "}
-                    <strong>{document.days_off || 0} dia(s)</strong>.
-                  </p>
+              <div>
+                <p className="text-[15.5px] leading-9 text-slate-900">
+                  Atesto, para os devidos fins, que{" "}
+                  <strong>{patientName}</strong>, portador(a) do CPF{" "}
+                  <strong>{patient?.cpf || "não informado"}</strong>, foi
+                  atendido(a) nesta unidade e necessita de afastamento de suas
+                  atividades por{" "}
+                  <strong>{getDaysText(document.days_off)}</strong>.
+                </p>
+
+                <div className="mt-9 space-y-7">
+                  {document.cid_code && (
+                    <PaperItem
+                      title="CID"
+                      content={`${document.cid_code}${
+                        document.cid_description
+                          ? ` — ${document.cid_description}`
+                          : ""
+                      }`}
+                    />
+                  )}
+
+                  {document.purpose && (
+                    <PaperItem title="Finalidade" content={document.purpose} />
+                  )}
+
+                  {notes && <PaperItem title="Observações" content={notes} />}
                 </div>
-
-                {document.cid_code && (
-                  <DocumentBlock
-                    title="CID"
-                    content={`${document.cid_code}${
-                      document.cid_description
-                        ? ` — ${document.cid_description}`
-                        : ""
-                    }`}
-                  />
-                )}
-
-                {document.purpose && (
-                  <DocumentBlock title="Finalidade" content={document.purpose} />
-                )}
-
-                {document.plain_text && (
-                  <DocumentBlock title="Observações" content={document.plain_text} />
-                )}
               </div>
             )}
 
             {document.document_type === "attendance_declaration" && (
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-[#E0E7FF] bg-white p-6">
-                  <p className="text-lg leading-9 text-slate-800">
-                    Declaro, para os devidos fins, que{" "}
-                    <strong>{patientName}</strong> compareceu ao atendimento
-                    médico nesta unidade.
-                  </p>
+              <div>
+                <p className="text-[15.5px] leading-9 text-slate-900">
+                  Declaro, para os devidos fins, que{" "}
+                  <strong>{patientName}</strong>, portador(a) do CPF{" "}
+                  <strong>{patient?.cpf || "não informado"}</strong>,
+                  compareceu ao atendimento médico nesta unidade na data de{" "}
+                  <strong>{formatDateTime(issuedAt)}</strong>.
+                </p>
+
+                <div className="mt-9 space-y-7">
+                  {document.purpose && (
+                    <PaperItem title="Finalidade" content={document.purpose} />
+                  )}
+
+                  {notes && <PaperItem title="Observações" content={notes} />}
                 </div>
-
-                {document.purpose && (
-                  <DocumentBlock title="Finalidade" content={document.purpose} />
-                )}
-
-                {document.plain_text && (
-                  <DocumentBlock title="Observações" content={document.plain_text} />
-                )}
               </div>
             )}
 
             {document.document_type === "clinical_summary" && (
-              <div className="space-y-6">
-                <DocumentBlock
-                  title="Resumo clínico"
-                  content={
-                    document.clinical_indication ||
-                    document.plain_text ||
-                    "Resumo não informado."
-                  }
-                />
+              <div>
+                <PaperSectionTitle>Resumo clínico</PaperSectionTitle>
 
-                {document.plain_text && document.clinical_indication && (
-                  <DocumentBlock title="Conduta" content={document.plain_text} />
-                )}
+                <div className="mt-6 space-y-7">
+                  <PaperItem
+                    title="Resumo"
+                    content={
+                      document.clinical_indication ||
+                      "Resumo clínico não informado."
+                    }
+                  />
+
+                  {notes && <PaperItem title="Conduta" content={notes} />}
+                </div>
               </div>
             )}
           </section>
 
-          <section className="border-t border-[#E0E7FF] px-8 py-8 sm:px-12">
-            <div className="grid gap-8 md:grid-cols-[1fr_260px] md:items-end">
-              <div>
-                <p className="text-sm leading-7 text-slate-500">
-                  Documento emitido eletronicamente pela MediNexus. A validade
-                  clínica e legal depende das informações registradas pelo
-                  profissional responsável e das regras aplicáveis ao atendimento.
-                </p>
+          <section className="mt-14">
+            <p className="text-center text-[13px] text-slate-700">
+              {clinic?.address_city || clinic?.city || "Cidade"},{" "}
+              {formatLongDate(issuedAt)}.
+            </p>
 
-                {document.released_to_patient && (
-                  <p className="mt-3 text-sm font-semibold text-emerald-700">
-                    Documento liberado para visualização do paciente.
-                  </p>
-                )}
-              </div>
+            <div className="mt-20 flex justify-center">
+              <div className="w-[350px] text-center">
+                <div className="border-t border-slate-500 pt-3" />
 
-              <div className="text-center">
-                <div className="mb-3 h-px bg-slate-300" />
-                <p className="font-bold text-slate-950">
+                <p className="text-[14px] font-bold leading-5 text-slate-950">
                   {document.doctor_name || "Médico responsável"}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+
+                <p className="mt-1 text-[12px] text-slate-600">
                   CRM {document.doctor_crm || "não informado"}
                   {document.doctor_crm_state
                     ? ` / ${document.doctor_crm_state}`
@@ -640,24 +675,46 @@ export default function DocumentoMedicoPage() {
               </div>
             </div>
           </section>
-        </article>
 
-        <p className="document-actions mt-4 text-center text-xs font-semibold text-slate-400">
-          Para baixar em PDF, clique em “Imprimir / salvar PDF” e escolha
-          “Salvar como PDF”. Nome sugerido: {fileName}.pdf
-        </p>
+          <footer className="mt-auto border-t border-slate-200 pt-3">
+            <div className="grid gap-1 text-[9.5px] leading-4 text-slate-500 sm:grid-cols-[1fr_auto] sm:items-center">
+              <p>
+                Documento emitido eletronicamente pela MediNexus. Validade
+                condicionada às informações registradas pelo profissional.
+              </p>
+              <p>Nº {getDocumentNumber(document.id)}</p>
+            </div>
+          </footer>
+        </article>
       </section>
     </main>
   );
 }
 
-function DocumentBlock({ title, content }: { title: string; content: string }) {
+function PatientCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[28px] border border-[#E0E7FF] bg-[#F8FAFC] p-6">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6E56CF]">
+    <div className="border-b border-slate-200 px-4 py-2">
+      <span className="font-bold text-slate-950">{label}:</span>{" "}
+      <span className="text-slate-700">{value}</span>
+    </div>
+  );
+}
+
+function PaperSectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="border-b border-slate-300 pb-2 text-[13px] font-bold uppercase tracking-[0.12em] text-[#283C7A]">
+      {children}
+    </h3>
+  );
+}
+
+function PaperItem({ title, content }: { title: string; content: string }) {
+  return (
+    <div>
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate-500">
         {title}
       </p>
-      <p className="mt-4 whitespace-pre-line text-base leading-8 text-slate-800">
+      <p className="mt-2 whitespace-pre-line text-[14.5px] leading-8 text-slate-900">
         {content}
       </p>
     </div>
