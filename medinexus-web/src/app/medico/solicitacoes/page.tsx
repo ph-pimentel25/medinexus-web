@@ -5,57 +5,68 @@ import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
 
-type MemberRow = {
-  doctor_id: string | null;
-};
+type AppointmentStatus =
+  | "pending"
+  | "confirmed"
+  | "cancelled_by_patient"
+  | "cancelled_by_clinic"
+  | "completed"
+  | "no_show"
+  | string;
 
 type AppointmentRow = {
   id: string;
+  status: AppointmentStatus | null;
+
   patient_id: string | null;
-  clinic_id: string | null;
   doctor_id: string | null;
-  specialty_id: string | null;
-  status: string | null;
-  created_at: string | null;
+  clinic_id: string | null;
+
   requested_start_at: string | null;
   requested_end_at: string | null;
   confirmed_start_at: string | null;
   confirmed_end_at: string | null;
-  rejection_reason: string | null;
-  appointment_mode: string | null;
-  distance_km: number | null;
-  appointment_duration_minutes: number | null;
+
+  patient_confirmation_status: string | null;
+  patient_confirmed_at: string | null;
+  patient_cancelled_at: string | null;
+  patient_cancellation_reason: string | null;
+  reschedule_requested_at: string | null;
+  reschedule_reason: string | null;
+  confirmation_requested_at: string | null;
+  confirmation_deadline_at: string | null;
+
+  created_at: string | null;
+
+  patient_name: string | null;
+  patient_cpf: string | null;
+  patient_phone: string | null;
+  patient_email: string | null;
+  patient_health_plan_operator: string | null;
+  patient_health_plan_product_name: string | null;
+
+  doctor_name: string | null;
+  doctor_crm: string | null;
+  doctor_crm_state: string | null;
+
+  clinic_name: string | null;
+  clinic_city: string | null;
+  clinic_state: string | null;
+  clinic_neighborhood: string | null;
 };
 
-type ProfileRow = {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-};
+type FilterType =
+  | "all"
+  | "pending"
+  | "confirmed"
+  | "awaiting_patient"
+  | "patient_confirmed"
+  | "reschedule_requested"
+  | "cancelled"
+  | "completed";
 
-type PatientRow = {
-  id: string;
-  birth_date: string | null;
-  health_plan_operator: string | null;
-  health_plan_product_name: string | null;
-  health_plan_card_number: string | null;
-  accepts_private_consultation: boolean | null;
-};
-
-type SpecialtyRow = {
-  id: string;
-  name: string | null;
-};
-
-type AppointmentItem = AppointmentRow & {
-  patientProfile: ProfileRow | null;
-  patientData: PatientRow | null;
-  specialtyName: string;
-};
-
-function formatDateTime(value: string | null) {
-  if (!value) return "Horário não informado";
+function formatDateTime(value?: string | null) {
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -63,68 +74,139 @@ function formatDateTime(value: string | null) {
   });
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "Não informado";
-
-  return new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR");
+function normalize(value?: string | null) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
 }
 
-function getStatusLabel(status: string | null) {
-  if (status === "pending") return "Pendente";
-  if (status === "confirmed") return "Confirmada";
-  if (status === "completed") return "Concluída";
-  if (status === "rejected") return "Recusada";
-  if (status === "cancelled") return "Cancelada";
-  return status || "Não informado";
+function getStatusLabel(status?: string | null) {
+  const labels: Record<string, string> = {
+    pending: "Pendente",
+    confirmed: "Confirmada",
+    cancelled_by_patient: "Cancelada pelo paciente",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    completed: "Concluída",
+    no_show: "Não compareceu",
+  };
+
+  return labels[status || ""] || status || "Status não informado";
 }
 
-function getStatusClass(status: string | null) {
-  if (status === "pending") {
-    return "bg-amber-50 text-amber-700 ring-amber-200";
+function getStatusTone(status?: string | null) {
+  if (status === "confirmed") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
-  if (status === "confirmed") {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-200";
+  if (status === "pending") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  if (
+    status === "cancelled_by_patient" ||
+    status === "cancelled_by_clinic" ||
+    status === "no_show"
+  ) {
+    return "border-red-200 bg-red-50 text-red-700";
   }
 
   if (status === "completed") {
-    return "bg-sky-50 text-sky-700 ring-sky-200";
+    return "border-slate-200 bg-slate-100 text-slate-700";
   }
 
-  if (status === "rejected" || status === "cancelled") {
-    return "bg-red-50 text-red-700 ring-red-200";
+  return "border-blue-200 bg-blue-50 text-blue-700";
+}
+
+function getConfirmationLabel(status?: string | null) {
+  const labels: Record<string, string> = {
+    not_requested: "Sem confirmação necessária",
+    awaiting_confirmation: "Aguardando confirmação do paciente",
+    confirmed: "Paciente confirmou presença",
+    cancelled_by_patient: "Paciente cancelou",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    reschedule_requested: "Paciente pediu remarcação",
+    no_response: "Paciente não respondeu",
+    no_show: "Paciente não compareceu",
+  };
+
+  return labels[status || ""] || "Sem confirmação necessária";
+}
+
+function getConfirmationTone(status?: string | null) {
+  if (status === "confirmed") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
-  return "bg-slate-100 text-slate-700 ring-slate-200";
+  if (status === "awaiting_confirmation") {
+    return "border-blue-200 bg-blue-50 text-blue-700";
+  }
+
+  if (status === "reschedule_requested") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  if (
+    status === "cancelled_by_patient" ||
+    status === "cancelled_by_clinic" ||
+    status === "no_show"
+  ) {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
 }
 
-function getMainStartAt(item: AppointmentRow) {
-  return item.confirmed_start_at || item.requested_start_at;
-}
-
-function getMainEndAt(item: AppointmentRow) {
+function getAppointmentEnd(item: AppointmentRow) {
   return item.confirmed_end_at || item.requested_end_at;
+}
+
+function getSpecialtyName() {
+  return "Consulta";
+}
+
+function getPatientName(item: AppointmentRow) {
+  return item.patient_name || "Paciente não informado";
+}
+
+function getClinicName(item: AppointmentRow) {
+  return item.clinic_name || "Clínica não informada";
+}
+
+function getDoctorName(item: AppointmentRow) {
+  return item.doctor_name || "Médico não informado";
+}
+
+function getClinicLocation(item: AppointmentRow) {
+  const parts = [
+    item.clinic_neighborhood,
+    item.clinic_city,
+    item.clinic_state,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 export default function MedicoSolicitacoesPage() {
   const [loading, setLoading] = useState(true);
-  const [doctorId, setDoctorId] = useState("");
-  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [search, setSearch] = useState("");
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
     "info"
   );
 
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDoctorAppointments();
+    loadAppointments();
   }, []);
 
-  async function loadDoctorAppointments() {
+  async function loadAppointments() {
     setLoading(true);
     setMessage("");
 
@@ -133,624 +215,416 @@ export default function MedicoSolicitacoesPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado como médico.");
+      setMessage("Você precisa estar logado para ver suas solicitações.");
       setMessageType("error");
+      setAppointments([]);
       setLoading(false);
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("doctor_id")
-      .eq("user_id", user.id)
-      .eq("member_role", "doctor")
-      .maybeSingle<MemberRow>();
+    const { data, error } = await supabase.rpc("get_my_doctor_appointments");
 
-    if (memberError || !member?.doctor_id) {
-      setMessage("Não encontramos um médico vinculado a esta conta.");
+    if (error) {
+      setMessage(`Erro ao carregar solicitações: ${error.message}`);
       setMessageType("error");
+      setAppointments([]);
       setLoading(false);
       return;
     }
 
-    setDoctorId(member.doctor_id);
-
-    const { data: appointmentsData, error: appointmentsError } = await supabase
-      .from("appointments")
-      .select(
-        `
-        id,
-        patient_id,
-        clinic_id,
-        doctor_id,
-        specialty_id,
-        status,
-        created_at,
-        requested_start_at,
-        requested_end_at,
-        confirmed_start_at,
-        confirmed_end_at,
-        rejection_reason,
-        appointment_mode,
-        distance_km,
-        appointment_duration_minutes
-      `
-      )
-      .eq("doctor_id", member.doctor_id)
-      .order("created_at", { ascending: false });
-
-    if (appointmentsError) {
-      setMessage(`Erro ao carregar solicitações: ${appointmentsError.message}`);
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    const loadedAppointments = (appointmentsData || []) as AppointmentRow[];
-
-    const patientIds = Array.from(
-      new Set(
-        loadedAppointments
-          .map((item) => item.patient_id)
-          .filter(Boolean) as string[]
-      )
-    );
-
-    const specialtyIds = Array.from(
-      new Set(
-        loadedAppointments
-          .map((item) => item.specialty_id)
-          .filter(Boolean) as string[]
-      )
-    );
-
-    const [profilesResponse, patientsResponse, specialtiesResponse] =
-      await Promise.all([
-        patientIds.length > 0
-          ? supabase
-              .from("profiles")
-              .select("id, full_name, email, phone")
-              .in("id", patientIds)
-          : Promise.resolve({ data: [], error: null }),
-
-        patientIds.length > 0
-          ? supabase
-              .from("patients")
-              .select(
-                `
-                id,
-                birth_date,
-                health_plan_operator,
-                health_plan_product_name,
-                health_plan_card_number,
-                accepts_private_consultation
-              `
-              )
-              .in("id", patientIds)
-          : Promise.resolve({ data: [], error: null }),
-
-        specialtyIds.length > 0
-          ? supabase
-              .from("specialties")
-              .select("id, name")
-              .in("id", specialtyIds)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-
-    if (profilesResponse.error) {
-      setMessage(`Erro ao carregar pacientes: ${profilesResponse.error.message}`);
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    if (patientsResponse.error) {
-      setMessage(
-        `Erro ao carregar dados dos pacientes: ${patientsResponse.error.message}`
-      );
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    if (specialtiesResponse.error) {
-      setMessage(
-        `Erro ao carregar especialidades: ${specialtiesResponse.error.message}`
-      );
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    const profilesMap = new Map(
-      ((profilesResponse.data || []) as ProfileRow[]).map((item) => [
-        item.id,
-        item,
-      ])
-    );
-
-    const patientsMap = new Map(
-      ((patientsResponse.data || []) as PatientRow[]).map((item) => [
-        item.id,
-        item,
-      ])
-    );
-
-    const specialtiesMap = new Map(
-      ((specialtiesResponse.data || []) as SpecialtyRow[]).map((item) => [
-        item.id,
-        item.name || "Especialidade não informada",
-      ])
-    );
-
-    const formatted = loadedAppointments.map((item) => ({
-      ...item,
-      patientProfile: item.patient_id
-        ? profilesMap.get(item.patient_id) || null
-        : null,
-      patientData: item.patient_id
-        ? patientsMap.get(item.patient_id) || null
-        : null,
-      specialtyName: item.specialty_id
-        ? specialtiesMap.get(item.specialty_id) || "Especialidade não informada"
-        : "Especialidade não informada",
-    }));
-
-    setAppointments(formatted);
+    setAppointments((data || []) as AppointmentRow[]);
     setLoading(false);
   }
 
-  async function handleConfirmAppointment(appointment: AppointmentItem) {
-    setUpdatingId(appointment.id);
+  const filteredAppointments = useMemo(() => {
+    const query = normalize(search);
+
+    return appointments.filter((item) => {
+      const status = item.status || "";
+      const confirmation = item.patient_confirmation_status || "";
+
+      const matchesFilter =
+        filter === "all" ||
+        (filter === "pending" && status === "pending") ||
+        (filter === "confirmed" && status === "confirmed") ||
+        (filter === "awaiting_patient" &&
+          confirmation === "awaiting_confirmation") ||
+        (filter === "patient_confirmed" && confirmation === "confirmed") ||
+        (filter === "reschedule_requested" &&
+          confirmation === "reschedule_requested") ||
+        (filter === "cancelled" &&
+          (status === "cancelled_by_patient" ||
+            status === "cancelled_by_clinic")) ||
+        (filter === "completed" && status === "completed");
+
+      const searchable = normalize(
+        [
+          getClinicName(item),
+          getPatientName(item),
+          getDoctorName(item),
+          getSpecialtyName(),
+          item.status,
+          item.patient_confirmation_status,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+
+      const matchesSearch = !query || searchable.includes(query);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [appointments, filter, search]);
+
+  const stats = useMemo(() => {
+    return {
+      total: appointments.length,
+      pending: appointments.filter((item) => item.status === "pending").length,
+      confirmed: appointments.filter((item) => item.status === "confirmed")
+        .length,
+      awaitingPatient: appointments.filter(
+        (item) => item.patient_confirmation_status === "awaiting_confirmation"
+      ).length,
+      patientConfirmed: appointments.filter(
+        (item) => item.patient_confirmation_status === "confirmed"
+      ).length,
+    };
+  }, [appointments]);
+
+  async function handleConfirmAppointment(appointment: AppointmentRow) {
+    setActionLoadingId(appointment.id);
     setMessage("");
 
-    if (!appointment.requested_start_at || !appointment.requested_end_at) {
-      setMessage(
-        "Esta solicitação não possui horário sugerido. Peça para o paciente refazer a busca."
-      );
-      setMessageType("error");
-      setUpdatingId(null);
-      return;
-    }
-
-    const { error } = await supabase
-      .from("appointments")
-      .update({
-        status: "confirmed",
-        confirmed_start_at: appointment.requested_start_at,
-        confirmed_end_at: appointment.requested_end_at,
-      })
-      .eq("id", appointment.id)
-      .eq("doctor_id", doctorId);
+    const { error } = await supabase.rpc("confirm_my_doctor_appointment", {
+      p_appointment_id: appointment.id,
+    });
 
     if (error) {
       setMessage(`Erro ao confirmar consulta: ${error.message}`);
       setMessageType("error");
-      setUpdatingId(null);
+      setActionLoadingId(null);
       return;
     }
 
-    setMessage("Consulta confirmada com sucesso.");
+    setMessage("Consulta confirmada. Agora o paciente poderá confirmar presença.");
     setMessageType("success");
-    setUpdatingId(null);
-    await loadDoctorAppointments();
+    await loadAppointments();
+    setActionLoadingId(null);
   }
 
-  async function handleRejectAppointment(appointmentId: string) {
-    setUpdatingId(appointmentId);
+  async function handleCancelAppointment(appointment: AppointmentRow) {
+    const confirmCancel = window.confirm(
+      "Tem certeza que deseja cancelar esta consulta?"
+    );
+
+    if (!confirmCancel) return;
+
+    setActionLoadingId(appointment.id);
     setMessage("");
 
-    const { error } = await supabase
-      .from("appointments")
-      .update({
-        status: "rejected",
-        rejection_reason:
-          rejectionReason.trim() || "Solicitação recusada pelo médico.",
-      })
-      .eq("id", appointmentId)
-      .eq("doctor_id", doctorId);
+    const { error } = await supabase.rpc("cancel_my_doctor_appointment", {
+      p_appointment_id: appointment.id,
+    });
 
     if (error) {
-      setMessage(`Erro ao recusar consulta: ${error.message}`);
+      setMessage(`Erro ao cancelar consulta: ${error.message}`);
       setMessageType("error");
-      setUpdatingId(null);
+      setActionLoadingId(null);
       return;
     }
 
-    setMessage("Consulta recusada.");
+    setMessage("Consulta cancelada com sucesso.");
     setMessageType("success");
-    setRejectingId(null);
-    setRejectionReason("");
-    setUpdatingId(null);
-    await loadDoctorAppointments();
-  }
-
-  const pendingAppointments = useMemo(
-    () => appointments.filter((item) => item.status === "pending"),
-    [appointments]
-  );
-
-  const confirmedAppointments = useMemo(
-    () =>
-      appointments.filter((item) =>
-        ["confirmed", "completed"].includes(String(item.status || ""))
-      ),
-    [appointments]
-  );
-
-  const otherAppointments = useMemo(
-    () =>
-      appointments.filter(
-        (item) =>
-          !["pending", "confirmed", "completed"].includes(
-            String(item.status || "")
-          )
-      ),
-    [appointments]
-  );
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando solicitações...</p>
-      </main>
-    );
+    await loadAppointments();
+    setActionLoadingId(null);
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EAF1F0_0,#F8FAFC_34%,#FFFFFF_100%)]">
-      <section className="app-shell py-10">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1B4B58]">
-              Solicitações médicas
-            </p>
-            <h1 className="mt-3 app-section-title">
-              Confirme seus atendimentos
-            </h1>
-            <p className="app-section-subtitle">
-              O horário já é sugerido automaticamente pelo sistema. Você só precisa confirmar ou recusar.
-            </p>
+    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
+      <section className="relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
+
+        <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <p className="inline-flex rounded-full border border-[#D9D6F4] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#283C7A] shadow-sm">
+                Área do médico
+              </p>
+
+              <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
+                Solicitações de consulta
+              </h1>
+
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+                Confirme consultas, acompanhe confirmação do paciente e abra o
+                prontuário quando o atendimento estiver confirmado.
+              </p>
+            </div>
+
+            <div className="rounded-[38px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-7 text-white shadow-[0_28px_90px_-65px_rgba(40,60,122,0.9)]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-white/60">
+                Resumo
+              </p>
+
+              <div className="mt-6 grid gap-3">
+                <div className="rounded-[28px] bg-white/12 p-5 ring-1 ring-white/15">
+                  <p className="text-4xl font-bold">{stats.total}</p>
+                  <p className="mt-1 text-sm text-white/70">
+                    solicitações no total
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
+                    <p className="text-2xl font-bold">{stats.pending}</p>
+                    <p className="mt-1 text-xs text-white/70">pendentes</p>
+                  </div>
+
+                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
+                    <p className="text-2xl font-bold">{stats.confirmed}</p>
+                    <p className="mt-1 text-xs text-white/70">confirmadas</p>
+                  </div>
+
+                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
+                    <p className="text-2xl font-bold">{stats.awaitingPatient}</p>
+                    <p className="mt-1 text-xs text-white/70">
+                      aguardando paciente
+                    </p>
+                  </div>
+
+                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
+                    <p className="text-2xl font-bold">{stats.patientConfirmed}</p>
+                    <p className="mt-1 text-xs text-white/70">
+                      presença confirmada
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
+      </section>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/medico/dashboard"
-              className="app-button-secondary text-center"
-            >
-              Dashboard
-            </Link>
-
-            <Link
-              href="/medico/disponibilidade"
-              className="app-button-secondary text-center"
-            >
-              Disponibilidade
-            </Link>
-          </div>
-        </div>
-
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {message && (
           <div className="mb-6">
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="app-card p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-amber-600">
-              Pendentes
-            </p>
-            <p className="mt-2 text-4xl font-black text-slate-950">
-              {pendingAppointments.length}
-            </p>
-          </div>
+        <div className="rounded-[38px] border border-[#D9D6F4] bg-white p-6 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                Buscar solicitação
+              </label>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:bg-white"
+                placeholder="Busque por paciente, clínica, médico ou status"
+              />
+            </div>
 
-          <div className="app-card p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-600">
-              Confirmadas
-            </p>
-            <p className="mt-2 text-4xl font-black text-slate-950">
-              {confirmedAppointments.length}
-            </p>
-          </div>
-
-          <div className="app-card p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
-              Outras
-            </p>
-            <p className="mt-2 text-4xl font-black text-slate-950">
-              {otherAppointments.length}
-            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "all", label: "Todas" },
+                { value: "pending", label: "Pendentes" },
+                { value: "confirmed", label: "Confirmadas" },
+                { value: "awaiting_patient", label: "Aguardando paciente" },
+                { value: "patient_confirmed", label: "Paciente confirmou" },
+                { value: "reschedule_requested", label: "Remarcação" },
+                { value: "cancelled", label: "Canceladas" },
+                { value: "completed", label: "Concluídas" },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setFilter(item.value as FilterType)}
+                  className={`rounded-2xl px-5 py-4 text-sm font-bold transition ${
+                    filter === item.value
+                      ? "bg-[#283C7A] text-white"
+                      : "border border-[#D9D6F4] bg-white text-[#5E4B9A] hover:bg-[#F6F3FF]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-8">
-          <section>
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-black text-slate-950">
-                Pendentes
-              </h2>
-            </div>
-
-            {pendingAppointments.length === 0 ? (
-              <div className="app-card p-6">
-                <p className="text-slate-600">
-                  Nenhuma solicitação pendente no momento.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-5">
-                {pendingAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    updating={updatingId === appointment.id}
-                    rejectingId={rejectingId}
-                    rejectionReason={rejectionReason}
-                    setRejectingId={setRejectingId}
-                    setRejectionReason={setRejectionReason}
-                    onConfirm={() => handleConfirmAppointment(appointment)}
-                    onReject={() => handleRejectAppointment(appointment.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section>
-            <h2 className="mb-4 text-2xl font-black text-slate-950">
-              Confirmadas e concluídas
+        {loading ? (
+          <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white p-8 text-slate-600 shadow-sm">
+            Carregando solicitações...
+          </div>
+        ) : filteredAppointments.length === 0 ? (
+          <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white px-6 py-12 text-center shadow-sm">
+            <h2 className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
+              Nenhuma solicitação encontrada
             </h2>
-
-            {confirmedAppointments.length === 0 ? (
-              <div className="app-card p-6">
-                <p className="text-slate-600">
-                  Nenhuma consulta confirmada ainda.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-5">
-                {confirmedAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    updating={false}
-                    rejectingId={rejectingId}
-                    rejectionReason={rejectionReason}
-                    setRejectingId={setRejectingId}
-                    setRejectionReason={setRejectionReason}
-                    showActions={false}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {otherAppointments.length > 0 && (
-            <section>
-              <h2 className="mb-4 text-2xl font-black text-slate-950">
-                Recusadas ou canceladas
-              </h2>
-
-              <div className="grid gap-5">
-                {otherAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    updating={false}
-                    rejectingId={rejectingId}
-                    rejectionReason={rejectionReason}
-                    setRejectingId={setRejectingId}
-                    setRejectionReason={setRejectionReason}
-                    showActions={false}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </section>
-    </main>
-  );
-}
-
-type AppointmentCardProps = {
-  appointment: AppointmentItem;
-  updating: boolean;
-  rejectingId: string | null;
-  rejectionReason: string;
-  setRejectingId: (value: string | null) => void;
-  setRejectionReason: (value: string) => void;
-  onConfirm?: () => void;
-  onReject?: () => void;
-  showActions?: boolean;
-};
-
-function AppointmentCard({
-  appointment,
-  updating,
-  rejectingId,
-  rejectionReason,
-  setRejectingId,
-  setRejectionReason,
-  onConfirm,
-  onReject,
-  showActions = true,
-}: AppointmentCardProps) {
-  const startAt = getMainStartAt(appointment);
-  const endAt = getMainEndAt(appointment);
-
-  return (
-    <article className="app-card p-7">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap gap-2">
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${getStatusClass(
-                appointment.status
-              )}`}
-            >
-              {getStatusLabel(appointment.status)}
-            </span>
-
-            <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-sky-700 ring-1 ring-sky-200">
-              {appointment.appointment_mode === "private"
-                ? "Particular"
-                : "Plano de saúde"}
-            </span>
-
-            {appointment.distance_km !== null && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-slate-600 ring-1 ring-slate-200">
-                {appointment.distance_km} km
-              </span>
-            )}
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
+              Quando pacientes solicitarem consultas com você, elas aparecerão
+              aqui.
+            </p>
           </div>
-
-          <h3 className="text-2xl font-black text-slate-950">
-            {appointment.patientProfile?.full_name || "Paciente não informado"}
-          </h3>
-
-          <p className="mt-2 text-slate-600">
-            {appointment.specialtyName} • solicitado em{" "}
-            {formatDateTime(appointment.created_at)}
-          </p>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
-                Horário sugerido
-              </p>
-              <p className="mt-2 text-xl font-black text-slate-950">
-                {formatDateTime(startAt)}
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Término previsto: {formatDateTime(endAt)}
-              </p>
-              {appointment.appointment_duration_minutes && (
-                <p className="mt-1 text-sm text-slate-600">
-                  Duração: {appointment.appointment_duration_minutes} minutos
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
-                Dados do paciente
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                <span className="font-semibold">E-mail:</span>{" "}
-                {appointment.patientProfile?.email || "Não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                <span className="font-semibold">Telefone:</span>{" "}
-                {appointment.patientProfile?.phone || "Não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                <span className="font-semibold">Nascimento:</span>{" "}
-                {formatDate(appointment.patientData?.birth_date || null)}
-              </p>
-            </div>
-          </div>
-
-          {appointment.appointment_mode !== "private" && (
-            <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5">
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#1B4B58]">
-                Plano de saúde
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                <span className="font-semibold">Operadora:</span>{" "}
-                {appointment.patientData?.health_plan_operator || "Não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                <span className="font-semibold">Modelo:</span>{" "}
-                {appointment.patientData?.health_plan_product_name ||
-                  "Não informado"}
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                <span className="font-semibold">Carteirinha:</span>{" "}
-                {appointment.patientData?.health_plan_card_number ||
-                  "Não informado"}
-              </p>
-            </div>
-          )}
-
-          {appointment.rejection_reason && (
-            <div className="mt-4 rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-              <span className="font-bold">Motivo da recusa:</span>{" "}
-              {appointment.rejection_reason}
-            </div>
-          )}
-        </div>
-
-        <div className="flex w-full flex-col gap-3 lg:w-[280px]">
-          {showActions && appointment.status === "pending" && (
-            <>
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={updating}
-                className="rounded-2xl bg-[#1B4B58] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#163F4A] disabled:cursor-not-allowed disabled:opacity-60"
+        ) : (
+          <div className="mt-8 grid gap-6">
+            {filteredAppointments.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-[34px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]"
               >
-                {updating ? "Confirmando..." : "Confirmar consulta"}
-              </button>
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-[#BAE6FD] bg-[#F0F9FF] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-[#0369A1]">
+                        {getSpecialtyName()}
+                      </span>
 
-              {rejectingId === appointment.id ? (
-                <div className="rounded-3xl border border-red-200 bg-red-50 p-4">
-                  <label className="mb-2 block text-sm font-semibold text-red-800">
-                    Motivo da recusa
-                  </label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="min-h-[90px] w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm outline-none focus:border-red-400"
-                    placeholder="Ex: indisponibilidade, agenda cheia..."
-                  />
+                      <span
+                        className={`rounded-full border px-4 py-1.5 text-xs font-bold ${getStatusTone(
+                          item.status
+                        )}`}
+                      >
+                        {getStatusLabel(item.status)}
+                      </span>
 
-                  <div className="mt-3 grid gap-2">
-                    <button
-                      type="button"
-                      onClick={onReject}
-                      disabled={updating}
-                      className="rounded-2xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Confirmar recusa
-                    </button>
+                      <span
+                        className={`rounded-full border px-4 py-1.5 text-xs font-bold ${getConfirmationTone(
+                          item.patient_confirmation_status
+                        )}`}
+                      >
+                        {getConfirmationLabel(item.patient_confirmation_status)}
+                      </span>
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRejectingId(null);
-                        setRejectionReason("");
-                      }}
-                      className="rounded-2xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                    >
-                      Cancelar
-                    </button>
+                    <h2 className="text-3xl font-bold tracking-[-0.04em] text-slate-950">
+                      {getClinicName(item)}
+                    </h2>
+
+                    <p className="mt-2 text-slate-500">
+                      {getClinicLocation(item)}
+                    </p>
+
+                    <div className="mt-6 grid gap-3 text-sm leading-7 text-slate-700">
+                      <p>
+                        <strong>Paciente:</strong> {getPatientName(item)}
+                      </p>
+
+                      <p>
+                        <strong>CPF:</strong>{" "}
+                        {item.patient_cpf || "Não informado"}
+                      </p>
+
+                      <p>
+                        <strong>Telefone:</strong>{" "}
+                        {item.patient_phone || "Não informado"}
+                      </p>
+
+                      <p>
+                        <strong>Médico:</strong> {getDoctorName(item)} • CRM{" "}
+                        {item.doctor_crm || "N/I"}
+                        {item.doctor_crm_state
+                          ? ` / ${item.doctor_crm_state}`
+                          : ""}
+                      </p>
+
+                      <p>
+                        <strong>Solicitada em:</strong>{" "}
+                        {formatDateTime(item.created_at)}
+                      </p>
+
+                      <p>
+                        <strong>Horário sugerido:</strong>{" "}
+                        {formatDateTime(item.requested_start_at)} até{" "}
+                        {formatDateTime(item.requested_end_at)}
+                      </p>
+
+                      <p>
+                        <strong>Horário confirmado:</strong>{" "}
+                        {item.confirmed_start_at
+                          ? `${formatDateTime(
+                              item.confirmed_start_at
+                            )} até ${formatDateTime(getAppointmentEnd(item))}`
+                          : "Ainda não confirmado"}
+                      </p>
+
+                      <p>
+                        <strong>Confirmação:</strong>{" "}
+                        {getConfirmationLabel(item.patient_confirmation_status)}
+                      </p>
+
+                      {item.confirmation_deadline_at && (
+                        <p>
+                          <strong>Prazo para paciente confirmar:</strong>{" "}
+                          {formatDateTime(item.confirmation_deadline_at)}
+                        </p>
+                      )}
+
+                      {item.patient_confirmed_at && (
+                        <p>
+                          <strong>Paciente confirmou em:</strong>{" "}
+                          {formatDateTime(item.patient_confirmed_at)}
+                        </p>
+                      )}
+
+                      {item.patient_cancellation_reason && (
+                        <p>
+                          <strong>Motivo do cancelamento:</strong>{" "}
+                          {item.patient_cancellation_reason}
+                        </p>
+                      )}
+
+                      {item.reschedule_reason && (
+                        <p>
+                          <strong>Pedido de remarcação:</strong>{" "}
+                          {item.reschedule_reason}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-[220px] flex-col gap-3">
+                    {item.status === "pending" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmAppointment(item)}
+                          disabled={actionLoadingId === item.id}
+                          className="rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#213366] disabled:opacity-50"
+                        >
+                          {actionLoadingId === item.id
+                            ? "Confirmando..."
+                            : "Confirmar consulta"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCancelAppointment(item)}
+                          disabled={actionLoadingId === item.id}
+                          className="rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+
+                    {item.status === "confirmed" && (
+                      <Link
+                        href={`/medico/consultas/${item.id}`}
+                        className="rounded-2xl bg-[#6E56CF] px-6 py-4 text-center text-sm font-bold text-white transition hover:bg-[#5E4B9A]"
+                      >
+                        Abrir prontuário
+                      </Link>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setRejectingId(appointment.id)}
-                  className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
-                >
-                  Recusar
-                </button>
-              )}
-            </>
-          )}
-
-          {["confirmed", "completed"].includes(String(appointment.status || "")) && (
-            <Link
-              href={`/medico/consultas/${appointment.id}`}
-              className="rounded-2xl bg-[#594E86] px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-[#4D4278]"
-            >
-              Abrir prontuário
-            </Link>
-          )}
-        </div>
-      </div>
-    </article>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
