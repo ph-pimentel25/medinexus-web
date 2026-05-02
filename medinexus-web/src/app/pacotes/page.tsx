@@ -98,11 +98,10 @@ function getPackageCta(item: PackageRow) {
   }
 
   return {
-    href: "/medico/cadastro",
+    href: "/profissionais",
     label: "Começar como médico",
   };
 }
-
 function getPackageTag(item: PackageRow) {
   const name = item.name.toLowerCase();
 
@@ -534,7 +533,7 @@ export default function PacotesPage() {
 
           <div className="mt-7">
             <Link
-              href="/medico/cadastro"
+              href="/profissionais"
               className="inline-flex rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-black text-white transition hover:bg-[#213366]"
             >
               Começar como médico

@@ -25,6 +25,7 @@ const publicLinks: LinkItem[] = [
   { href: "/sobre", label: "Sobre" },
   { href: "/especialidades", label: "Especialidades" },
   { href: "/clinicas", label: "Clínicas" },
+  { href: "/profissionais", label: "Profissionais" },
   { href: "/pacotes", label: "Pacotes" },
   { href: "/login", label: "Entrar" },
 ];
@@ -61,6 +62,7 @@ const publicMarketingRoutes = [
   "/pacotes",
   "/especialidades",
   "/clinicas",
+  "/profissionais",
 ];
 
 function isActiveLink(pathname: string, href: string) {

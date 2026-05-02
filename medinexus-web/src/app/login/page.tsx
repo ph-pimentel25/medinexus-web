@@ -160,7 +160,7 @@ export default function LoginPage() {
                 Criar conta de paciente
               </Link>
               <Link
-                href="/medico/cadastro"
+                href="/profissionais"
                 className="text-sky-700 hover:underline"
               >
                 Criar conta de médico

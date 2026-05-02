@@ -16,7 +16,7 @@ const conversionCards = [
     subtitle: "Quero organizar meus atendimentos",
     description:
       "Receba solicitações com horário sugerido, confirme com um clique e atenda com prontuário integrado.",
-    href: "/pacotes",
+    href: "/profissionais",
     cta: "Ver solução médica",
     gradient: "from-[#EEF2FF] to-[#F6F3FF]",
     badge: "Médico",
