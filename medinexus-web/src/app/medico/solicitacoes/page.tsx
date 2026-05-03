@@ -96,66 +96,51 @@ function getStatusLabel(status?: string | null) {
 }
 
 function getStatusTone(status?: string | null) {
-  if (status === "confirmed") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (status === "pending") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
+  if (status === "confirmed") return "bg-emerald-50 text-emerald-700";
+  if (status === "pending") return "bg-amber-50 text-amber-700";
 
   if (
     status === "cancelled_by_patient" ||
     status === "cancelled_by_clinic" ||
     status === "no_show"
   ) {
-    return "border-red-200 bg-red-50 text-red-700";
+    return "bg-red-50 text-red-700";
   }
 
-  if (status === "completed") {
-    return "border-slate-200 bg-slate-100 text-slate-700";
-  }
+  if (status === "completed") return "bg-slate-100 text-slate-700";
 
-  return "border-blue-200 bg-blue-50 text-blue-700";
+  return "bg-blue-50 text-blue-700";
 }
 
 function getConfirmationLabel(status?: string | null) {
   const labels: Record<string, string> = {
     not_requested: "Sem confirmação necessária",
-    awaiting_confirmation: "Aguardando confirmação do paciente",
-    confirmed: "Paciente confirmou presença",
+    awaiting_confirmation: "Aguardando paciente",
+    confirmed: "Paciente confirmou",
     cancelled_by_patient: "Paciente cancelou",
     cancelled_by_clinic: "Cancelada pela clínica",
-    reschedule_requested: "Paciente pediu remarcação",
-    no_response: "Paciente não respondeu",
-    no_show: "Paciente não compareceu",
+    reschedule_requested: "Pedido de remarcação",
+    no_response: "Sem resposta",
+    no_show: "Não compareceu",
   };
 
   return labels[status || ""] || "Sem confirmação necessária";
 }
 
 function getConfirmationTone(status?: string | null) {
-  if (status === "confirmed") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (status === "awaiting_confirmation") {
-    return "border-blue-200 bg-blue-50 text-blue-700";
-  }
-
-  if (status === "reschedule_requested") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
+  if (status === "confirmed") return "bg-emerald-50 text-emerald-700";
+  if (status === "awaiting_confirmation") return "bg-blue-50 text-blue-700";
+  if (status === "reschedule_requested") return "bg-amber-50 text-amber-700";
 
   if (
     status === "cancelled_by_patient" ||
     status === "cancelled_by_clinic" ||
     status === "no_show"
   ) {
-    return "border-red-200 bg-red-50 text-red-700";
+    return "bg-red-50 text-red-700";
   }
 
-  return "border-slate-200 bg-slate-50 text-slate-600";
+  return "bg-slate-100 text-slate-600";
 }
 
 function getAppointmentEnd(item: AppointmentRow) {
@@ -172,10 +157,6 @@ function getPatientName(item: AppointmentRow) {
 
 function getClinicName(item: AppointmentRow) {
   return item.clinic_name || "Clínica não informada";
-}
-
-function getDoctorName(item: AppointmentRow) {
-  return item.doctor_name || "Médico não informado";
 }
 
 function getClinicLocation(item: AppointmentRow) {
@@ -261,18 +242,15 @@ export default function MedicoSolicitacoesPage() {
         [
           getClinicName(item),
           getPatientName(item),
-          getDoctorName(item),
-          getSpecialtyName(),
+          item.patient_cpf,
+          item.patient_phone,
+          item.patient_email,
           item.status,
           item.patient_confirmation_status,
-        ]
-          .filter(Boolean)
-          .join(" ")
+        ].join(" ")
       );
 
-      const matchesSearch = !query || searchable.includes(query);
-
-      return matchesFilter && matchesSearch;
+      return matchesFilter && (!query || searchable.includes(query));
     });
   }, [appointments, filter, search]);
 
@@ -288,6 +266,8 @@ export default function MedicoSolicitacoesPage() {
       patientConfirmed: appointments.filter(
         (item) => item.patient_confirmation_status === "confirmed"
       ).length,
+      completed: appointments.filter((item) => item.status === "completed")
+        .length,
     };
   }, [appointments]);
 
@@ -340,89 +320,91 @@ export default function MedicoSolicitacoesPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
-      <section className="relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <section className="border-b border-[#E8EAF4] bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+          <div>
+            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
+              Área médica
+            </span>
 
-        <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="inline-flex rounded-full border border-[#D9D6F4] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#283C7A] shadow-sm">
-                Área do médico
-              </p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Solicitações de consulta
+            </h1>
 
-              <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
-                Solicitações de consulta
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Confirme consultas, acompanhe confirmação do paciente e abra o
-                prontuário quando o atendimento estiver confirmado.
-              </p>
-            </div>
-
-            <div className="rounded-[38px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-7 text-white shadow-[0_28px_90px_-65px_rgba(40,60,122,0.9)]">
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-white/60">
-                Resumo
-              </p>
-
-              <div className="mt-6 grid gap-3">
-                <div className="rounded-[28px] bg-white/12 p-5 ring-1 ring-white/15">
-                  <p className="text-4xl font-bold">{stats.total}</p>
-                  <p className="mt-1 text-sm text-white/70">
-                    solicitações no total
-                  </p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.pending}</p>
-                    <p className="mt-1 text-xs text-white/70">pendentes</p>
-                  </div>
-
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.confirmed}</p>
-                    <p className="mt-1 text-xs text-white/70">confirmadas</p>
-                  </div>
-
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.awaitingPatient}</p>
-                    <p className="mt-1 text-xs text-white/70">
-                      aguardando paciente
-                    </p>
-                  </div>
-
-                  <div className="rounded-[24px] bg-white/12 p-4 ring-1 ring-white/15">
-                    <p className="text-2xl font-bold">{stats.patientConfirmed}</p>
-                    <p className="mt-1 text-xs text-white/70">
-                      presença confirmada
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Confirme solicitações, acompanhe presença do paciente e abra o
+              prontuário quando a consulta estiver confirmada.
+            </p>
           </div>
-        </section>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/medico/dashboard"
+              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/medico/disponibilidade"
+              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+            >
+              Disponibilidade
+            </Link>
+          </div>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
           <div className="mb-6">
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
-        <div className="rounded-[38px] border border-[#D9D6F4] bg-white p-6 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          {[
+            { label: "Total", value: stats.total, tone: "text-slate-950" },
+            { label: "Pendentes", value: stats.pending, tone: "text-[#B26B00]" },
+            { label: "Confirmadas", value: stats.confirmed, tone: "text-[#0F8A5F]" },
+            {
+              label: "Aguardando",
+              value: stats.awaitingPatient,
+              tone: "text-[#283C7A]",
+            },
+            {
+              label: "Paciente confirmou",
+              value: stats.patientConfirmed,
+              tone: "text-[#5E4B9A]",
+            },
+            { label: "Concluídas", value: stats.completed, tone: "text-slate-700" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-[#E3E8F4] bg-white p-5 shadow-sm"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {item.label}
+              </p>
+              <p className={`mt-3 text-3xl font-bold ${item.tone}`}>
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="w-full xl:max-w-xl">
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Buscar solicitação
               </label>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:bg-white"
-                placeholder="Busque por paciente, clínica, médico ou status"
+                className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                placeholder="Busque por paciente, CPF, telefone, clínica ou status"
               />
             </div>
 
@@ -441,10 +423,10 @@ export default function MedicoSolicitacoesPage() {
                   key={item.value}
                   type="button"
                   onClick={() => setFilter(item.value as FilterType)}
-                  className={`rounded-2xl px-5 py-4 text-sm font-bold transition ${
+                  className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     filter === item.value
                       ? "bg-[#283C7A] text-white"
-                      : "border border-[#D9D6F4] bg-white text-[#5E4B9A] hover:bg-[#F6F3FF]"
+                      : "border border-[#D9DDF0] bg-white text-[#5E4B9A] hover:bg-[#F8FAFF]"
                   }`}
                 >
                   {item.label}
@@ -454,36 +436,36 @@ export default function MedicoSolicitacoesPage() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white p-8 text-slate-600 shadow-sm">
-            Carregando solicitações...
-          </div>
-        ) : filteredAppointments.length === 0 ? (
-          <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white px-6 py-12 text-center shadow-sm">
-            <h2 className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
-              Nenhuma solicitação encontrada
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
-              Quando pacientes solicitarem consultas com você, elas aparecerão
-              aqui.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-6">
-            {filteredAppointments.map((item) => (
+        <div className="mt-6 grid gap-4">
+          {loading ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+              Carregando solicitações...
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-10 text-center shadow-sm">
+              <h2 className="text-xl font-bold text-slate-950">
+                Nenhuma solicitação encontrada
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Quando pacientes solicitarem consultas com você, elas aparecerão
+                aqui.
+              </p>
+            </div>
+          ) : (
+            filteredAppointments.map((item) => (
               <article
                 key={item.id}
-                className="rounded-[34px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]"
+                className="rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm"
               >
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      <span className="rounded-full border border-[#BAE6FD] bg-[#F0F9FF] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-[#0369A1]">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#283C7A]">
                         {getSpecialtyName()}
                       </span>
 
                       <span
-                        className={`rounded-full border px-4 py-1.5 text-xs font-bold ${getStatusTone(
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${getStatusTone(
                           item.status
                         )}`}
                       >
@@ -491,7 +473,7 @@ export default function MedicoSolicitacoesPage() {
                       </span>
 
                       <span
-                        className={`rounded-full border px-4 py-1.5 text-xs font-bold ${getConfirmationTone(
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${getConfirmationTone(
                           item.patient_confirmation_status
                         )}`}
                       >
@@ -499,50 +481,53 @@ export default function MedicoSolicitacoesPage() {
                       </span>
                     </div>
 
-                    <h2 className="text-3xl font-bold tracking-[-0.04em] text-slate-950">
-                      {getClinicName(item)}
-                    </h2>
+                    <h3 className="text-xl font-bold text-slate-950">
+                      {getPatientName(item)}
+                    </h3>
 
-                    <p className="mt-2 text-slate-500">
-                      {getClinicLocation(item)}
+                    <p className="mt-1 text-sm text-slate-500">
+                      {getClinicName(item)} • {getClinicLocation(item)}
                     </p>
 
-                    <div className="mt-6 grid gap-3 text-sm leading-7 text-slate-700">
+                    <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                       <p>
-                        <strong>Paciente:</strong> {getPatientName(item)}
-                      </p>
-
-                      <p>
-                        <strong>CPF:</strong>{" "}
+                        <strong className="text-slate-800">CPF:</strong>{" "}
                         {item.patient_cpf || "Não informado"}
                       </p>
 
                       <p>
-                        <strong>Telefone:</strong>{" "}
+                        <strong className="text-slate-800">Telefone:</strong>{" "}
                         {item.patient_phone || "Não informado"}
                       </p>
 
                       <p>
-                        <strong>Médico:</strong> {getDoctorName(item)} • CRM{" "}
-                        {item.doctor_crm || "N/I"}
-                        {item.doctor_crm_state
-                          ? ` / ${item.doctor_crm_state}`
-                          : ""}
+                        <strong className="text-slate-800">E-mail:</strong>{" "}
+                        {item.patient_email || "Não informado"}
                       </p>
 
                       <p>
-                        <strong>Solicitada em:</strong>{" "}
+                        <strong className="text-slate-800">Plano:</strong>{" "}
+                        {item.patient_health_plan_operator ||
+                          item.patient_health_plan_product_name ||
+                          "Não informado"}
+                      </p>
+
+                      <p>
+                        <strong className="text-slate-800">Solicitada em:</strong>{" "}
                         {formatDateTime(item.created_at)}
                       </p>
 
                       <p>
-                        <strong>Horário sugerido:</strong>{" "}
-                        {formatDateTime(item.requested_start_at)} até{" "}
-                        {formatDateTime(item.requested_end_at)}
+                        <strong className="text-slate-800">
+                          Horário sugerido:
+                        </strong>{" "}
+                        {formatDateTime(item.requested_start_at)}
                       </p>
 
                       <p>
-                        <strong>Horário confirmado:</strong>{" "}
+                        <strong className="text-slate-800">
+                          Horário confirmado:
+                        </strong>{" "}
                         {item.confirmed_start_at
                           ? `${formatDateTime(
                               item.confirmed_start_at
@@ -551,48 +536,34 @@ export default function MedicoSolicitacoesPage() {
                       </p>
 
                       <p>
-                        <strong>Confirmação:</strong>{" "}
+                        <strong className="text-slate-800">Confirmação:</strong>{" "}
                         {getConfirmationLabel(item.patient_confirmation_status)}
                       </p>
-
-                      {item.confirmation_deadline_at && (
-                        <p>
-                          <strong>Prazo para paciente confirmar:</strong>{" "}
-                          {formatDateTime(item.confirmation_deadline_at)}
-                        </p>
-                      )}
-
-                      {item.patient_confirmed_at && (
-                        <p>
-                          <strong>Paciente confirmou em:</strong>{" "}
-                          {formatDateTime(item.patient_confirmed_at)}
-                        </p>
-                      )}
-
-                      {item.patient_cancellation_reason && (
-                        <p>
-                          <strong>Motivo do cancelamento:</strong>{" "}
-                          {item.patient_cancellation_reason}
-                        </p>
-                      )}
-
-                      {item.reschedule_reason && (
-                        <p>
-                          <strong>Pedido de remarcação:</strong>{" "}
-                          {item.reschedule_reason}
-                        </p>
-                      )}
                     </div>
+
+                    {item.reschedule_reason && (
+                      <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
+                        <strong>Pedido de remarcação:</strong>{" "}
+                        {item.reschedule_reason}
+                      </div>
+                    )}
+
+                    {item.patient_cancellation_reason && (
+                      <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+                        <strong>Motivo do cancelamento:</strong>{" "}
+                        {item.patient_cancellation_reason}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex min-w-[220px] flex-col gap-3">
+                  <div className="flex shrink-0 flex-wrap gap-2 lg:max-w-[240px]">
                     {item.status === "pending" && (
                       <>
                         <button
                           type="button"
                           onClick={() => handleConfirmAppointment(item)}
                           disabled={actionLoadingId === item.id}
-                          className="rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#213366] disabled:opacity-50"
+                          className="w-full rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E] disabled:opacity-50"
                         >
                           {actionLoadingId === item.id
                             ? "Confirmando..."
@@ -603,7 +574,7 @@ export default function MedicoSolicitacoesPage() {
                           type="button"
                           onClick={() => handleCancelAppointment(item)}
                           disabled={actionLoadingId === item.id}
-                          className="rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                          className="w-full rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
                         >
                           Cancelar
                         </button>
@@ -613,17 +584,24 @@ export default function MedicoSolicitacoesPage() {
                     {item.status === "confirmed" && (
                       <Link
                         href={`/medico/consultas/${item.id}`}
-                        className="rounded-2xl bg-[#6E56CF] px-6 py-4 text-center text-sm font-bold text-white transition hover:bg-[#5E4B9A]"
+                        className="w-full rounded-2xl bg-[#6E56CF] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#5E4B9A]"
                       >
                         Abrir prontuário
                       </Link>
                     )}
+
+                    <Link
+                      href="/medico/dashboard"
+                      className="w-full rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-center text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                    >
+                      Voltar ao painel
+                    </Link>
                   </div>
                 </div>
               </article>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </section>
     </main>
   );
