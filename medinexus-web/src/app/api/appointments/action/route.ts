@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 type TokenRow = {
@@ -150,3 +150,5 @@ export async function GET(request: NextRequest) {
     `${baseUrl}/solicitacoes?appointmentAction=email-cancelled`
   );
 }
+
+

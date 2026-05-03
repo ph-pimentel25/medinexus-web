@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -30,14 +30,14 @@ const STORAGE_BUCKET = "clinic-branding";
 
 const IMAGE_RULES = {
   logo: {
-    label: "Logo da clínica",
+    label: "Logo da clÃ­nica",
     maxBytes: 2 * 1024 * 1024,
     minWidth: 300,
     minHeight: 300,
     idealText: "Ideal: 800 x 800 px",
-    ratioText: "Proporção recomendada: 1:1",
+    ratioText: "ProporÃ§Ã£o recomendada: 1:1",
     helpText:
-      "PNG, JPG ou WEBP • máximo 2 MB • mínimo recomendado 300 x 300 px",
+      "PNG, JPG ou WEBP â€¢ mÃ¡ximo 2 MB â€¢ mÃ­nimo recomendado 300 x 300 px",
   },
   cover: {
     label: "Imagem de capa",
@@ -45,9 +45,9 @@ const IMAGE_RULES = {
     minWidth: 1200,
     minHeight: 600,
     idealText: "Ideal: 1600 x 900 px",
-    ratioText: "Proporção recomendada: 16:9",
+    ratioText: "ProporÃ§Ã£o recomendada: 16:9",
     helpText:
-      "PNG, JPG ou WEBP • máximo 4 MB • mínimo recomendado 1200 x 600 px",
+      "PNG, JPG ou WEBP â€¢ mÃ¡ximo 4 MB â€¢ mÃ­nimo recomendado 1200 x 600 px",
   },
 } as const;
 
@@ -87,7 +87,7 @@ async function getImageDimensions(file: File) {
         };
 
         img.onerror = () =>
-          reject(new Error("Não foi possível ler a imagem."));
+          reject(new Error("NÃ£o foi possÃ­vel ler a imagem."));
         img.src = objectUrl;
       }
     );
@@ -106,7 +106,7 @@ async function validateImageFile(file: File, kind: UploadKind) {
   }
 
   if (file.size > rules.maxBytes) {
-    return `O arquivo excede o tamanho máximo de ${Math.round(
+    return `O arquivo excede o tamanho mÃ¡ximo de ${Math.round(
       rules.maxBytes / (1024 * 1024)
     )} MB.`;
   }
@@ -114,7 +114,7 @@ async function validateImageFile(file: File, kind: UploadKind) {
   const { width, height } = await getImageDimensions(file);
 
   if (width < rules.minWidth || height < rules.minHeight) {
-    return `A imagem é muito pequena. Mínimo recomendado: ${rules.minWidth} x ${rules.minHeight} px.`;
+    return `A imagem Ã© muito pequena. MÃ­nimo recomendado: ${rules.minWidth} x ${rules.minHeight} px.`;
   }
 
   return null;
@@ -193,7 +193,7 @@ export default function ClinicaPublicoPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado.");
+      setMessage("VocÃª precisa estar logado.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -210,7 +210,7 @@ export default function ClinicaPublicoPage() {
       !member ||
       !["owner", "admin"].includes(member.member_role)
     ) {
-      setMessage("Você não possui permissão para editar a página pública.");
+      setMessage("VocÃª nÃ£o possui permissÃ£o para editar a pÃ¡gina pÃºblica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -239,7 +239,7 @@ export default function ClinicaPublicoPage() {
       .single();
 
     if (clinicError || !clinic) {
-      setMessage("Não foi possível carregar a página pública da clínica.");
+      setMessage("NÃ£o foi possÃ­vel carregar a pÃ¡gina pÃºblica da clÃ­nica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -329,7 +329,7 @@ export default function ClinicaPublicoPage() {
     if (!file) return;
 
     if (!clinicId) {
-      setMessage("Clínica não encontrada.");
+      setMessage("ClÃ­nica nÃ£o encontrada.");
       setMessageType("error");
       return;
     }
@@ -394,7 +394,7 @@ export default function ClinicaPublicoPage() {
       setUploadState({
         kind,
         progress: 85,
-        label: "Salvando imagem na clínica...",
+        label: "Salvando imagem na clÃ­nica...",
       });
 
       try {
@@ -429,7 +429,7 @@ export default function ClinicaPublicoPage() {
       setUploadState({
         kind,
         progress: 100,
-        label: "Upload concluído.",
+        label: "Upload concluÃ­do.",
       });
 
       clearPreview(kind);
@@ -440,7 +440,7 @@ export default function ClinicaPublicoPage() {
       setMessageType("success");
     } catch (error: any) {
       setMessage(
-        error?.message || "Não foi possível processar a imagem enviada."
+        error?.message || "NÃ£o foi possÃ­vel processar a imagem enviada."
       );
       setMessageType("error");
     } finally {
@@ -452,7 +452,7 @@ export default function ClinicaPublicoPage() {
 
   async function handleRemoveImage(kind: UploadKind) {
     if (!clinicId) {
-      setMessage("Clínica não encontrada.");
+      setMessage("ClÃ­nica nÃ£o encontrada.");
       setMessageType("error");
       return;
     }
@@ -504,7 +504,7 @@ export default function ClinicaPublicoPage() {
       );
       setMessageType("success");
     } catch (error: any) {
-      setMessage(error?.message || "Não foi possível remover a imagem.");
+      setMessage(error?.message || "NÃ£o foi possÃ­vel remover a imagem.");
       setMessageType("error");
     } finally {
       setTimeout(() => {
@@ -519,7 +519,7 @@ export default function ClinicaPublicoPage() {
     setMessage("");
 
     if (!clinicId) {
-      setMessage("Clínica não encontrada.");
+      setMessage("ClÃ­nica nÃ£o encontrada.");
       setMessageType("error");
       setSaving(false);
       return;
@@ -541,13 +541,13 @@ export default function ClinicaPublicoPage() {
       .eq("id", clinicId);
 
     if (error) {
-      setMessage(`Erro ao salvar página pública: ${error.message}`);
+      setMessage(`Erro ao salvar pÃ¡gina pÃºblica: ${error.message}`);
       setMessageType("error");
       setSaving(false);
       return;
     }
 
-    setMessage("Página pública atualizada com sucesso.");
+    setMessage("PÃ¡gina pÃºblica atualizada com sucesso.");
     setMessageType("success");
     setSaving(false);
   }
@@ -558,7 +558,7 @@ export default function ClinicaPublicoPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando página pública...</p>
+        <p className="text-slate-600">Carregando pÃ¡gina pÃºblica...</p>
       </main>
     );
   }
@@ -569,13 +569,13 @@ export default function ClinicaPublicoPage() {
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-              Página pública da clínica
+              PÃ¡gina pÃºblica da clÃ­nica
             </p>
             <h1 className="mt-3 app-section-title">
-              Personalize a vitrine da sua clínica
+              Personalize a vitrine da sua clÃ­nica
             </h1>
             <p className="app-section-subtitle">
-              Edite textos, imagens e destaques que aparecem no diretório público.
+              Edite textos, imagens e destaques que aparecem no diretÃ³rio pÃºblico.
             </p>
           </div>
 
@@ -591,7 +591,7 @@ export default function ClinicaPublicoPage() {
                 href={`/clinicas/${clinicId}`}
                 className="app-button-primary text-center"
               >
-                Ver página pública
+                Ver pÃ¡gina pÃºblica
               </Link>
             )}
           </div>
@@ -608,12 +608,12 @@ export default function ClinicaPublicoPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-900">
-                  {uploadState.label || "Salvando alterações..."}
+                  {uploadState.label || "Salvando alteraÃ§Ãµes..."}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   {uploadState.kind
                     ? `Processando ${uploadState.kind === "logo" ? "logo" : "capa"}`
-                    : "Atualizando conteúdo da página pública"}
+                    : "Atualizando conteÃºdo da pÃ¡gina pÃºblica"}
                 </p>
               </div>
 
@@ -639,13 +639,13 @@ export default function ClinicaPublicoPage() {
             <div className="grid gap-8 lg:grid-cols-2">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <h2 className="text-xl font-semibold text-slate-900">
-                  Logo da clínica
+                  Logo da clÃ­nica
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
                   {IMAGE_RULES.logo.helpText}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {IMAGE_RULES.logo.idealText} • {IMAGE_RULES.logo.ratioText}
+                  {IMAGE_RULES.logo.idealText} â€¢ {IMAGE_RULES.logo.ratioText}
                 </p>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-4">
@@ -699,7 +699,7 @@ export default function ClinicaPublicoPage() {
                   {IMAGE_RULES.cover.helpText}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {IMAGE_RULES.cover.idealText} • {IMAGE_RULES.cover.ratioText}
+                  {IMAGE_RULES.cover.idealText} â€¢ {IMAGE_RULES.cover.ratioText}
                 </p>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-2">
@@ -751,7 +751,7 @@ export default function ClinicaPublicoPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Nome da clínica
+                  Nome da clÃ­nica
                 </label>
                 <input
                   name="trade_name"
@@ -763,7 +763,7 @@ export default function ClinicaPublicoPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Slug público
+                  Slug pÃºblico
                 </label>
                 <input
                   name="public_slug"
@@ -777,7 +777,7 @@ export default function ClinicaPublicoPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Título principal
+                TÃ­tulo principal
               </label>
               <input
                 name="hero_title"
@@ -790,27 +790,27 @@ export default function ClinicaPublicoPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Subtítulo principal
+                SubtÃ­tulo principal
               </label>
               <textarea
                 name="hero_subtitle"
                 value={form.hero_subtitle}
                 onChange={handleChange}
                 className="app-textarea"
-                placeholder="Descreva em poucas linhas a proposta da clínica"
+                placeholder="Descreva em poucas linhas a proposta da clÃ­nica"
               />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Descrição institucional
+                DescriÃ§Ã£o institucional
               </label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 className="app-textarea"
-                placeholder="Conte mais sobre a clínica, diferenciais, estrutura e posicionamento"
+                placeholder="Conte mais sobre a clÃ­nica, diferenciais, estrutura e posicionamento"
               />
             </div>
 
@@ -863,7 +863,7 @@ export default function ClinicaPublicoPage() {
                   value={form.public_highlight_3}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="Ex: Convênios parceiros"
+                  placeholder="Ex: ConvÃªnios parceiros"
                 />
               </div>
             </div>
@@ -873,7 +873,7 @@ export default function ClinicaPublicoPage() {
               disabled={saving || uploadState.kind !== null}
               className="app-button-primary"
             >
-              {saving ? "Salvando..." : "Salvar página pública"}
+              {saving ? "Salvando..." : "Salvar pÃ¡gina pÃºblica"}
             </button>
           </form>
         </div>
@@ -881,3 +881,5 @@ export default function ClinicaPublicoPage() {
     </main>
   );
 }
+
+

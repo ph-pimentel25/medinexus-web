@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -29,7 +29,7 @@ type ClinicRow = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -38,7 +38,7 @@ function formatDate(value?: string | null) {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
+  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
 }
 
 function getClinicLocation(clinic: ClinicRow | null) {
@@ -48,7 +48,7 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
 }
 
 export default function MedicoPerfilPage() {
@@ -82,7 +82,7 @@ export default function MedicoPerfilPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado como médico.");
+      setMessage("VocÃª precisa estar logado como mÃ©dico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -95,14 +95,14 @@ export default function MedicoPerfilPage() {
       .maybeSingle();
 
     if (doctorError) {
-      setMessage(`Erro ao carregar perfil médico: ${doctorError.message}`);
+      setMessage(`Erro ao carregar perfil mÃ©dico: ${doctorError.message}`);
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (!doctorData?.id) {
-      setMessage("Nenhum cadastro médico encontrado para este usuário.");
+      setMessage("Nenhum cadastro mÃ©dico encontrado para este usuÃ¡rio.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -138,7 +138,7 @@ export default function MedicoPerfilPage() {
     event.preventDefault();
 
     if (!doctor?.id) {
-      setMessage("Cadastro médico não encontrado.");
+      setMessage("Cadastro mÃ©dico nÃ£o encontrado.");
       setMessageType("error");
       return;
     }
@@ -182,7 +182,7 @@ export default function MedicoPerfilPage() {
       return;
     }
 
-    setMessage("Perfil médico atualizado com sucesso.");
+    setMessage("Perfil mÃ©dico atualizado com sucesso.");
     setMessageType("success");
     await loadProfile();
     setSaving(false);
@@ -195,12 +195,12 @@ export default function MedicoPerfilPage() {
   }, [name, crm, crmState, bio]);
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <section className="border-b border-[#E8EAF4] bg-white">
+    <main className="min-h-screen bg-[#FAF6F3]">
+      <section className="border-b border-[#E7DDD7] bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
-              Perfil médico
+            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
+              Perfil mÃ©dico
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -208,7 +208,7 @@ export default function MedicoPerfilPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Atualize seu nome profissional, CRM, bio e status de exibição na
+              Atualize seu nome profissional, CRM, bio e status de exibiÃ§Ã£o na
               plataforma.
             </p>
           </div>
@@ -216,16 +216,16 @@ export default function MedicoPerfilPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/medico/dashboard"
-              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
             >
               Dashboard
             </Link>
 
             <Link
               href="/medico/solicitacoes"
-              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              Solicitações
+              SolicitaÃ§Ãµes
             </Link>
           </div>
         </div>
@@ -239,15 +239,15 @@ export default function MedicoPerfilPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando perfil médico...
+          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+            Carregando perfil mÃ©dico...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.2fr]">
             <aside className="space-y-6">
-              <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#283C7A] to-[#6E56CF] text-xl font-bold text-white">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#164957] to-[#5A4C86] text-xl font-bold text-white">
                     {name ? name.slice(0, 2).toUpperCase() : "MD"}
                   </div>
 
@@ -277,21 +277,21 @@ export default function MedicoPerfilPage() {
                     <p className="text-sm font-semibold text-slate-700">
                       Completude do perfil
                     </p>
-                    <p className="text-sm font-bold text-[#283C7A]">
+                    <p className="text-sm font-bold text-[#164957]">
                       {completion}%
                     </p>
                   </div>
 
                   <div className="mt-3 h-3 overflow-hidden rounded-full bg-white">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#283C7A] to-[#6E56CF]"
+                      className="h-full rounded-full bg-gradient-to-r from-[#164957] to-[#5A4C86]"
                       style={{ width: `${completion}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-6 grid gap-3">
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Cadastro criado em
                     </p>
@@ -300,9 +300,9 @@ export default function MedicoPerfilPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Clínica vinculada
+                      ClÃ­nica vinculada
                     </p>
                     <p className="mt-1 text-sm font-bold text-slate-950">
                       {getClinicName(clinic)}
@@ -314,7 +314,7 @@ export default function MedicoPerfilPage() {
                 </div>
               </section>
 
-              <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-950">
                   Atalhos
                 </h2>
@@ -322,35 +322,35 @@ export default function MedicoPerfilPage() {
                 <div className="mt-5 grid gap-3">
                   <Link
                     href="/medico/dashboard"
-                    className="rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
                     Abrir dashboard
                   </Link>
 
                   <Link
                     href="/medico/disponibilidade"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Editar disponibilidade
                   </Link>
 
                   <Link
                     href="/medico/solicitacoes"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Ver solicitações
+                    Ver solicitaÃ§Ãµes
                   </Link>
                 </div>
               </section>
             </aside>
 
-            <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+            <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Editar informações
+                Editar informaÃ§Ãµes
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Esses dados aparecem para pacientes e clínicas dentro da
+                Esses dados aparecem para pacientes e clÃ­nicas dentro da
                 plataforma.
               </p>
 
@@ -363,7 +363,7 @@ export default function MedicoPerfilPage() {
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="Ex.: Dra. Ana Souza"
-                    className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                    className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                   />
                 </div>
 
@@ -376,7 +376,7 @@ export default function MedicoPerfilPage() {
                       value={crm}
                       onChange={(event) => setCrm(event.target.value)}
                       placeholder="Ex.: 123456"
-                      className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                     />
                   </div>
 
@@ -389,7 +389,7 @@ export default function MedicoPerfilPage() {
                       onChange={(event) => setCrmState(event.target.value)}
                       placeholder="Ex.: RJ"
                       maxLength={2}
-                      className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm uppercase text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm uppercase text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                     />
                   </div>
                 </div>
@@ -401,13 +401,13 @@ export default function MedicoPerfilPage() {
                   <textarea
                     value={bio}
                     onChange={(event) => setBio(event.target.value)}
-                    placeholder="Descreva sua atuação, experiência, abordagem e informações úteis para pacientes."
+                    placeholder="Descreva sua atuaÃ§Ã£o, experiÃªncia, abordagem e informaÃ§Ãµes Ãºteis para pacientes."
                     rows={7}
-                    className="w-full resize-none rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                    className="w-full resize-none rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                   />
                 </div>
 
-                <div className="rounded-2xl border border-[#E3E8F4] bg-[#FBFCFF] p-4">
+                <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-bold text-slate-950">
@@ -415,7 +415,7 @@ export default function MedicoPerfilPage() {
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
                         Quando ativo, seu perfil pode aparecer para pacientes e
-                        clínicas.
+                        clÃ­nicas.
                       </p>
                     </div>
 
@@ -433,18 +433,18 @@ export default function MedicoPerfilPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3 border-t border-[#EEF1FA] pt-5">
+                <div className="flex flex-wrap gap-3 border-t border-[#E7DDD7] pt-5">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-2xl bg-[#283C7A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E] disabled:opacity-50"
+                    className="rounded-2xl bg-[#164957] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
                   >
                     {saving ? "Salvando..." : "Salvar perfil"}
                   </button>
 
                   <Link
                     href="/medico/dashboard"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-6 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-6 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Cancelar
                   </Link>
@@ -457,3 +457,5 @@ export default function MedicoPerfilPage() {
     </main>
   );
 }
+
+

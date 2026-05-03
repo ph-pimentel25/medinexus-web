@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -37,7 +37,7 @@ export default function LoginPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Sessão não encontrada após o login.");
+      setMessage("SessÃ£o nÃ£o encontrada apÃ³s o login.");
       setSubmitting(false);
       return;
     }
@@ -49,7 +49,7 @@ export default function LoginPage() {
       .single<{ role: ProfileRole }>();
 
     if (profileError || !profile) {
-      setMessage("Não foi possível identificar o perfil do usuário.");
+      setMessage("NÃ£o foi possÃ­vel identificar o perfil do usuÃ¡rio.");
       setSubmitting(false);
       return;
     }
@@ -77,13 +77,13 @@ export default function LoginPage() {
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              Pacientes, médicos e clínicas acessam áreas diferentes conforme o
+              Pacientes, mÃ©dicos e clÃ­nicas acessam Ã¡reas diferentes conforme o
               perfil da conta.
             </p>
 
             <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
-                Acessos disponíveis
+                Acessos disponÃ­veis
               </p>
 
               <div className="mt-4 grid gap-3">
@@ -91,10 +91,10 @@ export default function LoginPage() {
                   Paciente: busca e acompanhamento de consultas
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Médico: solicitações e disponibilidade
+                  MÃ©dico: solicitaÃ§Ãµes e disponibilidade
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Clínica: planos, médicos e painel operacional
+                  ClÃ­nica: planos, mÃ©dicos e painel operacional
                 </div>
               </div>
             </div>
@@ -106,13 +106,13 @@ export default function LoginPage() {
                 href="/"
                 className="text-sm font-medium text-sky-700 hover:underline"
               >
-                ← Voltar para a página inicial
+                â† Voltar para a pÃ¡gina inicial
               </Link>
             </div>
 
             <h2 className="text-3xl font-bold text-slate-900">Entrar</h2>
             <p className="mt-2 text-slate-600">
-              Use seu e-mail e senha para acessar sua área.
+              Use seu e-mail e senha para acessar sua Ã¡rea.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -163,10 +163,10 @@ export default function LoginPage() {
                 href="/profissionais"
                 className="text-sky-700 hover:underline"
               >
-                Criar conta de médico
+                Criar conta de mÃ©dico
               </Link>
               <Link href="/sobre" className="text-sky-700 hover:underline">
-                Conheça a MediNexus
+                ConheÃ§a a MediNexus
               </Link>
             </div>
           </div>
@@ -175,3 +175,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+

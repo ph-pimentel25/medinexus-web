@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 type ReminderAppointment = {
@@ -37,7 +37,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) return "Ainda não definido";
+  if (!value) return "Ainda nÃ£o definido";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -69,7 +69,7 @@ async function sendResendEmail({
   const from = process.env.RESEND_FROM_EMAIL;
 
   if (!apiKey || !from) {
-    throw new Error("RESEND_API_KEY ou RESEND_FROM_EMAIL não configurado.");
+    throw new Error("RESEND_API_KEY ou RESEND_FROM_EMAIL nÃ£o configurado.");
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -105,23 +105,23 @@ function buildReminderEmailHtml(params: {
 }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#303B41;">
-      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Confirmação de consulta — MediNexus</h1>
-      <p>Olá, <strong>${escapeHtml(params.patientName)}</strong>.</p>
-      <p>Você tem uma consulta confirmada e precisa confirmar sua presença com antecedência.</p>
+      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">ConfirmaÃ§Ã£o de consulta â€” MediNexus</h1>
+      <p>OlÃ¡, <strong>${escapeHtml(params.patientName)}</strong>.</p>
+      <p>VocÃª tem uma consulta confirmada e precisa confirmar sua presenÃ§a com antecedÃªncia.</p>
 
       <div style="border:1px solid #E2E8F0;border-radius:16px;padding:16px;margin:20px 0;background:#F8F4F2;">
-        <p><strong>Clínica:</strong> ${escapeHtml(params.clinicName)}</p>
-        <p><strong>Médico:</strong> ${escapeHtml(params.doctorName)}</p>
+        <p><strong>ClÃ­nica:</strong> ${escapeHtml(params.clinicName)}</p>
+        <p><strong>MÃ©dico:</strong> ${escapeHtml(params.doctorName)}</p>
         <p><strong>Especialidade:</strong> ${escapeHtml(params.specialtyName)}</p>
         <p><strong>Consulta:</strong> ${escapeHtml(formatDateTime(params.confirmedStartAt))}</p>
         <p><strong>Prazo para resposta:</strong> ${escapeHtml(formatDateTime(params.deadlineAt))}</p>
       </div>
 
-      <p>Escolha uma das opções abaixo:</p>
+      <p>Escolha uma das opÃ§Ãµes abaixo:</p>
 
       <div style="margin:24px 0;">
         <a href="${params.confirmUrl}" style="display:inline-block;padding:12px 18px;border-radius:12px;background:#1B4B58;color:#ffffff;text-decoration:none;font-weight:700;margin-right:12px;">
-          Confirmar presença
+          Confirmar presenÃ§a
         </a>
         <a href="${params.cancelUrl}" style="display:inline-block;padding:12px 18px;border-radius:12px;background:#B91C1C;color:#ffffff;text-decoration:none;font-weight:700;">
           Cancelar consulta
@@ -129,7 +129,7 @@ function buildReminderEmailHtml(params: {
       </div>
 
       <p style="font-size:14px;color:#64748B;">
-        Se você não confirmar dentro do prazo, o horário será liberado para outro paciente.
+        Se vocÃª nÃ£o confirmar dentro do prazo, o horÃ¡rio serÃ¡ liberado para outro paciente.
       </p>
     </div>
   `;
@@ -146,16 +146,16 @@ function buildReminderEmailText(params: {
   cancelUrl: string;
 }) {
   return [
-    `Olá, ${params.patientName}.`,
+    `OlÃ¡, ${params.patientName}.`,
     ``,
-    `Você precisa confirmar sua consulta.`,
-    `Clínica: ${params.clinicName}`,
-    `Médico: ${params.doctorName}`,
+    `VocÃª precisa confirmar sua consulta.`,
+    `ClÃ­nica: ${params.clinicName}`,
+    `MÃ©dico: ${params.doctorName}`,
     `Especialidade: ${params.specialtyName}`,
     `Consulta: ${formatDateTime(params.confirmedStartAt)}`,
     `Prazo para resposta: ${formatDateTime(params.deadlineAt)}`,
     ``,
-    `Confirmar presença: ${params.confirmUrl}`,
+    `Confirmar presenÃ§a: ${params.confirmUrl}`,
     `Cancelar consulta: ${params.cancelUrl}`,
   ].join("\n");
 }
@@ -168,18 +168,18 @@ function buildExpiredEmailHtml(params: {
 }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#303B41;">
-      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Consulta liberada — MediNexus</h1>
-      <p>Olá, <strong>${escapeHtml(params.patientName)}</strong>.</p>
-      <p>Como sua presença não foi confirmada no prazo, a consulta abaixo foi liberada para outro paciente.</p>
+      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Consulta liberada â€” MediNexus</h1>
+      <p>OlÃ¡, <strong>${escapeHtml(params.patientName)}</strong>.</p>
+      <p>Como sua presenÃ§a nÃ£o foi confirmada no prazo, a consulta abaixo foi liberada para outro paciente.</p>
 
       <div style="border:1px solid #E2E8F0;border-radius:16px;padding:16px;margin:20px 0;background:#F8F4F2;">
-        <p><strong>Clínica:</strong> ${escapeHtml(params.clinicName)}</p>
-        <p><strong>Médico:</strong> ${escapeHtml(params.doctorName)}</p>
+        <p><strong>ClÃ­nica:</strong> ${escapeHtml(params.clinicName)}</p>
+        <p><strong>MÃ©dico:</strong> ${escapeHtml(params.doctorName)}</p>
         <p><strong>Consulta:</strong> ${escapeHtml(formatDateTime(params.confirmedStartAt))}</p>
       </div>
 
       <p style="font-size:14px;color:#64748B;">
-        Você pode voltar à MediNexus e fazer uma nova solicitação de consulta.
+        VocÃª pode voltar Ã  MediNexus e fazer uma nova solicitaÃ§Ã£o de consulta.
       </p>
     </div>
   `;
@@ -192,11 +192,11 @@ function buildExpiredEmailText(params: {
   confirmedStartAt: string | null;
 }) {
   return [
-    `Olá, ${params.patientName}.`,
+    `OlÃ¡, ${params.patientName}.`,
     ``,
-    `Como sua presença não foi confirmada no prazo, a consulta abaixo foi liberada para outro paciente.`,
-    `Clínica: ${params.clinicName}`,
-    `Médico: ${params.doctorName}`,
+    `Como sua presenÃ§a nÃ£o foi confirmada no prazo, a consulta abaixo foi liberada para outro paciente.`,
+    `ClÃ­nica: ${params.clinicName}`,
+    `MÃ©dico: ${params.doctorName}`,
     `Consulta: ${formatDateTime(params.confirmedStartAt)}`,
   ].join("\n");
 }
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
   let expiredCount = 0;
   const errors: string[] = [];
 
-  // 1) Expira consultas não confirmadas no prazo
+  // 1) Expira consultas nÃ£o confirmadas no prazo
   const { data: expiredAppointments, error: expireError } = await admin
     .from("appointments")
     .update({
@@ -293,8 +293,8 @@ export async function GET(request: NextRequest) {
         kind: "expired",
         status: profile?.email ? "sent" : "skipped",
         detail: profile?.email
-          ? "Expiração processada."
-          : "Paciente sem e-mail para aviso de expiração.",
+          ? "ExpiraÃ§Ã£o processada."
+          : "Paciente sem e-mail para aviso de expiraÃ§Ã£o.",
       });
 
       if (!profile?.email) continue;
@@ -302,17 +302,17 @@ export async function GET(request: NextRequest) {
       try {
         await sendResendEmail({
           to: profile.email,
-          subject: "Consulta liberada por falta de confirmação",
+          subject: "Consulta liberada por falta de confirmaÃ§Ã£o",
           html: buildExpiredEmailHtml({
             patientName: profile.full_name || "Paciente",
-            clinicName: clinic?.trade_name || "Clínica",
-            doctorName: doctor?.name || "Médico",
+            clinicName: clinic?.trade_name || "ClÃ­nica",
+            doctorName: doctor?.name || "MÃ©dico",
             confirmedStartAt: appointment.confirmed_start_at,
           }),
           text: buildExpiredEmailText({
             patientName: profile.full_name || "Paciente",
-            clinicName: clinic?.trade_name || "Clínica",
-            doctorName: doctor?.name || "Médico",
+            clinicName: clinic?.trade_name || "ClÃ­nica",
+            doctorName: doctor?.name || "MÃ©dico",
             confirmedStartAt: appointment.confirmed_start_at,
           }),
         });
@@ -425,8 +425,8 @@ export async function GET(request: NextRequest) {
           subject: "Confirme sua consulta na MediNexus",
           html: buildReminderEmailHtml({
             patientName: profile.full_name || "Paciente",
-            clinicName: clinic?.trade_name || "Clínica",
-            doctorName: doctor?.name || "Médico",
+            clinicName: clinic?.trade_name || "ClÃ­nica",
+            doctorName: doctor?.name || "MÃ©dico",
             specialtyName: specialty?.name || "Especialidade",
             confirmedStartAt: appointment.confirmed_start_at,
             deadlineAt: appointment.patient_confirmation_deadline_at,
@@ -435,8 +435,8 @@ export async function GET(request: NextRequest) {
           }),
           text: buildReminderEmailText({
             patientName: profile.full_name || "Paciente",
-            clinicName: clinic?.trade_name || "Clínica",
-            doctorName: doctor?.name || "Médico",
+            clinicName: clinic?.trade_name || "ClÃ­nica",
+            doctorName: doctor?.name || "MÃ©dico",
             specialtyName: specialty?.name || "Especialidade",
             confirmedStartAt: appointment.confirmed_start_at,
             deadlineAt: appointment.patient_confirmation_deadline_at,
@@ -457,7 +457,7 @@ export async function GET(request: NextRequest) {
           channel: "email",
           kind: "confirmation_required",
           status: "sent",
-          detail: "Lembrete enviado com links de ação.",
+          detail: "Lembrete enviado com links de aÃ§Ã£o.",
         });
 
         remindersSent += 1;
@@ -482,3 +482,5 @@ export async function GET(request: NextRequest) {
     errors,
   });
 }
+
+

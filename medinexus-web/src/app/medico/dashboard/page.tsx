@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -80,7 +80,7 @@ function getFirstName(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -93,11 +93,11 @@ function getAppointmentDate(item: AppointmentRow) {
 }
 
 function getPatientName(item: AppointmentRow) {
-  return item.patient_name || "Paciente não informado";
+  return item.patient_name || "Paciente nÃ£o informado";
 }
 
 function getClinicName(item: AppointmentRow) {
-  return item.clinic_name || "Clínica não informada";
+  return item.clinic_name || "ClÃ­nica nÃ£o informada";
 }
 
 function getClinicLocation(item: AppointmentRow) {
@@ -107,7 +107,7 @@ function getClinicLocation(item: AppointmentRow) {
     item.clinic_state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
 }
 
 function getStatusLabel(status?: string | null) {
@@ -115,27 +115,27 @@ function getStatusLabel(status?: string | null) {
     pending: "Pendente",
     confirmed: "Confirmada",
     cancelled_by_patient: "Cancelada pelo paciente",
-    cancelled_by_clinic: "Cancelada pela clínica",
-    completed: "Concluída",
-    no_show: "Não compareceu",
+    cancelled_by_clinic: "Cancelada pela clÃ­nica",
+    completed: "ConcluÃ­da",
+    no_show: "NÃ£o compareceu",
   };
 
-  return labels[status || ""] || status || "Status não informado";
+  return labels[status || ""] || status || "Status nÃ£o informado";
 }
 
 function getConfirmationLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    not_requested: "Sem confirmação necessária",
+    not_requested: "Sem confirmaÃ§Ã£o necessÃ¡ria",
     awaiting_confirmation: "Aguardando paciente",
     confirmed: "Paciente confirmou",
     cancelled_by_patient: "Paciente cancelou",
-    cancelled_by_clinic: "Cancelada pela clínica",
-    reschedule_requested: "Pedido de remarcação",
+    cancelled_by_clinic: "Cancelada pela clÃ­nica",
+    reschedule_requested: "Pedido de remarcaÃ§Ã£o",
     no_response: "Sem resposta",
-    no_show: "Não compareceu",
+    no_show: "NÃ£o compareceu",
   };
 
-  return labels[status || ""] || "Sem confirmação necessária";
+  return labels[status || ""] || "Sem confirmaÃ§Ã£o necessÃ¡ria";
 }
 
 function getRawNotificationType(item: NotificationRow) {
@@ -143,11 +143,11 @@ function getRawNotificationType(item: NotificationRow) {
 }
 
 function getNotificationTitle(item: NotificationRow) {
-  return item.title || "Nova notificação";
+  return item.title || "Nova notificaÃ§Ã£o";
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.body || item.message || "Você recebeu uma nova atualização.";
+  return item.body || item.message || "VocÃª recebeu uma nova atualizaÃ§Ã£o.";
 }
 
 function getNotificationHref(item: NotificationRow) {
@@ -182,7 +182,7 @@ function getNotificationTypeLabel(item: NotificationRow) {
   if (raw.includes("document")) return "Documento";
   if (raw.includes("appointment")) return "Consulta";
   if (raw.includes("consulta")) return "Consulta";
-  if (raw.includes("confirm")) return "Confirmação";
+  if (raw.includes("confirm")) return "ConfirmaÃ§Ã£o";
   if (raw.includes("cancel")) return "Cancelamento";
 
   return "Aviso";
@@ -208,7 +208,7 @@ export default function MedicoDashboardPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado como médico.");
+      setMessage("VocÃª precisa estar logado como mÃ©dico.");
       setLoading(false);
       return;
     }
@@ -220,13 +220,13 @@ export default function MedicoDashboardPage() {
       .maybeSingle();
 
     if (doctorError) {
-      setMessage(`Erro ao carregar médico: ${doctorError.message}`);
+      setMessage(`Erro ao carregar mÃ©dico: ${doctorError.message}`);
       setLoading(false);
       return;
     }
 
     if (!doctorData?.id) {
-      setMessage("Nenhum cadastro médico encontrado para este usuário.");
+      setMessage("Nenhum cadastro mÃ©dico encontrado para este usuÃ¡rio.");
       setLoading(false);
       return;
     }
@@ -295,57 +295,57 @@ export default function MedicoDashboardPage() {
   const firstName = getFirstName(doctor?.name);
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <section className="border-b border-[#E8EAF4] bg-white">
+    <main className="min-h-screen bg-[#FAF6F3]">
+      <section className="border-b border-[#E7DDD7] bg-white">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.55fr_1fr] lg:px-8">
-          <div className="rounded-[32px] border border-[#E3E8F4] bg-gradient-to-r from-[#F4F8FF] to-[#F8F5FF] p-8">
-            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4660A9]">
-              Área médica
+          <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
+            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
+              Ãrea mÃ©dica
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Olá, {firstName}
+              OlÃ¡, {firstName}
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Gerencie solicitações, acompanhe confirmações de pacientes e abra
-              prontuários de consultas confirmadas.
+              Gerencie solicitaÃ§Ãµes, acompanhe confirmaÃ§Ãµes de pacientes e abra
+              prontuÃ¡rios de consultas confirmadas.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/medico/solicitacoes"
-                className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
               >
-                Ver solicitações
+                Ver solicitaÃ§Ãµes
               </Link>
 
               <Link
                 href="/medico/disponibilidade"
-                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
                 Configurar disponibilidade
               </Link>
 
               <Link
                 href="/medico/perfil"
-                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
-                Perfil médico
+                Perfil mÃ©dico
               </Link>
             </div>
           </div>
 
           <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rápido
+              Resumo rÃ¡pido
             </p>
 
             <div className="mt-4 grid gap-3">
               <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                 <p className="text-3xl font-bold">{summary.total}</p>
                 <p className="mt-1 text-sm text-white/80">
-                  solicitações no total
+                  solicitaÃ§Ãµes no total
                 </p>
               </div>
 
@@ -370,7 +370,7 @@ export default function MedicoDashboardPage() {
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.patientConfirmed}</p>
                   <p className="mt-1 text-sm text-white/80">
-                    presença confirmada
+                    presenÃ§a confirmada
                   </p>
                 </div>
               </div>
@@ -387,26 +387,26 @@ export default function MedicoDashboardPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando painel médico...
+          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+            Carregando painel mÃ©dico...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      Próximas consultas
+                      PrÃ³ximas consultas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Consultas futuras atribuídas ao seu cadastro.
+                      Consultas futuras atribuÃ­das ao seu cadastro.
                     </p>
                   </div>
 
                   <Link
                     href="/medico/solicitacoes"
-                    className="text-sm font-semibold text-[#4660A9] hover:underline"
+                    className="text-sm font-semibold text-[#164957] hover:underline"
                   >
                     Ver tudo
                   </Link>
@@ -421,16 +421,16 @@ export default function MedicoDashboardPage() {
                     {nextAppointments.map((item) => (
                       <article
                         key={item.id}
-                        className="rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-5"
+                        className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-5"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <div className="mb-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#283C7A]">
+                              <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#164957]">
                                 {getStatusLabel(item.status)}
                               </span>
 
-                              <span className="rounded-full bg-[#F4F1FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#6E56CF]">
+                              <span className="rounded-full bg-[#F0EDF7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5A4C86]">
                                 {getConfirmationLabel(
                                   item.patient_confirmation_status
                                 )}
@@ -464,15 +464,15 @@ export default function MedicoDashboardPage() {
                           {item.status === "confirmed" && (
                             <Link
                               href={`/medico/consultas/${item.id}`}
-                              className="rounded-2xl bg-[#283C7A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                              className="rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                             >
-                              Abrir prontuário
+                              Abrir prontuÃ¡rio
                             </Link>
                           )}
 
                           <Link
                             href="/medico/solicitacoes"
-                            className="rounded-2xl border border-[#D9DDF0] bg-white px-4 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                            className="rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                           >
                             Ver detalhes
                           </Link>
@@ -483,63 +483,63 @@ export default function MedicoDashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5">
                   <h2 className="text-xl font-bold text-slate-950">
-                    Ações rápidas
+                    AÃ§Ãµes rÃ¡pidas
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Atalhos principais da sua rotina médica.
+                    Atalhos principais da sua rotina mÃ©dica.
                   </p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Link
                     href="/medico/solicitacoes"
-                    className="rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
-                    Ver solicitações
+                    Ver solicitaÃ§Ãµes
                   </Link>
 
                   <Link
                     href="/medico/disponibilidade"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Configurar disponibilidade
                   </Link>
 
                   <Link
                     href="/medico/perfil"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Editar perfil médico
+                    Editar perfil mÃ©dico
                   </Link>
 
                   <Link
                     href="/notificacoes"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Abrir notificações
+                    Abrir notificaÃ§Ãµes
                   </Link>
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      Notificações recentes
+                      NotificaÃ§Ãµes recentes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Últimos avisos da plataforma.
+                      Ãšltimos avisos da plataforma.
                     </p>
                   </div>
 
                   <Link
                     href="/notificacoes"
-                    className="text-sm font-semibold text-[#4660A9] hover:underline"
+                    className="text-sm font-semibold text-[#164957] hover:underline"
                   >
                     Ver tudo
                   </Link>
@@ -547,7 +547,7 @@ export default function MedicoDashboardPage() {
 
                 {notifications.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhuma notificação por enquanto.
+                    Nenhuma notificaÃ§Ã£o por enquanto.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -555,15 +555,15 @@ export default function MedicoDashboardPage() {
                       <Link
                         key={item.id}
                         href={getNotificationHref(item)}
-                        className="block rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-4 transition hover:bg-white"
+                        className="block rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 transition hover:bg-white"
                       >
                         <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-bold text-[#283C7A]">
+                          <span className="rounded-full bg-[#EEF3EF] px-2.5 py-1 text-[11px] font-bold text-[#164957]">
                             {getNotificationTypeLabel(item)}
                           </span>
 
                           {!item.is_read && (
-                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#0F8A5F]">
+                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#7A9D8C]">
                               Nova
                             </span>
                           )}
@@ -586,7 +586,7 @@ export default function MedicoDashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-950">
                   Dados profissionais
                 </h2>
@@ -596,41 +596,41 @@ export default function MedicoDashboardPage() {
                     Nome profissional
                   </p>
                   <p className="mt-1 text-base font-bold text-slate-950">
-                    {doctor?.name || "Médico não informado"}
+                    {doctor?.name || "MÃ©dico nÃ£o informado"}
                   </p>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       CRM
                     </p>
-                    <p className="mt-2 text-xl font-bold text-[#283C7A]">
+                    <p className="mt-2 text-xl font-bold text-[#164957]">
                       {doctor?.crm || "N/I"}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       UF
                     </p>
-                    <p className="mt-2 text-xl font-bold text-[#5E4B9A]">
+                    <p className="mt-2 text-xl font-bold text-[#5A4C86]">
                       {doctor?.crm_state || "N/I"}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Concluídas
+                      ConcluÃ­das
                     </p>
-                    <p className="mt-2 text-2xl font-bold text-[#0F8A5F]">
+                    <p className="mt-2 text-2xl font-bold text-[#7A9D8C]">
                       {summary.completed}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Não lidas
+                      NÃ£o lidas
                     </p>
                     <p className="mt-2 text-2xl font-bold text-[#B26B00]">
                       {summary.unread}
@@ -652,7 +652,7 @@ export default function MedicoDashboardPage() {
                 <div className="mt-4">
                   <Link
                     href="/medico/perfil"
-                    className="inline-flex rounded-2xl border border-[#D9DDF0] bg-white px-4 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="inline-flex rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Atualizar perfil
                   </Link>
@@ -665,3 +665,5 @@ export default function MedicoDashboardPage() {
     </main>
   );
 }
+
+

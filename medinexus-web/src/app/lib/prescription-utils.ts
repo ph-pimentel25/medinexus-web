@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+﻿import jsPDF from "jspdf";
 
 export type PrescriptionPayload = {
   clinicName: string;
@@ -57,7 +57,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Receituário médico digital", margin + 6, 29);
+  doc.text("ReceituÃ¡rio mÃ©dico digital", margin + 6, 29);
 
   // Card topo
   doc.setTextColor(48, 59, 65);
@@ -66,23 +66,23 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(payload.title?.trim() || "Receituário médico", margin + 6, 48);
+  doc.text(payload.title?.trim() || "ReceituÃ¡rio mÃ©dico", margin + 6, 48);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
-    `Caráter da solicitação: ${payload.characterLabel || "Rotina"}`,
+    `CarÃ¡ter da solicitaÃ§Ã£o: ${payload.characterLabel || "Rotina"}`,
     margin + 6,
     55
   );
   doc.text(
-    `Data de emissão: ${formatDate(payload.createdAt || new Date().toISOString())}`,
+    `Data de emissÃ£o: ${formatDate(payload.createdAt || new Date().toISOString())}`,
     margin + 6,
     61
   );
 
   doc.text(
-    `Clínica: ${payload.clinicName}${payload.clinicCity ? ` • ${payload.clinicCity}` : ""}${payload.clinicState ? `/${payload.clinicState}` : ""}`,
+    `ClÃ­nica: ${payload.clinicName}${payload.clinicCity ? ` â€¢ ${payload.clinicCity}` : ""}${payload.clinicState ? `/${payload.clinicState}` : ""}`,
     margin + 6,
     67
   );
@@ -107,7 +107,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Prescrição / orientações", margin + 6, 122);
+  doc.text("PrescriÃ§Ã£o / orientaÃ§Ãµes", margin + 6, 122);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
@@ -120,7 +120,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
   if (payload.notes?.trim()) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("Observações", margin + 6, currentY);
+    doc.text("ObservaÃ§Ãµes", margin + 6, currentY);
 
     currentY += 7;
     doc.setFont("helvetica", "normal");
@@ -145,7 +145,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
     align: "center",
   });
 
-  // Rodapé
+  // RodapÃ©
   doc.setTextColor(89, 78, 134);
   doc.setFontSize(9);
   doc.text(
@@ -176,7 +176,7 @@ export function printPrescription(payload: PrescriptionPayload) {
   popup.document.write(`
     <html>
       <head>
-        <title>Receituário - MediNexus</title>
+        <title>ReceituÃ¡rio - MediNexus</title>
         <style>
           * { box-sizing: border-box; }
           body {
@@ -261,18 +261,18 @@ export function printPrescription(payload: PrescriptionPayload) {
         <div class="sheet">
           <div class="header">
             <h1>MediNexus</h1>
-            <p>Receituário médico digital</p>
+            <p>ReceituÃ¡rio mÃ©dico digital</p>
           </div>
 
           <div class="card">
-            <div class="badge">Caráter da solicitação: ${escapeHtml(
+            <div class="badge">CarÃ¡ter da solicitaÃ§Ã£o: ${escapeHtml(
               payload.characterLabel || "Rotina"
             )}</div>
-            <div class="title">${escapeHtml(payload.title?.trim() || "Receituário médico")}</div>
-            <div class="sub">Data de emissão: ${escapeHtml(issueDate)}</div>
+            <div class="title">${escapeHtml(payload.title?.trim() || "ReceituÃ¡rio mÃ©dico")}</div>
+            <div class="sub">Data de emissÃ£o: ${escapeHtml(issueDate)}</div>
             <div class="sub">
-              Clínica: ${escapeHtml(payload.clinicName)}
-              ${payload.clinicCity ? " • " + escapeHtml(payload.clinicCity) : ""}
+              ClÃ­nica: ${escapeHtml(payload.clinicName)}
+              ${payload.clinicCity ? " â€¢ " + escapeHtml(payload.clinicCity) : ""}
               ${payload.clinicState ? "/" + escapeHtml(payload.clinicState) : ""}
             </div>
           </div>
@@ -284,7 +284,7 @@ export function printPrescription(payload: PrescriptionPayload) {
           </div>
 
           <div class="card">
-            <h3 style="margin-top:0;">Prescrição / orientações</h3>
+            <h3 style="margin-top:0;">PrescriÃ§Ã£o / orientaÃ§Ãµes</h3>
             <div class="content">${escapeHtml(payload.content)}</div>
           </div>
 
@@ -292,7 +292,7 @@ export function printPrescription(payload: PrescriptionPayload) {
             payload.notes?.trim()
               ? `
             <div class="card">
-              <h3 style="margin-top:0;">Observações</h3>
+              <h3 style="margin-top:0;">ObservaÃ§Ãµes</h3>
               <div class="content">${escapeHtml(payload.notes)}</div>
             </div>
           `
@@ -317,3 +317,5 @@ export function printPrescription(payload: PrescriptionPayload) {
 
   popup.document.close();
 }
+
+

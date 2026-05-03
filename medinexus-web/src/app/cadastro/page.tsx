@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -41,7 +41,7 @@ export default function CadastroPage() {
         .order("name", { ascending: true });
 
       if (error) {
-        setMessage("Erro ao carregar os planos de saúde.");
+        setMessage("Erro ao carregar os planos de saÃºde.");
         setMessageType("error");
       } else {
         setHealthPlans(data || []);
@@ -90,7 +90,7 @@ export default function CadastroPage() {
     const userId = data.user?.id;
 
     if (!userId) {
-      setMessage("Conta criada, mas não foi possível finalizar o cadastro.");
+      setMessage("Conta criada, mas nÃ£o foi possÃ­vel finalizar o cadastro.");
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -118,7 +118,7 @@ export default function CadastroPage() {
       return;
     }
 
-    setMessage("Cadastro realizado com sucesso! Você será redirecionado.");
+    setMessage("Cadastro realizado com sucesso! VocÃª serÃ¡ redirecionado.");
     setMessageType("success");
 
     setTimeout(() => {
@@ -140,18 +140,18 @@ export default function CadastroPage() {
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              Cadastre seu perfil, escolha seu plano de saúde e deixe tudo pronto
-              para buscar consultas compatíveis com sua rotina.
+              Cadastre seu perfil, escolha seu plano de saÃºde e deixe tudo pronto
+              para buscar consultas compatÃ­veis com sua rotina.
             </p>
 
             <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
-                O cadastro já salva
+                O cadastro jÃ¡ salva
               </p>
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Seu plano de saúde principal
+                  Seu plano de saÃºde principal
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
                   Cidade e estado base para suas buscas
@@ -169,13 +169,13 @@ export default function CadastroPage() {
                 href="/"
                 className="text-sm font-medium text-sky-700 hover:underline"
               >
-                ← Voltar para a página inicial
+                â† Voltar para a pÃ¡gina inicial
               </Link>
             </div>
 
             <h2 className="text-3xl font-bold text-slate-900">Criar conta</h2>
             <p className="mt-2 text-slate-600">
-              Preencha seus dados para começar a usar a plataforma.
+              Preencha seus dados para comeÃ§ar a usar a plataforma.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -258,7 +258,7 @@ export default function CadastroPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Plano de saúde
+                  Plano de saÃºde
                 </label>
                 <select
                   name="healthPlanId"
@@ -321,7 +321,7 @@ export default function CadastroPage() {
             </form>
 
             <p className="mt-6 text-sm text-slate-600">
-              Já tem conta?{" "}
+              JÃ¡ tem conta?{" "}
               <Link href="/login" className="font-medium text-sky-700 hover:underline">
                 Entrar
               </Link>
@@ -332,3 +332,5 @@ export default function CadastroPage() {
     </main>
   );
 }
+
+

@@ -1,20 +1,20 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const whatIs = [
   {
     title: "Marketplace de acesso",
     description:
-      "Ajuda pacientes a encontrarem médicos e clínicas compatíveis com localização, especialidade, plano ou particular.",
+      "Ajuda pacientes a encontrarem mÃ©dicos e clÃ­nicas compatÃ­veis com localizaÃ§Ã£o, especialidade, plano ou particular.",
   },
   {
-    title: "Sistema operacional clínico",
+    title: "Sistema operacional clÃ­nico",
     description:
-      "Ajuda médicos e clínicas a organizarem solicitações, disponibilidade, confirmação e prontuário.",
+      "Ajuda mÃ©dicos e clÃ­nicas a organizarem solicitaÃ§Ãµes, disponibilidade, confirmaÃ§Ã£o e prontuÃ¡rio.",
   },
   {
     title: "Base de continuidade",
     description:
-      "Transforma cada consulta em histórico, documentos e informações úteis para próximos atendimentos.",
+      "Transforma cada consulta em histÃ³rico, documentos e informaÃ§Ãµes Ãºteis para prÃ³ximos atendimentos.",
   },
 ];
 
@@ -25,34 +25,34 @@ const audiences = [
       "Quer encontrar atendimento com menos incerteza, saber se pode usar plano ou particular e manter documentos organizados.",
     items: [
       "Busca por especialidade",
-      "Busca por distância",
+      "Busca por distÃ¢ncia",
       "Plano ou particular",
-      "Solicitações acompanháveis",
-      "Histórico clínico",
+      "SolicitaÃ§Ãµes acompanhÃ¡veis",
+      "HistÃ³rico clÃ­nico",
     ],
   },
   {
-    title: "Médico",
+    title: "MÃ©dico",
     description:
-      "Precisa receber solicitações estruturadas, confirmar horários rapidamente e atender com mais contexto.",
+      "Precisa receber solicitaÃ§Ãµes estruturadas, confirmar horÃ¡rios rapidamente e atender com mais contexto.",
     items: [
-      "Solicitações qualificadas",
-      "Horário sugerido",
-      "Prontuário integrado",
+      "SolicitaÃ§Ãµes qualificadas",
+      "HorÃ¡rio sugerido",
+      "ProntuÃ¡rio integrado",
       "Anamnese base",
-      "Documentos médicos",
+      "Documentos mÃ©dicos",
     ],
   },
   {
-    title: "Clínica",
+    title: "ClÃ­nica",
     description:
-      "Precisa organizar presença digital, médicos, planos aceitos, agenda e relacionamento com pacientes.",
+      "Precisa organizar presenÃ§a digital, mÃ©dicos, planos aceitos, agenda e relacionamento com pacientes.",
     items: [
-      "Página pública",
-      "Gestão de médicos",
+      "PÃ¡gina pÃºblica",
+      "GestÃ£o de mÃ©dicos",
       "Planos aceitos",
-      "Configuração institucional",
-      "Fluxo de solicitações",
+      "ConfiguraÃ§Ã£o institucional",
+      "Fluxo de solicitaÃ§Ãµes",
     ],
   },
 ];
@@ -60,10 +60,10 @@ const audiences = [
 const principles = [
   "Acesso deve ser claro.",
   "Atendimento precisa gerar continuidade.",
-  "Paciente, médico e clínica não podem operar em silos.",
-  "Plano de saúde e particular devem conviver no mesmo fluxo.",
-  "Dados precisam virar contexto, não burocracia.",
-  "Tecnologia deve reduzir atrito, não criar mais uma barreira.",
+  "Paciente, mÃ©dico e clÃ­nica nÃ£o podem operar em silos.",
+  "Plano de saÃºde e particular devem conviver no mesmo fluxo.",
+  "Dados precisam virar contexto, nÃ£o burocracia.",
+  "Tecnologia deve reduzir atrito, nÃ£o criar mais uma barreira.",
 ];
 
 const roadmap = [
@@ -71,72 +71,72 @@ const roadmap = [
     phase: "Fase atual",
     title: "Fluxo essencial",
     description:
-      "Base funcional para busca, cadastro, raio, plano/particular e confirmação médica.",
+      "Base funcional para busca, cadastro, raio, plano/particular e confirmaÃ§Ã£o mÃ©dica.",
     items: [
       "Cadastro premium",
       "Busca por raio",
-      "Horário sugerido",
-      "Confirmação médica",
-      "Prontuário base",
+      "HorÃ¡rio sugerido",
+      "ConfirmaÃ§Ã£o mÃ©dica",
+      "ProntuÃ¡rio base",
     ],
   },
   {
-    phase: "Próximo round",
-    title: "Documentos médicos",
+    phase: "PrÃ³ximo round",
+    title: "Documentos mÃ©dicos",
     description:
-      "Transformar atendimento em documentos clínicos bonitos, imprimíveis e úteis.",
+      "Transformar atendimento em documentos clÃ­nicos bonitos, imprimÃ­veis e Ãºteis.",
     items: [
       "Receita premium",
-      "Solicitação de exame",
-      "Atestado médico",
-      "Declaração",
+      "SolicitaÃ§Ã£o de exame",
+      "Atestado mÃ©dico",
+      "DeclaraÃ§Ã£o",
       "PDF profissional",
     ],
   },
   {
-    phase: "Operação avançada",
+    phase: "OperaÃ§Ã£o avanÃ§ada",
     title: "Agenda e relacionamento",
     description:
-      "Criar uma rotina de confirmação, lembretes, encaixe e comunicação com paciente.",
+      "Criar uma rotina de confirmaÃ§Ã£o, lembretes, encaixe e comunicaÃ§Ã£o com paciente.",
     items: [
-      "Confirmação 24h",
-      "Cancelamento automático",
+      "ConfirmaÃ§Ã£o 24h",
+      "Cancelamento automÃ¡tico",
       "Consulta de encaixe",
       "E-mail/WhatsApp/SMS",
       "Tokens seguros",
     ],
   },
   {
-    phase: "Monetização",
-    title: "Pagamentos e reputação",
+    phase: "MonetizaÃ§Ã£o",
+    title: "Pagamentos e reputaÃ§Ã£o",
     description:
-      "Validar pacotes, assinatura da plataforma, pagamento de consulta e avaliações.",
+      "Validar pacotes, assinatura da plataforma, pagamento de consulta e avaliaÃ§Ãµes.",
     items: [
       "Assinaturas",
       "Checkout",
       "Pagamento de consulta",
       "Split/taxa MediNexus",
-      "Avaliações",
+      "AvaliaÃ§Ãµes",
     ],
   },
 ];
 
 const comparison = [
   {
-    before: "Paciente liga ou manda mensagem sem saber se tem horário.",
-    after: "Paciente busca por especialidade, distância e janela desejada.",
+    before: "Paciente liga ou manda mensagem sem saber se tem horÃ¡rio.",
+    after: "Paciente busca por especialidade, distÃ¢ncia e janela desejada.",
   },
   {
-    before: "Clínica responde manualmente e perde contexto.",
-    after: "Clínica recebe solicitações estruturadas e rastreáveis.",
+    before: "ClÃ­nica responde manualmente e perde contexto.",
+    after: "ClÃ­nica recebe solicitaÃ§Ãµes estruturadas e rastreÃ¡veis.",
   },
   {
-    before: "Médico precisa decidir horário caso a caso.",
-    after: "Médico recebe horário sugerido e confirma com um clique.",
+    before: "MÃ©dico precisa decidir horÃ¡rio caso a caso.",
+    after: "MÃ©dico recebe horÃ¡rio sugerido e confirma com um clique.",
   },
   {
     before: "Documentos ficam espalhados em papel, foto ou conversa.",
-    after: "Documentos e histórico ficam conectados à consulta.",
+    after: "Documentos e histÃ³rico ficam conectados Ã  consulta.",
   },
 ];
 
@@ -149,7 +149,7 @@ export default function SobrePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
             <div>
-              <p className="inline-flex rounded-full border border-[#283C7A]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#283C7A] shadow-sm">
+              <p className="inline-flex rounded-full border border-[#164957]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#164957] shadow-sm">
                 Sobre a MediNexus
               </p>
 
@@ -159,38 +159,38 @@ export default function SobrePage() {
 
               <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">
                 A MediNexus nasceu para resolver um problema simples de falar e
-                difícil de operar: conectar pacientes, médicos e clínicas em um
-                fluxo único, seguro e inteligente.
+                difÃ­cil de operar: conectar pacientes, mÃ©dicos e clÃ­nicas em um
+                fluxo Ãºnico, seguro e inteligente.
               </p>
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/login"
-                  className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#213366]"
+                  className="inline-flex justify-center rounded-2xl bg-[#164957] px-7 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#123B46]"
                 >
                   Entrar na plataforma
                 </Link>
 
                 <Link
                   href="/clinica/cadastro"
-                  className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-7 py-4 text-sm font-black text-[#5E4B9A] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
+                  className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-7 py-4 text-sm font-black text-[#5A4C86] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
                 >
-                  Cadastrar clínica
+                  Cadastrar clÃ­nica
                 </Link>
               </div>
             </div>
 
             <div className="rounded-[46px] border border-white/80 bg-white/80 p-5 shadow-[0_35px_120px_-65px_rgba(40,60,122,0.6)] backdrop-blur">
-              <div className="rounded-[38px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-8 text-white">
+              <div className="rounded-[38px] bg-gradient-to-br from-[#164957] via-[#5A4C86] to-[#5A4C86] p-8 text-white">
                 <p className="text-xs font-black uppercase tracking-[0.22em] text-white/55">
-                  Nossa visão
+                  Nossa visÃ£o
                 </p>
                 <h2 className="mt-4 text-4xl font-black leading-none tracking-[-0.06em]">
-                  Saúde digital não deve ser só uma agenda online.
+                  SaÃºde digital nÃ£o deve ser sÃ³ uma agenda online.
                 </h2>
                 <p className="mt-5 leading-8 text-white/75">
-                  A consulta começa na busca, passa pela confirmação, ganha
-                  valor no atendimento e continua no histórico do paciente.
+                  A consulta comeÃ§a na busca, passa pela confirmaÃ§Ã£o, ganha
+                  valor no atendimento e continua no histÃ³rico do paciente.
                 </p>
 
                 <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -210,11 +210,11 @@ export default function SobrePage() {
               </div>
 
               <div className="mt-4 rounded-[34px] border border-[#D9D6F4] bg-[#F6F3FF] p-6">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6E56CF]">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#5A4C86]">
                   Tese do produto
                 </p>
                 <p className="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950">
-                  Quando a jornada fica conectada, a experiência melhora para
+                  Quando a jornada fica conectada, a experiÃªncia melhora para
                   todos os lados.
                 </p>
               </div>
@@ -226,16 +226,16 @@ export default function SobrePage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#6E56CF]">
-              O que é a MediNexus
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#5A4C86]">
+              O que Ã© a MediNexus
             </p>
             <h2 className="mt-4 text-4xl font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-5xl">
-              Não é só busca. Não é só agenda. Não é só prontuário.
+              NÃ£o Ã© sÃ³ busca. NÃ£o Ã© sÃ³ agenda. NÃ£o Ã© sÃ³ prontuÃ¡rio.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              A MediNexus funciona como uma camada de conexão entre demanda do
-              paciente, capacidade de atendimento da clínica e atuação do
-              médico.
+              A MediNexus funciona como uma camada de conexÃ£o entre demanda do
+              paciente, capacidade de atendimento da clÃ­nica e atuaÃ§Ã£o do
+              mÃ©dico.
             </p>
           </div>
 
@@ -260,16 +260,16 @@ export default function SobrePage() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[46px] bg-slate-950 shadow-[0_35px_120px_-70px_rgba(15,23,42,0.95)]">
           <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
-            <div className="bg-gradient-to-br from-[#283C7A] to-[#6E56CF] p-8 text-white lg:p-12">
+            <div className="bg-gradient-to-br from-[#164957] to-[#5A4C86] p-8 text-white lg:p-12">
               <p className="text-sm font-black uppercase tracking-[0.22em] text-white/60">
                 Antes e depois
               </p>
               <h2 className="mt-4 text-4xl font-black leading-none tracking-[-0.06em]">
-                O objetivo é reduzir atrito em cada etapa.
+                O objetivo Ã© reduzir atrito em cada etapa.
               </h2>
               <p className="mt-5 leading-8 text-white/75">
-                A plataforma não substitui o cuidado. Ela organiza o caminho
-                até ele e a continuidade depois dele.
+                A plataforma nÃ£o substitui o cuidado. Ela organiza o caminho
+                atÃ© ele e a continuidade depois dele.
               </p>
             </div>
 
@@ -307,11 +307,11 @@ export default function SobrePage() {
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 max-w-3xl">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#283C7A]">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#164957]">
             Para quem foi criada
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.06em] text-slate-950 sm:text-5xl">
-            Três públicos. Uma jornada conectada.
+            TrÃªs pÃºblicos. Uma jornada conectada.
           </h2>
         </div>
 
@@ -321,7 +321,7 @@ export default function SobrePage() {
               key={item.title}
               className="rounded-[38px] border border-[#D9D6F4] bg-white p-8 shadow-[0_24px_80px_-66px_rgba(94,75,154,0.4)]"
             >
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#6E56CF]">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#5A4C86]">
                 {item.title}
               </p>
 
@@ -333,7 +333,7 @@ export default function SobrePage() {
                 {item.items.map((benefit) => (
                   <div
                     key={benefit}
-                    className="rounded-2xl bg-[#F6F3FF] px-4 py-3 text-sm font-bold text-[#5E4B9A]"
+                    className="rounded-2xl bg-[#F6F3FF] px-4 py-3 text-sm font-bold text-[#5A4C86]"
                   >
                     {benefit}
                   </div>
@@ -348,16 +348,16 @@ export default function SobrePage() {
         <div className="rounded-[46px] border border-[#D9D6F4] bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF] p-8 shadow-[0_30px_100px_-70px_rgba(94,75,154,0.45)] lg:p-12">
           <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.22em] text-[#6E56CF]">
-                Princípios
+              <p className="text-sm font-black uppercase tracking-[0.22em] text-[#5A4C86]">
+                PrincÃ­pios
               </p>
               <h2 className="mt-4 text-4xl font-black tracking-[-0.06em] text-slate-950">
-                O produto cresce, mas a lógica precisa continuar simples.
+                O produto cresce, mas a lÃ³gica precisa continuar simples.
               </h2>
               <p className="mt-5 leading-8 text-slate-600">
-                A MediNexus está sendo construída em camadas para evitar
+                A MediNexus estÃ¡ sendo construÃ­da em camadas para evitar
                 improvisos: primeiro o fluxo, depois documentos, agenda
-                avançada, pagamentos, avaliações e IA.
+                avanÃ§ada, pagamentos, avaliaÃ§Ãµes e IA.
               </p>
             </div>
 
@@ -377,15 +377,15 @@ export default function SobrePage() {
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 max-w-3xl">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#283C7A]">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#164957]">
             Roadmap
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.06em] text-slate-950 sm:text-5xl">
-            Uma construção em fases claras.
+            Uma construÃ§Ã£o em fases claras.
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-600">
             Cada fase adiciona valor sem perder a base principal: conectar
-            paciente, médico e clínica.
+            paciente, mÃ©dico e clÃ­nica.
           </p>
         </div>
 
@@ -395,7 +395,7 @@ export default function SobrePage() {
               key={phase.title}
               className="rounded-[36px] border border-[#E0E7FF] bg-white p-6 shadow-[0_24px_80px_-68px_rgba(40,60,122,0.45)]"
             >
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6E56CF]">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#5A4C86]">
                 {phase.phase}
               </p>
               <h3 className="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950">
@@ -409,7 +409,7 @@ export default function SobrePage() {
                 {phase.items.map((item) => (
                   <div
                     key={item}
-                    className="rounded-2xl bg-[#F1F5FF] px-4 py-3 text-sm font-semibold text-[#283C7A]"
+                    className="rounded-2xl bg-[#F1F5FF] px-4 py-3 text-sm font-semibold text-[#164957]"
                   >
                     {item}
                   </div>
@@ -421,28 +421,28 @@ export default function SobrePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
+        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#164957] via-[#5A4C86] to-[#5A4C86] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
           <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -bottom-24 left-20 h-80 w-80 rounded-full bg-[#B7A7FF]/20 blur-3xl" />
 
           <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-white/60">
-                Próximo passo
+                PrÃ³ximo passo
               </p>
               <h2 className="mt-4 max-w-4xl text-4xl font-black leading-none tracking-[-0.06em] sm:text-5xl">
-                Faça parte de uma plataforma desenhada para conectar a saúde.
+                FaÃ§a parte de uma plataforma desenhada para conectar a saÃºde.
               </h2>
               <p className="mt-5 max-w-2xl leading-8 text-white/75">
-                Entre como paciente, conheça os pacotes para médicos ou cadastre
-                sua clínica na MediNexus.
+                Entre como paciente, conheÃ§a os pacotes para mÃ©dicos ou cadastre
+                sua clÃ­nica na MediNexus.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <Link
                 href="/login"
-                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#283C7A] transition hover:bg-slate-100"
+                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#164957] transition hover:bg-slate-100"
               >
                 Sou paciente
               </Link>
@@ -451,14 +451,14 @@ export default function SobrePage() {
                 href="/pacotes"
                 className="inline-flex justify-center rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black text-white transition hover:bg-white/15"
               >
-                Sou médico
+                Sou mÃ©dico
               </Link>
 
               <Link
                 href="/clinica/cadastro"
                 className="inline-flex justify-center rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black text-white transition hover:bg-white/15"
               >
-                Sou clínica
+                Sou clÃ­nica
               </Link>
             </div>
           </div>
@@ -467,3 +467,5 @@ export default function SobrePage() {
     </main>
   );
 }
+
+

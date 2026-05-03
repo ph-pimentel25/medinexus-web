@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import RoleGuard from "../components/role-guard";
 
@@ -9,3 +9,5 @@ export default function ClinicaLayout({
 }) {
   return <RoleGuard area="clinic">{children}</RoleGuard>;
 }
+
+

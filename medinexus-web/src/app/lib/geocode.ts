@@ -1,4 +1,4 @@
-export type GeocodeResult = {
+﻿export type GeocodeResult = {
   latitude: number | null;
   longitude: number | null;
 };
@@ -109,3 +109,5 @@ export async function geocodeBrazilAddress(
     longitude: null,
   };
 }
+
+

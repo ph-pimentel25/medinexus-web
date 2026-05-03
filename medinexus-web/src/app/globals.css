@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 /* =========================================================
    MEDINEXUS - Global Theme
@@ -9,7 +9,7 @@
   --foreground: #071026;
 
   --med-blue: #283c7a;
-  --med-blue-dark: #213366;
+  --med-blue-dark: #123B46;
   --med-blue-soft: #f1f5ff;
 
   --med-purple: #6e56cf;
@@ -175,7 +175,7 @@ button:disabled {
 
 .app-button-primary:hover {
   transform: translateY(-1px);
-  background: #213366;
+  background: #123B46;
 }
 
 .app-button-primary:disabled {
@@ -360,3 +360,18 @@ main .leading-\[0\.98\] {
     border: 1px solid #cbd5e1 !important;
   }
 }
+.home-hero-grid,
+.home-cards-grid {
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .home-hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

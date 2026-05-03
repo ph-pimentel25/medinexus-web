@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -48,7 +48,7 @@ export default function MedicoCadastroPage() {
 
     if (error) {
       console.error("doctor signUp error:", error);
-      setMessage(`Erro ao criar conta do médico: ${error.message}`);
+      setMessage(`Erro ao criar conta do mÃ©dico: ${error.message}`);
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -56,7 +56,7 @@ export default function MedicoCadastroPage() {
 
     if (!data.session || !data.user) {
       setMessage(
-        "Conta criada. Confirme o e-mail antes de concluir o acesso médico."
+        "Conta criada. Confirme o e-mail antes de concluir o acesso mÃ©dico."
       );
       setMessageType("info");
       setSubmitting(false);
@@ -109,7 +109,7 @@ if (matchedDoctorError || !matchedDoctor) {
   console.error("matchedDoctorError:", matchedDoctorError);
   console.error("doctorCandidates:", doctorCandidates);
   setMessage(
-    "Conta criada, mas nenhum médico pré-cadastrado foi encontrado com este e-mail e CRM. Revise o cadastro do médico na clínica."
+    "Conta criada, mas nenhum mÃ©dico prÃ©-cadastrado foi encontrado com este e-mail e CRM. Revise o cadastro do mÃ©dico na clÃ­nica."
   );
   setMessageType("error");
   setSubmitting(false);
@@ -136,13 +136,13 @@ if (matchedDoctorError || !matchedDoctor) {
 
     if (memberInsertError) {
       console.error("memberInsertError:", memberInsertError);
-      setMessage(`Conta criada, mas houve erro ao vincular o médico: ${memberInsertError.message}`);
+      setMessage(`Conta criada, mas houve erro ao vincular o mÃ©dico: ${memberInsertError.message}`);
       setMessageType("error");
       setSubmitting(false);
       return;
     }
 
-    setMessage("Conta médica criada com sucesso! Redirecionando...");
+    setMessage("Conta mÃ©dica criada com sucesso! Redirecionando...");
     setMessageType("success");
     setSubmitting(false);
 
@@ -156,14 +156,14 @@ if (matchedDoctorError || !matchedDoctor) {
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-2">
           <div>
-            <span className="brand-chip">Cadastro do médico</span>
+            <span className="brand-chip">Cadastro do mÃ©dico</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-              Ative o acesso médico à área restrita da MediNexus.
+              Ative o acesso mÃ©dico Ã  Ã¡rea restrita da MediNexus.
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              Use o mesmo e-mail profissional e CRM cadastrados pela clínica para vincular sua conta corretamente.
+              Use o mesmo e-mail profissional e CRM cadastrados pela clÃ­nica para vincular sua conta corretamente.
             </p>
 
             <div className="mt-8 app-card p-6">
@@ -173,13 +173,13 @@ if (matchedDoctorError || !matchedDoctor) {
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  A clínica precisa ter cadastrado seu e-mail profissional
+                  A clÃ­nica precisa ter cadastrado seu e-mail profissional
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
                   O CRM informado aqui deve bater com o CRM do cadastro
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Depois do vínculo, sua área médica será liberada
+                  Depois do vÃ­nculo, sua Ã¡rea mÃ©dica serÃ¡ liberada
                 </div>
               </div>
             </div>
@@ -191,13 +191,13 @@ if (matchedDoctorError || !matchedDoctor) {
                 href="/login"
                 className="text-sm font-medium text-sky-700 hover:underline"
               >
-                ← Voltar para login
+                â† Voltar para login
               </Link>
             </div>
 
-            <h2 className="text-3xl font-bold text-slate-900">Criar conta médica</h2>
+            <h2 className="text-3xl font-bold text-slate-900">Criar conta mÃ©dica</h2>
             <p className="mt-2 text-slate-600">
-              Preencha exatamente como foi cadastrado pela clínica.
+              Preencha exatamente como foi cadastrado pela clÃ­nica.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -253,7 +253,7 @@ if (matchedDoctorError || !matchedDoctor) {
                 disabled={submitting}
                 className="app-button-primary"
               >
-                {submitting ? "Criando conta..." : "Criar conta médica"}
+                {submitting ? "Criando conta..." : "Criar conta mÃ©dica"}
               </button>
             </form>
           </div>
@@ -262,3 +262,5 @@ if (matchedDoctorError || !matchedDoctor) {
     </main>
   );
 }
+
+

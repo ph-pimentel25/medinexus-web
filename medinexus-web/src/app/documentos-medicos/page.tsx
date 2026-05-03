@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -97,7 +97,7 @@ function pickOne<T>(value: MaybeArray<T>): T | null {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -106,13 +106,13 @@ function formatDateTime(value: string | null) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleDateString("pt-BR");
 }
 
 function formatBirthDate(value: string | null) {
-  if (!value) return "Não informada";
+  if (!value) return "NÃ£o informada";
 
   return new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR");
 }
@@ -140,15 +140,15 @@ function getDocumentTypeLabel(type: DocumentItem["document_type"]) {
     case "medication":
       return "Receita medicamentosa";
     case "exam":
-      return "Solicitação de exame";
+      return "SolicitaÃ§Ã£o de exame";
     case "freeform":
       return "Documento livre";
     case "sick_note":
-      return "Atestado médico";
+      return "Atestado mÃ©dico";
     case "attendance_declaration":
-      return "Declaração de comparecimento";
+      return "DeclaraÃ§Ã£o de comparecimento";
     default:
-      return "Documento médico";
+      return "Documento mÃ©dico";
   }
 }
 
@@ -179,7 +179,7 @@ export default function DocumentosMedicosPage() {
 
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [patient, setPatient] = useState<PatientRow | null>(null);
-  const [healthPlanName, setHealthPlanName] = useState("Não informado");
+  const [healthPlanName, setHealthPlanName] = useState("NÃ£o informado");
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
 
   useEffect(() => {
@@ -195,7 +195,7 @@ export default function DocumentosMedicosPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para acessar seus documentos médicos.");
+      setMessage("VocÃª precisa estar logado para acessar seus documentos mÃ©dicos.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -281,9 +281,9 @@ export default function DocumentosMedicosPage() {
         .eq("id", patientResponse.data.default_health_plan_id)
         .maybeSingle<HealthPlanRow>();
 
-      setHealthPlanName(planData?.name || "Não informado");
+      setHealthPlanName(planData?.name || "NÃ£o informado");
     } else {
-      setHealthPlanName("Não informado");
+      setHealthPlanName("NÃ£o informado");
     }
 
     const rawDocuments = (documentsResponse.data || []) as PrescriptionRow[];
@@ -330,7 +330,7 @@ export default function DocumentosMedicosPage() {
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        doc.text("Documento médico digital", margin + 6, y + 15);
+        doc.text("Documento mÃ©dico digital", margin + 6, y + 15);
 
         y += 28;
         doc.setTextColor(48, 59, 65);
@@ -344,7 +344,7 @@ export default function DocumentosMedicosPage() {
       };
 
       const drawBlock = (label: string, value: string) => {
-        const safeValue = value?.trim() ? value.trim() : "Não informado";
+        const safeValue = value?.trim() ? value.trim() : "NÃ£o informado";
         const lines = doc.splitTextToSize(safeValue, width - 8);
         const blockHeight = Math.max(16, lines.length * 6 + 10);
 
@@ -367,27 +367,27 @@ export default function DocumentosMedicosPage() {
       drawHeader();
 
       drawBlock("Tipo de documento", getDocumentTypeLabel(item.document_type));
-      drawBlock("Título", item.title || getDocumentTypeLabel(item.document_type));
+      drawBlock("TÃ­tulo", item.title || getDocumentTypeLabel(item.document_type));
       drawBlock("Paciente", profile?.full_name || "Paciente");
       drawBlock("Data de nascimento", formatBirthDate(patient?.birth_date || null));
       drawBlock("Plano", healthPlanName);
-      drawBlock("Clínica", item.clinic?.trade_name || "Não informada");
+      drawBlock("ClÃ­nica", item.clinic?.trade_name || "NÃ£o informada");
       drawBlock(
         "Local",
-        `${item.clinic?.city || "Cidade não informada"} / ${
-          item.clinic?.state || "Estado não informado"
+        `${item.clinic?.city || "Cidade nÃ£o informada"} / ${
+          item.clinic?.state || "Estado nÃ£o informado"
         }`
       );
       drawBlock(
         "Especialidade",
-        item.specialty?.name || "Não informada"
+        item.specialty?.name || "NÃ£o informada"
       );
       drawBlock(
-        "Data de emissão",
+        "Data de emissÃ£o",
         formatDate(item.issued_at || item.created_at)
       );
-      drawBlock("Conteúdo", item.content || "Não informado");
-      drawBlock("Orientações", item.guidance || "Não informado");
+      drawBlock("ConteÃºdo", item.content || "NÃ£o informado");
+      drawBlock("OrientaÃ§Ãµes", item.guidance || "NÃ£o informado");
 
       y += 8;
       ensureSpace(44);
@@ -397,14 +397,14 @@ export default function DocumentosMedicosPage() {
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(item.doctor?.name || "Médico", pageWidth / 2, y + 24, {
+      doc.text(item.doctor?.name || "MÃ©dico", pageWidth / 2, y + 24, {
         align: "center",
       });
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.text(
-        `CRM ${item.doctor?.crm || "não informado"}${
+        `CRM ${item.doctor?.crm || "nÃ£o informado"}${
           item.doctor?.crm_state ? ` / ${item.doctor.crm_state}` : ""
         }`,
         pageWidth / 2,
@@ -524,7 +524,7 @@ export default function DocumentosMedicosPage() {
           <div class="sheet">
             <div class="header">
               <h1>MediNexus</h1>
-              <p>Documento médico digital</p>
+              <p>Documento mÃ©dico digital</p>
             </div>
 
             <div class="card">
@@ -532,11 +532,11 @@ export default function DocumentosMedicosPage() {
               <div class="title">${escapeHtml(
                 item.title || getDocumentTypeLabel(item.document_type)
               )}</div>
-              <div class="sub">Data de emissão: ${escapeHtml(
+              <div class="sub">Data de emissÃ£o: ${escapeHtml(
                 formatDate(item.issued_at || item.created_at)
               )}</div>
-              <div class="sub">Clínica: ${escapeHtml(
-                item.clinic?.trade_name || "Não informada"
+              <div class="sub">ClÃ­nica: ${escapeHtml(
+                item.clinic?.trade_name || "NÃ£o informada"
               )}</div>
             </div>
 
@@ -549,14 +549,14 @@ export default function DocumentosMedicosPage() {
                 formatBirthDate(patient?.birth_date || null)
               )}<br />
               <strong>Especialidade:</strong> ${escapeHtml(
-                item.specialty?.name || "Não informada"
+                item.specialty?.name || "NÃ£o informada"
               )}
             </div>
 
             <div class="card">
-              <h3 style="margin-top:0;">Conteúdo</h3>
+              <h3 style="margin-top:0;">ConteÃºdo</h3>
               <div class="content">${escapeHtml(
-                item.content || "Não informado"
+                item.content || "NÃ£o informado"
               )}</div>
             </div>
 
@@ -564,7 +564,7 @@ export default function DocumentosMedicosPage() {
               item.guidance?.trim()
                 ? `
               <div class="card">
-                <h3 style="margin-top:0;">Orientações</h3>
+                <h3 style="margin-top:0;">OrientaÃ§Ãµes</h3>
                 <div class="content">${escapeHtml(item.guidance)}</div>
               </div>
             `
@@ -573,9 +573,9 @@ export default function DocumentosMedicosPage() {
 
             <div class="signature">
               <div class="line"></div>
-              <div><strong>${escapeHtml(item.doctor?.name || "Médico")}</strong></div>
+              <div><strong>${escapeHtml(item.doctor?.name || "MÃ©dico")}</strong></div>
               <div class="muted">CRM: ${escapeHtml(
-                `${item.doctor?.crm || "não informado"}${
+                `${item.doctor?.crm || "nÃ£o informado"}${
                   item.doctor?.crm_state ? ` / ${item.doctor.crm_state}` : ""
                 }`
               )}</div>
@@ -608,7 +608,7 @@ export default function DocumentosMedicosPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando documentos médicos...</p>
+        <p className="text-slate-600">Carregando documentos mÃ©dicos...</p>
       </main>
     );
   }
@@ -619,13 +619,13 @@ export default function DocumentosMedicosPage() {
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-              Documentos médicos
+              Documentos mÃ©dicos
             </p>
             <h1 className="mt-3 app-section-title">
-              Seus documentos em um só lugar
+              Seus documentos em um sÃ³ lugar
             </h1>
             <p className="app-section-subtitle">
-              Acesse receituários, solicitações de exame e documentos emitidos nos seus atendimentos.
+              Acesse receituÃ¡rios, solicitaÃ§Ãµes de exame e documentos emitidos nos seus atendimentos.
             </p>
           </div>
 
@@ -635,7 +635,7 @@ export default function DocumentosMedicosPage() {
             </Link>
 
             <Link href="/historico-clinico" className="app-button-primary text-center">
-              Histórico clínico
+              HistÃ³rico clÃ­nico
             </Link>
           </div>
         </div>
@@ -679,7 +679,7 @@ export default function DocumentosMedicosPage() {
         {documents.length === 0 ? (
           <div className="app-card p-8">
             <p className="text-slate-700">
-              Você ainda não possui documentos médicos emitidos.
+              VocÃª ainda nÃ£o possui documentos mÃ©dicos emitidos.
             </p>
 
             <div className="mt-6">
@@ -719,21 +719,21 @@ export default function DocumentosMedicosPage() {
 
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600">
                     <p className="font-semibold text-slate-900">
-                      {item.clinic?.trade_name || "Clínica não informada"}
+                      {item.clinic?.trade_name || "ClÃ­nica nÃ£o informada"}
                     </p>
                     <p>
-                      {item.clinic?.city || "Cidade não informada"} /{" "}
-                      {item.clinic?.state || "Estado não informado"}
+                      {item.clinic?.city || "Cidade nÃ£o informada"} /{" "}
+                      {item.clinic?.state || "Estado nÃ£o informado"}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid gap-3 text-slate-700">
                   <p>
-                    <span className="font-semibold">Médico:</span>{" "}
-                    {item.doctor?.name || "Não informado"}
+                    <span className="font-semibold">MÃ©dico:</span>{" "}
+                    {item.doctor?.name || "NÃ£o informado"}
                     {item.doctor?.crm
-                      ? ` • CRM ${item.doctor.crm}${
+                      ? ` â€¢ CRM ${item.doctor.crm}${
                           item.doctor.crm_state ? ` / ${item.doctor.crm_state}` : ""
                         }`
                       : ""}
@@ -757,17 +757,17 @@ export default function DocumentosMedicosPage() {
 
                 <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Conteúdo
+                    ConteÃºdo
                   </p>
                   <p className="mt-3 whitespace-pre-wrap text-slate-700 leading-7">
-                    {item.content || "Não informado"}
+                    {item.content || "NÃ£o informado"}
                   </p>
                 </div>
 
                 {item.guidance && (
                   <div className="mt-5 rounded-2xl bg-blue-50 px-4 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">
-                      Orientações
+                      OrientaÃ§Ãµes
                     </p>
                     <p className="mt-3 whitespace-pre-wrap text-blue-900 leading-7">
                       {item.guidance}
@@ -801,3 +801,5 @@ export default function DocumentosMedicosPage() {
     </main>
   );
 }
+
+

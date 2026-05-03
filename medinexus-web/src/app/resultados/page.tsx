@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -155,7 +155,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) return "Horário a definir";
+  if (!value) return "HorÃ¡rio a definir";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -164,7 +164,7 @@ function formatDateTime(value: string | null) {
 }
 
 function formatMoney(cents: number | null) {
-  if (!cents) return "Valor não informado";
+  if (!cents) return "Valor nÃ£o informado";
 
   return (cents / 100).toLocaleString("pt-BR", {
     style: "currency",
@@ -343,7 +343,7 @@ function ResultadosPageContent() {
     setMessage("");
 
     if (!searchId) {
-      setMessage("Busca não encontrada.");
+      setMessage("Busca nÃ£o encontrada.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -354,7 +354,7 @@ function ResultadosPageContent() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para ver os resultados.");
+      setMessage("VocÃª precisa estar logado para ver os resultados.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -383,7 +383,7 @@ function ResultadosPageContent() {
 
     if (searchError || !searchData) {
       setMessage(
-        `Erro ao carregar busca: ${searchError?.message || "busca não encontrada"}`
+        `Erro ao carregar busca: ${searchError?.message || "busca nÃ£o encontrada"}`
       );
       setMessageType("error");
       setLoading(false);
@@ -459,14 +459,14 @@ function ResultadosPageContent() {
     ]);
 
     if (windowsResponse.error) {
-      setMessage(`Erro ao carregar horários: ${windowsResponse.error.message}`);
+      setMessage(`Erro ao carregar horÃ¡rios: ${windowsResponse.error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (profileResponse.error) {
-      setMessage(`Erro ao carregar localização: ${profileResponse.error.message}`);
+      setMessage(`Erro ao carregar localizaÃ§Ã£o: ${profileResponse.error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -481,7 +481,7 @@ function ResultadosPageContent() {
 
     if (doctorSpecialtiesResponse.error) {
       setMessage(
-        `Erro ao buscar médicos compatíveis: ${doctorSpecialtiesResponse.error.message}`
+        `Erro ao buscar mÃ©dicos compatÃ­veis: ${doctorSpecialtiesResponse.error.message}`
       );
       setMessageType("error");
       setLoading(false);
@@ -490,7 +490,7 @@ function ResultadosPageContent() {
 
     if (appointmentsResponse.error) {
       setMessage(
-        `Erro ao carregar agenda dos médicos: ${appointmentsResponse.error.message}`
+        `Erro ao carregar agenda dos mÃ©dicos: ${appointmentsResponse.error.message}`
       );
       setMessageType("error");
       setLoading(false);
@@ -575,12 +575,12 @@ function ResultadosPageContent() {
 
         const candidate: DoctorCandidate = {
           doctorId: doctor.id,
-          doctorName: doctor.name || "Médico não informado",
+          doctorName: doctor.name || "MÃ©dico nÃ£o informado",
           crm: doctor.crm,
           crmState: doctor.crm_state,
           clinicId: clinic.id,
-          clinicName: clinic.trade_name || "Clínica não informada",
-          clinicCity: clinic.address_city || clinic.city || "Cidade não informada",
+          clinicName: clinic.trade_name || "ClÃ­nica nÃ£o informada",
+          clinicCity: clinic.address_city || clinic.city || "Cidade nÃ£o informada",
           clinicState: clinic.address_state || clinic.state || "UF",
           clinicNeighborhood: clinic.address_neighborhood,
           distanceKm,
@@ -630,7 +630,7 @@ setLoading(false);
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para solicitar consulta.");
+      setMessage("VocÃª precisa estar logado para solicitar consulta.");
       setMessageType("error");
       setRequestingId(null);
       return;
@@ -648,7 +648,7 @@ setLoading(false);
 
     if (existingAppointment?.id) {
       setMessage(
-        "Você já possui uma solicitação ativa para este médico nesta especialidade."
+        "VocÃª jÃ¡ possui uma solicitaÃ§Ã£o ativa para este mÃ©dico nesta especialidade."
       );
       setMessageType("info");
       setRequestingId(null);
@@ -676,7 +676,7 @@ setLoading(false);
       return;
     }
 
-    setMessage("Solicitação enviada com sucesso. Redirecionando...");
+    setMessage("SolicitaÃ§Ã£o enviada com sucesso. Redirecionando...");
     setMessageType("success");
 
     setTimeout(() => {
@@ -688,12 +688,12 @@ setLoading(false);
     if (!searchPreference) return "";
 
     if (searchPreference.preferred_clinic_id) {
-      return "Resultados restritos à clínica selecionada.";
+      return "Resultados restritos Ã  clÃ­nica selecionada.";
     }
 
-    return `Mostrando opções dentro de até ${
+    return `Mostrando opÃ§Ãµes dentro de atÃ© ${
       searchPreference.max_radius_km || 10
-    } km da sua localização.`;
+    } km da sua localizaÃ§Ã£o.`;
   }, [searchPreference]);
 
   if (loading) {
@@ -713,7 +713,7 @@ setLoading(false);
               Resultados
             </p>
             <h1 className="mt-3 app-section-title">
-              Opções compatíveis com sua busca
+              OpÃ§Ãµes compatÃ­veis com sua busca
             </h1>
             <p className="app-section-subtitle">
               {subtitle}
@@ -745,12 +745,12 @@ setLoading(false);
         {candidates.length === 0 ? (
           <div className="app-card p-8">
             <h2 className="text-2xl font-black text-slate-950">
-              Nenhuma opção encontrada
+              Nenhuma opÃ§Ã£o encontrada
             </h2>
             <p className="mt-3 text-slate-600">
-              Não encontramos médicos compatíveis com os filtros atuais. Tente
+              NÃ£o encontramos mÃ©dicos compatÃ­veis com os filtros atuais. Tente
               aumentar o raio, selecionar consulta particular ou escolher outra
-              faixa de horário.
+              faixa de horÃ¡rio.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -758,7 +758,7 @@ setLoading(false);
                 Ajustar busca
               </Link>
               <Link href="/clinicas" className="app-button-secondary text-center">
-                Ver clínicas
+                Ver clÃ­nicas
               </Link>
             </div>
           </div>
@@ -782,7 +782,7 @@ setLoading(false);
                         <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-sky-700 ring-1 ring-sky-200">
                           {candidate.appointmentMode === "private"
                             ? "Particular"
-                            : "Plano de saúde"}
+                            : "Plano de saÃºde"}
                         </span>
 
                         {candidate.distanceKm !== null && (
@@ -798,20 +798,20 @@ setLoading(false);
 
                       <p className="mt-2 text-slate-600">
                         {candidate.clinicNeighborhood
-                          ? `${candidate.clinicNeighborhood} • `
+                          ? `${candidate.clinicNeighborhood} â€¢ `
                           : ""}
                         {candidate.clinicCity} / {candidate.clinicState}
                       </p>
 
                       <div className="mt-5 rounded-3xl bg-slate-50 p-5">
                         <p className="text-sm font-semibold text-slate-500">
-                          Médico
+                          MÃ©dico
                         </p>
                         <p className="mt-2 text-xl font-black text-slate-950">
                           {candidate.doctorName}
                         </p>
                         <p className="mt-1 text-sm text-slate-600">
-                          CRM {candidate.crm || "não informado"}
+                          CRM {candidate.crm || "nÃ£o informado"}
                           {candidate.crmState ? ` / ${candidate.crmState}` : ""}
                         </p>
                       </div>
@@ -819,7 +819,7 @@ setLoading(false);
 
                     <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm lg:min-w-[320px]">
                       <p className="text-sm font-black uppercase tracking-[0.16em] text-[#1B4B58]">
-                        Horário sugerido
+                        HorÃ¡rio sugerido
                       </p>
 
                       <p className="mt-3 text-2xl font-black text-slate-950">
@@ -827,7 +827,7 @@ setLoading(false);
                       </p>
 
                       <p className="mt-2 text-sm text-slate-600">
-                        Duração estimada: {candidate.durationMinutes} minutos
+                        DuraÃ§Ã£o estimada: {candidate.durationMinutes} minutos
                       </p>
 
                       {candidate.appointmentMode === "private" && (
@@ -869,3 +869,5 @@ export default function ResultadosPage() {
     </Suspense>
   );
 }
+
+

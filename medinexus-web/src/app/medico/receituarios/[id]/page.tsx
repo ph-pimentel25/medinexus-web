@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -81,12 +81,12 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatBirthDate(value: string | null) {
-  if (!value) return "Não informada";
+  if (!value) return "NÃ£o informada";
   return new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR");
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) return "Não definido";
+  if (!value) return "NÃ£o definido";
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
@@ -119,7 +119,7 @@ export default function MedicoReceituarioPage() {
   const [appointment, setAppointment] = useState<AppointmentData | null>(null);
   const [patientName, setPatientName] = useState("Paciente");
   const [birthDate, setBirthDate] = useState<string | null>(null);
-  const [healthPlanName, setHealthPlanName] = useState("Não informado");
+  const [healthPlanName, setHealthPlanName] = useState("NÃ£o informado");
   const [doctor, setDoctor] = useState<DoctorRow | null>(null);
   const [lockedAt, setLockedAt] = useState<string | null>(null);
 
@@ -158,7 +158,7 @@ export default function MedicoReceituarioPage() {
       .single<MemberRow>();
 
     if (memberError || !member || !member.doctor_id) {
-      setMessage("Você não possui acesso à área médica.");
+      setMessage("VocÃª nÃ£o possui acesso Ã  Ã¡rea mÃ©dica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -186,7 +186,7 @@ export default function MedicoReceituarioPage() {
       .maybeSingle();
 
     if (appointmentError || !appointmentData) {
-      setMessage("Consulta não encontrada.");
+      setMessage("Consulta nÃ£o encontrada.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -247,7 +247,7 @@ export default function MedicoReceituarioPage() {
         .eq("id", patientResponse.data.default_health_plan_id)
         .maybeSingle<HealthPlanRow>();
 
-      setHealthPlanName(planData?.name || "Não informado");
+      setHealthPlanName(planData?.name || "NÃ£o informado");
     }
 
     if (prescriptionResponse.data) {
@@ -303,13 +303,13 @@ export default function MedicoReceituarioPage() {
     );
 
     if (error) {
-      setMessage(`Erro ao salvar receituário: ${error.message}`);
+      setMessage(`Erro ao salvar receituÃ¡rio: ${error.message}`);
       setMessageType("error");
       setSaving(false);
       return;
     }
 
-    setMessage("Receituário salvo com sucesso.");
+    setMessage("ReceituÃ¡rio salvo com sucesso.");
     setMessageType("success");
     setSaving(false);
   }
@@ -335,13 +335,13 @@ export default function MedicoReceituarioPage() {
         doc.text("MediNexus", margin + 6, y + 8);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        doc.text("Receituário / Solicitação médica", margin + 6, y + 14);
+        doc.text("ReceituÃ¡rio / SolicitaÃ§Ã£o mÃ©dica", margin + 6, y + 14);
         y += 26;
         doc.setTextColor(48, 59, 65);
       };
 
       const drawBlock = (label: string, value: string) => {
-        const text = value?.trim() ? value.trim() : "Não informado";
+        const text = value?.trim() ? value.trim() : "NÃ£o informado";
         const lines = doc.splitTextToSize(text, width - 8);
         const blockHeight = Math.max(16, lines.length * 6 + 10);
 
@@ -366,22 +366,22 @@ export default function MedicoReceituarioPage() {
       drawBlock("Paciente", patientName);
       drawBlock("Data de nascimento", formatBirthDate(birthDate));
       drawBlock("Plano", healthPlanName);
-      drawBlock("Clínica", appointment.clinics?.trade_name || "Não informada");
+      drawBlock("ClÃ­nica", appointment.clinics?.trade_name || "NÃ£o informada");
       drawBlock(
         "Especialidade",
-        appointment.specialties?.name || "Não informada"
+        appointment.specialties?.name || "NÃ£o informada"
       );
-      drawBlock("Título", form.title || "Sem título");
+      drawBlock("TÃ­tulo", form.title || "Sem tÃ­tulo");
       drawBlock(
         "Tipo de documento",
         form.document_type === "medication"
           ? "Receita medicamentosa"
           : form.document_type === "exam"
-          ? "Solicitação de exame"
+          ? "SolicitaÃ§Ã£o de exame"
           : "Documento livre"
       );
-      drawBlock("Conteúdo", form.content || "Não informado");
-      drawBlock("Orientações", form.guidance || "Não informado");
+      drawBlock("ConteÃºdo", form.content || "NÃ£o informado");
+      drawBlock("OrientaÃ§Ãµes", form.guidance || "NÃ£o informado");
 
       y += 8;
       doc.setDrawColor(160, 160, 160);
@@ -389,12 +389,12 @@ export default function MedicoReceituarioPage() {
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(doctor?.name || "Médico", margin, y + 24);
+      doc.text(doctor?.name || "MÃ©dico", margin, y + 24);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.text(
-        `CRM ${doctor?.crm || "não informado"}${doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}`,
+        `CRM ${doctor?.crm || "nÃ£o informado"}${doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}`,
         margin,
         y + 30
       );
@@ -416,7 +416,7 @@ export default function MedicoReceituarioPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando receituário...</p>
+        <p className="text-slate-600">Carregando receituÃ¡rio...</p>
       </main>
     );
   }
@@ -425,7 +425,7 @@ export default function MedicoReceituarioPage() {
     return (
       <main className="min-h-screen bg-slate-50">
         <section className="app-shell py-10">
-          <Alert variant="error">Consulta não encontrada.</Alert>
+          <Alert variant="error">Consulta nÃ£o encontrada.</Alert>
         </section>
       </main>
     );
@@ -442,15 +442,15 @@ export default function MedicoReceituarioPage() {
               href={`/medico/consultas/${appointment.id}`}
               className="text-sm font-medium text-sky-700 hover:underline"
             >
-              ← Voltar para o prontuário
+              â† Voltar para o prontuÃ¡rio
             </Link>
 
             <p className="mt-6 text-sm uppercase tracking-[0.2em] text-sky-700">
-              Receituário médico
+              ReceituÃ¡rio mÃ©dico
             </p>
             <h1 className="mt-3 app-section-title">{patientName}</h1>
             <p className="app-section-subtitle">
-              Gere uma receita, solicitação de exame ou documento livre com assinatura médica.
+              Gere uma receita, solicitaÃ§Ã£o de exame ou documento livre com assinatura mÃ©dica.
             </p>
           </div>
 
@@ -471,7 +471,7 @@ export default function MedicoReceituarioPage() {
         {isLocked && (
           <div className="mb-6">
             <Alert variant="info">
-              Este receituário está bloqueado para edição.
+              Este receituÃ¡rio estÃ¡ bloqueado para ediÃ§Ã£o.
             </Alert>
           </div>
         )}
@@ -499,7 +499,7 @@ export default function MedicoReceituarioPage() {
           <div className="metric-card metric-card--neutral">
             <p className="text-sm text-slate-500">CRM</p>
             <h3 className="mt-3 text-xl font-bold text-slate-900">
-              {doctor?.crm || "Não informado"}
+              {doctor?.crm || "NÃ£o informado"}
               {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}
             </h3>
           </div>
@@ -519,28 +519,28 @@ export default function MedicoReceituarioPage() {
                 disabled={isLocked}
               >
                 <option value="medication">Receita medicamentosa</option>
-                <option value="exam">Solicitação de exame</option>
+                <option value="exam">SolicitaÃ§Ã£o de exame</option>
                 <option value="freeform">Documento livre</option>
               </select>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-               Caráter da solicitação 
+               CarÃ¡ter da solicitaÃ§Ã£o 
               </label>
               <input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
                 className="app-input"
-                placeholder="Ex: Rotina / Emergência"
+                placeholder="Ex: Rotina / EmergÃªncia"
                 disabled={isLocked}
               />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Conteúdo principal
+                ConteÃºdo principal
               </label>
               <textarea
                 name="content"
@@ -554,14 +554,14 @@ export default function MedicoReceituarioPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Orientações complementares
+                OrientaÃ§Ãµes complementares
               </label>
               <textarea
                 name="guidance"
                 value={form.guidance}
                 onChange={handleChange}
                 className="app-textarea"
-                placeholder="Orientações adicionais ao paciente"
+                placeholder="OrientaÃ§Ãµes adicionais ao paciente"
                 disabled={isLocked}
               />
             </div>
@@ -573,7 +573,7 @@ export default function MedicoReceituarioPage() {
                 disabled={saving || isLocked}
                 className="app-button-primary"
               >
-                {saving ? "Salvando..." : "Salvar receituário"}
+                {saving ? "Salvando..." : "Salvar receituÃ¡rio"}
               </button>
 
               <button
@@ -591,3 +591,4 @@ export default function MedicoReceituarioPage() {
     </main>
   );
 }
+

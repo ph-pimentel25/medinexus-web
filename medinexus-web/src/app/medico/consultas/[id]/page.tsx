@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -138,7 +138,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -147,13 +147,13 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
 function getAge(birthDate?: string | null) {
-  if (!birthDate) return "Não informado";
+  if (!birthDate) return "NÃ£o informado";
 
   const birth = new Date(`${birthDate}T00:00:00`);
   const today = new Date();
@@ -183,21 +183,21 @@ function secondsToClock(totalSeconds: number) {
 
 function getDocumentLabel(type: MedicalDocumentRow["document_type"]) {
   const labels = {
-    prescription: "Receita médica",
-    exam_request: "Solicitação de exame",
-    medical_certificate: "Atestado médico",
-    attendance_declaration: "Declaração de comparecimento",
-    clinical_summary: "Resumo clínico",
+    prescription: "Receita mÃ©dica",
+    exam_request: "SolicitaÃ§Ã£o de exame",
+    medical_certificate: "Atestado mÃ©dico",
+    attendance_declaration: "DeclaraÃ§Ã£o de comparecimento",
+    clinical_summary: "Resumo clÃ­nico",
   };
 
-  return labels[type] || "Documento médico";
+  return labels[type] || "Documento mÃ©dico";
 }
 
 function buildSummary(notes: NotesForm) {
   const parts = [
-    notes.subjective ? `Queixa/evolução: ${notes.subjective}` : "",
+    notes.subjective ? `Queixa/evoluÃ§Ã£o: ${notes.subjective}` : "",
     notes.objective ? `Exame/achados: ${notes.objective}` : "",
-    notes.assessment ? `Avaliação: ${notes.assessment}` : "",
+    notes.assessment ? `AvaliaÃ§Ã£o: ${notes.assessment}` : "",
     notes.plan ? `Conduta: ${notes.plan}` : "",
   ].filter(Boolean);
 
@@ -322,7 +322,7 @@ export default function MedicoConsultaPage() {
     if (appointmentError || !appointmentData) {
       setMessage(
         `Erro ao carregar consulta: ${
-          appointmentError?.message || "consulta não encontrada"
+          appointmentError?.message || "consulta nÃ£o encontrada"
         }`
       );
       setMessageType("error");
@@ -493,7 +493,7 @@ export default function MedicoConsultaPage() {
 
     if (previousResponse.error) {
       setMessage(
-        `Erro ao carregar histórico anterior: ${previousResponse.error.message}`
+        `Erro ao carregar histÃ³rico anterior: ${previousResponse.error.message}`
       );
       setMessageType("error");
       setLoading(false);
@@ -535,10 +535,10 @@ export default function MedicoConsultaPage() {
   const doctor = pickOne(appointment?.doctors);
   const clinic = pickOne(appointment?.clinics);
 
-  const patientName = patient?.full_name || "Paciente não informado";
-  const doctorName = doctor?.name || "Médico não informado";
+  const patientName = patient?.full_name || "Paciente nÃ£o informado";
+  const doctorName = doctor?.name || "MÃ©dico nÃ£o informado";
   const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
+    clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
 
   const appointmentStart =
     appointment?.confirmed_start_at || appointment?.requested_start_at;
@@ -676,7 +676,7 @@ export default function MedicoConsultaPage() {
     if (!appointment) return;
 
     const confirmClose = window.confirm(
-      "Deseja encerrar este atendimento? Depois disso, o prontuário ficará fechado para edição."
+      "Deseja encerrar este atendimento? Depois disso, o prontuÃ¡rio ficarÃ¡ fechado para ediÃ§Ã£o."
     );
 
     if (!confirmClose) return;
@@ -783,12 +783,12 @@ export default function MedicoConsultaPage() {
 
     const patientLines = [
       `Nome: ${patientName}`,
-      `CPF: ${patient?.cpf || "Não informado"}`,
+      `CPF: ${patient?.cpf || "NÃ£o informado"}`,
       `Nascimento: ${formatDate(patient?.birth_date)} (${getAge(
         patient?.birth_date
       )})`,
-      `Telefone: ${patient?.phone || "Não informado"}`,
-      `Plano: ${patient?.health_plan_operator || "Particular/Não informado"} ${
+      `Telefone: ${patient?.phone || "NÃ£o informado"}`,
+      `Plano: ${patient?.health_plan_operator || "Particular/NÃ£o informado"} ${
         patient?.health_plan_product_name || ""
       }`,
     ];
@@ -803,11 +803,11 @@ export default function MedicoConsultaPage() {
     const sections = [
       ["Anamnese base", recordForm.base_anamnesis],
       ["Alergias", recordForm.allergies],
-      ["Condições crônicas", recordForm.chronic_conditions],
-      ["Medicações contínuas", recordForm.continuous_medications],
-      ["Histórico familiar", recordForm.family_history],
-      ["Histórico cirúrgico", recordForm.surgical_history],
-      ["Hábitos e estilo de vida", recordForm.lifestyle_notes],
+      ["CondiÃ§Ãµes crÃ´nicas", recordForm.chronic_conditions],
+      ["MedicaÃ§Ãµes contÃ­nuas", recordForm.continuous_medications],
+      ["HistÃ³rico familiar", recordForm.family_history],
+      ["HistÃ³rico cirÃºrgico", recordForm.surgical_history],
+      ["HÃ¡bitos e estilo de vida", recordForm.lifestyle_notes],
     ];
 
     sections.forEach(([title, content]) => {
@@ -825,7 +825,7 @@ export default function MedicoConsultaPage() {
       doc.setFontSize(10);
 
       const lines = doc.splitTextToSize(
-        content || "Não informado.",
+        content || "NÃ£o informado.",
         pageWidth - margin * 2
       );
 
@@ -849,7 +849,7 @@ export default function MedicoConsultaPage() {
     return (
       <main className="min-h-screen bg-[#F8FAFC]">
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-slate-600">Carregando prontuário...</p>
+          <p className="text-slate-600">Carregando prontuÃ¡rio...</p>
         </section>
       </main>
     );
@@ -860,7 +860,7 @@ export default function MedicoConsultaPage() {
       <main className="min-h-screen bg-[#F8FAFC]">
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="rounded-[28px] border border-red-200 bg-red-50 p-6 text-red-700">
-            {message || "Consulta não encontrada."}
+            {message || "Consulta nÃ£o encontrada."}
           </div>
         </section>
       </main>
@@ -875,29 +875,29 @@ export default function MedicoConsultaPage() {
         <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
-                Prontuário médico
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+                ProntuÃ¡rio mÃ©dico
               </p>
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
                 Atendimento de {patientName}
               </h1>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Registre anamnese, notas da consulta, documentos médicos e
-                histórico clínico do paciente.
+                Registre anamnese, notas da consulta, documentos mÃ©dicos e
+                histÃ³rico clÃ­nico do paciente.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/medico/solicitacoes"
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5E4B9A] shadow-sm transition hover:bg-[#F6F3FF]"
+                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
               >
                 Voltar
               </Link>
 
               <Link
                 href={`/medico/consultas/${appointmentId}/documentos`}
-                className="inline-flex justify-center rounded-2xl bg-[#6E56CF] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(110,86,207,0.9)] transition hover:bg-[#5E4B9A]"
+                className="inline-flex justify-center rounded-2xl bg-[#5A4C86] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(110,86,207,0.9)] transition hover:bg-[#5A4C86]"
               >
                 Emitir documentos
               </Link>
@@ -907,7 +907,7 @@ export default function MedicoConsultaPage() {
                   type="button"
                   onClick={handleCloseAppointment}
                   disabled={closing}
-                  className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#213366] disabled:opacity-50"
+                  className="inline-flex justify-center rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#164957] disabled:opacity-50"
                 >
                   {closing ? "Encerrando..." : "Encerrar atendimento"}
                 </button>
@@ -926,8 +926,8 @@ export default function MedicoConsultaPage() {
 
         {isClosed && (
           <div className="mb-6 rounded-[28px] border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
-            Este atendimento foi encerrado. Por política interna, os registros
-            ficam preservados para histórico e não devem ser alterados.
+            Este atendimento foi encerrado. Por polÃ­tica interna, os registros
+            ficam preservados para histÃ³rico e nÃ£o devem ser alterados.
           </div>
         )}
 
@@ -938,7 +938,7 @@ export default function MedicoConsultaPage() {
             </p>
             <p className="mt-2 font-bold text-slate-950">{patientName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {getAge(patient?.birth_date)} • CPF {patient?.cpf || "N/I"}
+              {getAge(patient?.birth_date)} â€¢ CPF {patient?.cpf || "N/I"}
             </p>
           </div>
 
@@ -950,7 +950,7 @@ export default function MedicoConsultaPage() {
               {formatDateTime(appointmentStart)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Status: {appointment.status || "não informado"}
+              Status: {appointment.status || "nÃ£o informado"}
             </p>
           </div>
 
@@ -958,13 +958,13 @@ export default function MedicoConsultaPage() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Tempo
             </p>
-            <p className="mt-2 text-2xl font-bold text-[#283C7A]">
+            <p className="mt-2 text-2xl font-bold text-[#164957]">
               {appointment.finished_at
                 ? "Encerrada"
                 : secondsToClock(elapsedSeconds)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Início: {formatDateTime(appointment.started_at)}
+              InÃ­cio: {formatDateTime(appointment.started_at)}
             </p>
           </div>
 
@@ -972,7 +972,7 @@ export default function MedicoConsultaPage() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Documentos
             </p>
-            <p className="mt-2 text-2xl font-bold text-[#6E56CF]">
+            <p className="mt-2 text-2xl font-bold text-[#5A4C86]">
               {documents.length}
             </p>
             <p className="mt-1 text-sm text-slate-500">
@@ -983,7 +983,7 @@ export default function MedicoConsultaPage() {
 
         <div className="mb-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
               Dados do paciente
             </p>
 
@@ -993,10 +993,10 @@ export default function MedicoConsultaPage() {
                   Contato
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.phone || "Telefone não informado"}
+                  {patient?.phone || "Telefone nÃ£o informado"}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {patient?.email || "E-mail não informado"}
+                  {patient?.email || "E-mail nÃ£o informado"}
                 </p>
               </div>
 
@@ -1005,23 +1005,23 @@ export default function MedicoConsultaPage() {
                   Plano
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.health_plan_operator || "Particular/Não informado"}
+                  {patient?.health_plan_operator || "Particular/NÃ£o informado"}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {patient?.health_plan_product_name || "Modelo não informado"}
+                  {patient?.health_plan_product_name || "Modelo nÃ£o informado"}
                 </p>
               </div>
 
               <div className="rounded-3xl bg-[#F8FAFC] p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Médico e clínica
+                  MÃ©dico e clÃ­nica
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
                   {doctorName}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   CRM {doctor?.crm || "N/I"}
-                  {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""} •{" "}
+                  {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""} â€¢{" "}
                   {clinicName}
                 </p>
               </div>
@@ -1029,8 +1029,8 @@ export default function MedicoConsultaPage() {
           </section>
 
           <section className="rounded-[38px] border border-[#D9D6F4] bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF] p-7 shadow-[0_24px_80px_-70px_rgba(94,75,154,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6E56CF]">
-              Histórico recente
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+              HistÃ³rico recente
             </p>
 
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
@@ -1071,18 +1071,18 @@ export default function MedicoConsultaPage() {
           <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+                <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
                   Anamnese base
                 </p>
                 <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                  Ficha médica do paciente
+                  Ficha mÃ©dica do paciente
                 </h2>
               </div>
 
               <button
                 type="button"
                 onClick={handleDownloadAnamnesisPdf}
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-bold text-[#5E4B9A] transition hover:bg-[#F6F3FF]"
+                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-bold text-[#5A4C86] transition hover:bg-[#F6F3FF]"
               >
                 Baixar PDF
               </button>
@@ -1095,8 +1095,8 @@ export default function MedicoConsultaPage() {
                   updateRecord("base_anamnesis", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="História clínica geral, queixas recorrentes, informações importantes..."
+                className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="HistÃ³ria clÃ­nica geral, queixas recorrentes, informaÃ§Ãµes importantes..."
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1106,7 +1106,7 @@ export default function MedicoConsultaPage() {
                     updateRecord("allergies", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
                   placeholder="Alergias"
                 />
 
@@ -1116,8 +1116,8 @@ export default function MedicoConsultaPage() {
                     updateRecord("chronic_conditions", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                  placeholder="Condições crônicas"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                  placeholder="CondiÃ§Ãµes crÃ´nicas"
                 />
 
                 <textarea
@@ -1126,8 +1126,8 @@ export default function MedicoConsultaPage() {
                     updateRecord("continuous_medications", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                  placeholder="Medicações contínuas"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                  placeholder="MedicaÃ§Ãµes contÃ­nuas"
                 />
 
                 <textarea
@@ -1136,8 +1136,8 @@ export default function MedicoConsultaPage() {
                     updateRecord("family_history", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                  placeholder="Histórico familiar"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                  placeholder="HistÃ³rico familiar"
                 />
 
                 <textarea
@@ -1146,8 +1146,8 @@ export default function MedicoConsultaPage() {
                     updateRecord("surgical_history", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                  placeholder="Histórico cirúrgico"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                  placeholder="HistÃ³rico cirÃºrgico"
                 />
 
                 <textarea
@@ -1156,8 +1156,8 @@ export default function MedicoConsultaPage() {
                     updateRecord("lifestyle_notes", event.target.value)
                   }
                   disabled={isClosed}
-                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                  placeholder="Hábitos e estilo de vida"
+                  className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                  placeholder="HÃ¡bitos e estilo de vida"
                 />
               </div>
 
@@ -1166,7 +1166,7 @@ export default function MedicoConsultaPage() {
                   type="button"
                   onClick={handleSaveRecord}
                   disabled={savingRecord}
-                  className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#213366] disabled:opacity-50"
+                  className="inline-flex justify-center rounded-2xl bg-[#164957] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#164957] disabled:opacity-50"
                 >
                   {savingRecord ? "Salvando..." : "Salvar anamnese"}
                 </button>
@@ -1175,7 +1175,7 @@ export default function MedicoConsultaPage() {
           </section>
 
           <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6E56CF]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
               Notas da consulta
             </p>
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
@@ -1189,7 +1189,7 @@ export default function MedicoConsultaPage() {
                   updateNotes("subjective", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
+                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
                 placeholder="Queixa principal / relato do paciente"
               />
 
@@ -1199,8 +1199,8 @@ export default function MedicoConsultaPage() {
                   updateNotes("objective", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="Exame físico / achados objetivos"
+                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="Exame fÃ­sico / achados objetivos"
               />
 
               <textarea
@@ -1209,16 +1209,16 @@ export default function MedicoConsultaPage() {
                   updateNotes("assessment", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="Avaliação / hipótese diagnóstica"
+                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="AvaliaÃ§Ã£o / hipÃ³tese diagnÃ³stica"
               />
 
               <textarea
                 value={notesForm.plan}
                 onChange={(event) => updateNotes("plan", event.target.value)}
                 disabled={isClosed}
-                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="Conduta / plano terapêutico"
+                className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="Conduta / plano terapÃªutico"
               />
 
               <textarea
@@ -1227,8 +1227,8 @@ export default function MedicoConsultaPage() {
                   updateNotes("summary", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="Resumo da consulta para histórico"
+                className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="Resumo da consulta para histÃ³rico"
               />
 
               <textarea
@@ -1237,8 +1237,8 @@ export default function MedicoConsultaPage() {
                   updateNotes("private_notes", event.target.value)
                 }
                 disabled={isClosed}
-                className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white disabled:opacity-70"
-                placeholder="Notas privadas do médico"
+                className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
+                placeholder="Notas privadas do mÃ©dico"
               />
 
               {!isClosed && (
@@ -1246,7 +1246,7 @@ export default function MedicoConsultaPage() {
                   type="button"
                   onClick={handleSaveNotes}
                   disabled={savingNotes}
-                  className="inline-flex justify-center rounded-2xl bg-[#6E56CF] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#5E4B9A] disabled:opacity-50"
+                  className="inline-flex justify-center rounded-2xl bg-[#5A4C86] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#5A4C86] disabled:opacity-50"
                 >
                   {savingNotes ? "Salvando..." : "Salvar notas"}
                 </button>
@@ -1258,17 +1258,17 @@ export default function MedicoConsultaPage() {
         <section className="mt-8 rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
                 Documentos emitidos
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                Receita, exames, atestados e declarações
+                Receita, exames, atestados e declaraÃ§Ãµes
               </h2>
             </div>
 
             <Link
               href={`/medico/consultas/${appointmentId}/documentos`}
-              className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#213366]"
+              className="inline-flex justify-center rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#164957]"
             >
               Novo documento
             </Link>
@@ -1286,14 +1286,14 @@ export default function MedicoConsultaPage() {
                   className="grid gap-4 rounded-[28px] border border-[#E0E7FF] bg-[#F8FAFC] p-5 md:grid-cols-[1fr_auto]"
                 >
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6E56CF]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#5A4C86]">
                       {getDocumentLabel(document.document_type)}
                     </p>
                     <Link
   href={`/documentos-medicos/${document.id}`}
-  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#6E56CF]"
+  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#5A4C86]"
 >
-  {document.title || "Documento médico"}
+  {document.title || "Documento mÃ©dico"}
 </Link>
                     <p className="mt-1 text-sm text-slate-500">
                       Emitido em:{" "}
@@ -1329,3 +1329,4 @@ export default function MedicoConsultaPage() {
     </main>
   );
 }
+

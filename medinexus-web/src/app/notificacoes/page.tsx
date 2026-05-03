@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -25,7 +25,7 @@ type NotificationRow = {
 type FilterType = "all" | "unread" | "read" | "consultas" | "documentos";
 
 function formatDate(dateString?: string | null) {
-  if (!dateString) return "Agora há pouco";
+  if (!dateString) return "Agora hÃ¡ pouco";
 
   return new Date(dateString).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -34,7 +34,7 @@ function formatDate(dateString?: string | null) {
 }
 
 function formatRelativeDate(dateString?: string | null) {
-  if (!dateString) return "Agora há pouco";
+  if (!dateString) return "Agora hÃ¡ pouco";
 
   const date = new Date(dateString);
   const diffMs = Date.now() - date.getTime();
@@ -43,20 +43,20 @@ function formatRelativeDate(dateString?: string | null) {
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
 
-  if (minutes < 1) return "Agora há pouco";
-  if (minutes < 60) return `${minutes} min atrás`;
-  if (hours < 24) return `${hours} h atrás`;
-  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrás`;
+  if (minutes < 1) return "Agora hÃ¡ pouco";
+  if (minutes < 60) return `${minutes} min atrÃ¡s`;
+  if (hours < 24) return `${hours} h atrÃ¡s`;
+  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrÃ¡s`;
 
   return date.toLocaleDateString("pt-BR");
 }
 
 function getNotificationTitle(item: NotificationRow) {
-  return item.title || "Nova notificação";
+  return item.title || "Nova notificaÃ§Ã£o";
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.body || item.message || "Você recebeu uma nova atualização.";
+  return item.body || item.message || "VocÃª recebeu uma nova atualizaÃ§Ã£o.";
 }
 
 function getRawType(item: NotificationRow) {
@@ -69,7 +69,7 @@ function getTypeLabel(item: NotificationRow) {
   if (raw.includes("document")) return "Documento";
   if (raw.includes("consulta")) return "Consulta";
   if (raw.includes("appointment")) return "Consulta";
-  if (raw.includes("confirm")) return "Confirmação";
+  if (raw.includes("confirm")) return "ConfirmaÃ§Ã£o";
   if (raw.includes("cancel")) return "Cancelamento";
   return "Aviso";
 }
@@ -136,7 +136,7 @@ export default function NotificacoesPage() {
 
     if (!user) {
       setNotifications([]);
-      setMessage("Você precisa estar logado para visualizar suas notificações.");
+      setMessage("VocÃª precisa estar logado para visualizar suas notificaÃ§Ãµes.");
       setLoading(false);
       return;
     }
@@ -149,7 +149,7 @@ export default function NotificacoesPage() {
 
     if (error) {
       setNotifications([]);
-      setMessage(`Erro ao carregar notificações: ${error.message}`);
+      setMessage(`Erro ao carregar notificaÃ§Ãµes: ${error.message}`);
       setLoading(false);
       return;
     }
@@ -232,28 +232,28 @@ export default function NotificacoesPage() {
   }, [notifications, query, filter]);
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <section className="border-b border-[#E8EAF4] bg-white">
+    <main className="min-h-screen bg-[#FAF6F3]">
+      <section className="border-b border-[#E7DDD7] bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
+            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
               Central
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Notificações
+              NotificaÃ§Ãµes
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Consulte avisos de consultas, confirmações, documentos liberados e
-              atualizações importantes da sua conta.
+              Consulte avisos de consultas, confirmaÃ§Ãµes, documentos liberados e
+              atualizaÃ§Ãµes importantes da sua conta.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard"
-              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
             >
               Dashboard
             </Link>
@@ -261,7 +261,7 @@ export default function NotificacoesPage() {
             <button
               type="button"
               onClick={markAllAsRead}
-              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
               Marcar todas como lidas
             </button>
@@ -279,14 +279,14 @@ export default function NotificacoesPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "Total", value: summary.total, tone: "text-slate-950" },
-            { label: "Não lidas", value: summary.unread, tone: "text-[#283C7A]" },
-            { label: "Lidas", value: summary.read, tone: "text-[#5E4B9A]" },
-            { label: "Consultas", value: summary.consultas, tone: "text-[#0F8A5F]" },
+            { label: "NÃ£o lidas", value: summary.unread, tone: "text-[#164957]" },
+            { label: "Lidas", value: summary.read, tone: "text-[#5A4C86]" },
+            { label: "Consultas", value: summary.consultas, tone: "text-[#7A9D8C]" },
             { label: "Documentos", value: summary.documentos, tone: "text-[#B26B00]" },
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-3xl border border-[#E3E8F4] bg-white p-5 shadow-sm"
+              className="rounded-3xl border border-[#E7DDD7] bg-white p-5 shadow-sm"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 {item.label}
@@ -298,24 +298,24 @@ export default function NotificacoesPage() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm">
+        <div className="mt-6 rounded-[28px] border border-[#E7DDD7] bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="w-full xl:max-w-xl">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar notificação
+                Buscar notificaÃ§Ã£o
               </label>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Busque por consulta, documento, confirmação ou aviso"
-                className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                placeholder="Busque por consulta, documento, confirmaÃ§Ã£o ou aviso"
+                className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
 
             <div className="flex flex-wrap gap-2">
               {[
                 { key: "all", label: "Todas" },
-                { key: "unread", label: "Não lidas" },
+                { key: "unread", label: "NÃ£o lidas" },
                 { key: "read", label: "Lidas" },
                 { key: "consultas", label: "Consultas" },
                 { key: "documentos", label: "Documentos" },
@@ -326,8 +326,8 @@ export default function NotificacoesPage() {
                   onClick={() => setFilter(item.key as FilterType)}
                   className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     filter === item.key
-                      ? "bg-[#283C7A] text-white"
-                      : "border border-[#D9DDF0] bg-white text-[#5E4B9A] hover:bg-[#F8FAFF]"
+                      ? "bg-[#164957] text-white"
+                      : "border border-[#D8CCC5] bg-white text-[#5A4C86] hover:bg-[#FAF6F3]"
                   }`}
                 >
                   {item.label}
@@ -339,16 +339,16 @@ export default function NotificacoesPage() {
 
         <div className="mt-6 space-y-4">
           {loading ? (
-            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando notificações...
+            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+              Carregando notificaÃ§Ãµes...
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-10 text-center shadow-sm">
+            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhuma notificação encontrada
+                Nenhuma notificaÃ§Ã£o encontrada
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Não há itens com os filtros aplicados no momento.
+                NÃ£o hÃ¡ itens com os filtros aplicados no momento.
               </p>
             </div>
           ) : (
@@ -365,18 +365,18 @@ export default function NotificacoesPage() {
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#283C7A]">
+                        <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#164957]">
                           {getTypeLabel(item)}
                         </span>
 
                         <span
                           className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
                             unread
-                              ? "bg-[#E9F7EF] text-[#0F8A5F]"
+                              ? "bg-[#E9F7EF] text-[#7A9D8C]"
                               : "bg-[#F3F5FA] text-slate-500"
                           }`}
                         >
-                          {unread ? "Não lida" : "Lida"}
+                          {unread ? "NÃ£o lida" : "Lida"}
                         </span>
 
                         <span className="text-xs text-slate-400">
@@ -402,7 +402,7 @@ export default function NotificacoesPage() {
                         <button
                           type="button"
                           onClick={() => markAsRead(item.id)}
-                          className="rounded-2xl border border-[#D9DDF0] bg-white px-4 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                          className="rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                         >
                           Marcar como lida
                         </button>
@@ -411,7 +411,7 @@ export default function NotificacoesPage() {
                       <button
                         type="button"
                         onClick={() => handleOpen(item)}
-                        className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                        className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                       >
                         Abrir
                       </button>
@@ -426,3 +426,5 @@ export default function NotificacoesPage() {
     </main>
   );
 }
+
+

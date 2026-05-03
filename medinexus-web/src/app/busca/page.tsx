@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -47,11 +47,11 @@ type AppointmentMode = "health_plan" | "private";
 const weekdayOptions = [
   { value: "0", label: "Domingo" },
   { value: "1", label: "Segunda-feira" },
-  { value: "2", label: "Terça-feira" },
+  { value: "2", label: "TerÃ§a-feira" },
   { value: "3", label: "Quarta-feira" },
   { value: "4", label: "Quinta-feira" },
   { value: "5", label: "Sexta-feira" },
-  { value: "6", label: "Sábado" },
+  { value: "6", label: "SÃ¡bado" },
 ];
 
 function BuscaPageContent() {
@@ -103,7 +103,7 @@ function BuscaPageContent() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para criar uma busca.");
+      setMessage("VocÃª precisa estar logado para criar uma busca.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -159,7 +159,7 @@ function BuscaPageContent() {
     }
 
     if (profileResponse.error) {
-      setMessage(`Erro ao carregar localização do paciente: ${profileResponse.error.message}`);
+      setMessage(`Erro ao carregar localizaÃ§Ã£o do paciente: ${profileResponse.error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -173,7 +173,7 @@ function BuscaPageContent() {
     }
 
     if (clinicResponse.error) {
-      setMessage(`Erro ao carregar clínica selecionada: ${clinicResponse.error.message}`);
+      setMessage(`Erro ao carregar clÃ­nica selecionada: ${clinicResponse.error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -258,7 +258,7 @@ function BuscaPageContent() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para salvar a busca.");
+      setMessage("VocÃª precisa estar logado para salvar a busca.");
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -273,7 +273,7 @@ function BuscaPageContent() {
 
     if (!hasPreciseLocation && !selectedClinic?.id) {
       setMessage(
-        "Para buscar por raio, atualize seu perfil e use a localização atual do dispositivo."
+        "Para buscar por raio, atualize seu perfil e use a localizaÃ§Ã£o atual do dispositivo."
       );
       setMessageType("error");
       setSubmitting(false);
@@ -282,7 +282,7 @@ function BuscaPageContent() {
 
     if (appointmentMode === "health_plan" && !hasHealthPlanData) {
       setMessage(
-        "Você escolheu plano de saúde, mas seu perfil não possui dados de plano. Atualize o perfil ou selecione consulta particular."
+        "VocÃª escolheu plano de saÃºde, mas seu perfil nÃ£o possui dados de plano. Atualize o perfil ou selecione consulta particular."
       );
       setMessageType("error");
       setSubmitting(false);
@@ -291,7 +291,7 @@ function BuscaPageContent() {
 
     if (appointmentMode === "private" && patient?.accepts_private_consultation === false) {
       setMessage(
-        "Seu perfil não está marcado para aceitar consulta particular. Atualize seu perfil ou escolha plano de saúde."
+        "Seu perfil nÃ£o estÃ¡ marcado para aceitar consulta particular. Atualize seu perfil ou escolha plano de saÃºde."
       );
       setMessageType("error");
       setSubmitting(false);
@@ -301,7 +301,7 @@ function BuscaPageContent() {
     const radiusNumber = Number(maxRadiusKm);
 
     if (Number.isNaN(radiusNumber) || radiusNumber <= 0) {
-      setMessage("Informe um raio de busca válido.");
+      setMessage("Informe um raio de busca vÃ¡lido.");
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -316,7 +316,7 @@ function BuscaPageContent() {
     );
 
     if (validWindows.length === 0) {
-      setMessage("Informe pelo menos uma faixa de horário válida.");
+      setMessage("Informe pelo menos uma faixa de horÃ¡rio vÃ¡lida.");
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -375,7 +375,7 @@ function BuscaPageContent() {
       );
 
     if (windowsError) {
-      setMessage(`Erro ao salvar horários: ${windowsError.message}`);
+      setMessage(`Erro ao salvar horÃ¡rios: ${windowsError.message}`);
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -407,10 +407,10 @@ function BuscaPageContent() {
               Nova busca
             </p>
             <h1 className="mt-3 app-section-title">
-              Encontre a melhor opção para consulta
+              Encontre a melhor opÃ§Ã£o para consulta
             </h1>
             <p className="app-section-subtitle">
-              Defina especialidade, raio, forma de atendimento e horários desejados.
+              Defina especialidade, raio, forma de atendimento e horÃ¡rios desejados.
             </p>
           </div>
 
@@ -419,17 +419,17 @@ function BuscaPageContent() {
               Voltar ao dashboard
             </Link>
             <Link href="/clinicas" className="app-button-secondary text-center">
-              Ver clínicas
+              Ver clÃ­nicas
             </Link>
           </div>
         </div>
 
         {!hasPreciseLocation && !selectedClinic?.id && (
           <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-800">
-            <p className="font-bold">Localização precisa não encontrada</p>
+            <p className="font-bold">LocalizaÃ§Ã£o precisa nÃ£o encontrada</p>
             <p className="mt-1 text-sm">
               Para usar busca por raio, abra seu perfil e clique em{" "}
-              <span className="font-semibold">Usar minha localização atual</span>.
+              <span className="font-semibold">Usar minha localizaÃ§Ã£o atual</span>.
             </p>
             <div className="mt-4">
               <Link href="/perfil" className="app-button-secondary">
@@ -444,22 +444,22 @@ function BuscaPageContent() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">
-                  Busca restrita à clínica
+                  Busca restrita Ã  clÃ­nica
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  {selectedClinic.trade_name || "Clínica"}
+                  {selectedClinic.trade_name || "ClÃ­nica"}
                 </h2>
                 <p className="mt-1 text-slate-600">
-                  {selectedClinic.city || "Cidade não informada"} /{" "}
-                  {selectedClinic.state || "Estado não informado"}
+                  {selectedClinic.city || "Cidade nÃ£o informada"} /{" "}
+                  {selectedClinic.state || "Estado nÃ£o informado"}
                   {selectedClinic.neighborhood
-                    ? ` • ${selectedClinic.neighborhood}`
+                    ? ` â€¢ ${selectedClinic.neighborhood}`
                     : ""}
                 </p>
               </div>
 
               <Link href="/busca" className="app-button-secondary text-center">
-                Remover filtro da clínica
+                Remover filtro da clÃ­nica
               </Link>
             </div>
           </div>
@@ -539,13 +539,13 @@ function BuscaPageContent() {
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                <p className="text-lg font-black">Usar plano de saúde</p>
+                <p className="text-lg font-black">Usar plano de saÃºde</p>
                 <p className="mt-2 text-sm">
-                  Buscar clínicas compatíveis com os dados do seu plano.
+                  Buscar clÃ­nicas compatÃ­veis com os dados do seu plano.
                 </p>
                 {!hasHealthPlanData && (
                   <p className="mt-3 text-xs font-semibold text-red-600">
-                    Complete os dados do plano no perfil para usar esta opção.
+                    Complete os dados do plano no perfil para usar esta opÃ§Ã£o.
                   </p>
                 )}
               </button>
@@ -561,7 +561,7 @@ function BuscaPageContent() {
               >
                 <p className="text-lg font-black">Consulta particular</p>
                 <p className="mt-2 text-sm">
-                  Mostrar médicos e clínicas que aceitam atendimento particular.
+                  Mostrar mÃ©dicos e clÃ­nicas que aceitam atendimento particular.
                 </p>
               </button>
             </div>
@@ -570,15 +570,15 @@ function BuscaPageContent() {
               <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
                 <p>
                   <span className="font-semibold">Operadora:</span>{" "}
-                  {patient?.health_plan_operator || "Não informado"}
+                  {patient?.health_plan_operator || "NÃ£o informado"}
                 </p>
                 <p className="mt-1">
                   <span className="font-semibold">Modelo:</span>{" "}
-                  {patient?.health_plan_product_name || "Não informado"}
+                  {patient?.health_plan_product_name || "NÃ£o informado"}
                 </p>
                 <p className="mt-1">
                   <span className="font-semibold">Rede:</span>{" "}
-                  {patient?.health_plan_network || "Não informado"}
+                  {patient?.health_plan_network || "NÃ£o informado"}
                 </p>
               </div>
             )}
@@ -590,24 +590,24 @@ function BuscaPageContent() {
                 Raio de busca
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                O raio usa a localização precisa salva no seu perfil.
+                O raio usa a localizaÃ§Ã£o precisa salva no seu perfil.
               </p>
 
               <div className="mt-6 max-w-md">
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Distância máxima
+                  DistÃ¢ncia mÃ¡xima
                 </label>
                 <select
                   value={maxRadiusKm}
                   onChange={(e) => setMaxRadiusKm(e.target.value)}
                   className="app-input"
                 >
-                  <option value="3">Até 3 km</option>
-                  <option value="5">Até 5 km</option>
-                  <option value="10">Até 10 km</option>
-                  <option value="15">Até 15 km</option>
-                  <option value="25">Até 25 km</option>
-                  <option value="50">Até 50 km</option>
+                  <option value="3">AtÃ© 3 km</option>
+                  <option value="5">AtÃ© 5 km</option>
+                  <option value="10">AtÃ© 10 km</option>
+                  <option value="15">AtÃ© 15 km</option>
+                  <option value="25">AtÃ© 25 km</option>
+                  <option value="50">AtÃ© 50 km</option>
                 </select>
               </div>
             </div>
@@ -617,7 +617,7 @@ function BuscaPageContent() {
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black text-slate-950">
-                  Faixas de horário desejadas
+                  Faixas de horÃ¡rio desejadas
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
                   O sistema vai tentar encaixar a consulta dentro dessas janelas.
@@ -716,7 +716,7 @@ function BuscaPageContent() {
             disabled={submitting}
             className="app-button-primary"
           >
-            {submitting ? "Salvando busca..." : "Buscar opções"}
+            {submitting ? "Salvando busca..." : "Buscar opÃ§Ãµes"}
           </button>
         </form>
       </section>
@@ -737,3 +737,5 @@ export default function BuscaPage() {
     </Suspense>
   );
 }
+
+

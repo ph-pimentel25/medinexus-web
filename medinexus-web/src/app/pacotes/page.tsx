@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -28,45 +28,45 @@ const highlights = [
   {
     title: "Agenda inteligente",
     description:
-      "Solicitações chegam com horário sugerido, considerando disponibilidade e duração média da consulta.",
+      "SolicitaÃ§Ãµes chegam com horÃ¡rio sugerido, considerando disponibilidade e duraÃ§Ã£o mÃ©dia da consulta.",
   },
   {
-    title: "Presença digital",
+    title: "PresenÃ§a digital",
     description:
-      "Clínicas e médicos ganham uma vitrine mais profissional dentro da jornada MediNexus.",
+      "ClÃ­nicas e mÃ©dicos ganham uma vitrine mais profissional dentro da jornada MediNexus.",
   },
   {
-    title: "Documentos médicos",
+    title: "Documentos mÃ©dicos",
     description:
-      "Base para prontuário, anamnese, receituário, solicitações e histórico clínico do paciente.",
+      "Base para prontuÃ¡rio, anamnese, receituÃ¡rio, solicitaÃ§Ãµes e histÃ³rico clÃ­nico do paciente.",
   },
 ];
 
 const comparisonRows = [
   {
-    feature: "Solicitações de pacientes",
-    doctor: "Incluído",
-    clinic: "Incluído",
+    feature: "SolicitaÃ§Ãµes de pacientes",
+    doctor: "IncluÃ­do",
+    clinic: "IncluÃ­do",
   },
   {
-    feature: "Confirmação de consulta",
+    feature: "ConfirmaÃ§Ã£o de consulta",
     doctor: "1 clique",
-    clinic: "Gestão da equipe",
+    clinic: "GestÃ£o da equipe",
   },
   {
-    feature: "Página pública",
+    feature: "PÃ¡gina pÃºblica",
     doctor: "Perfil profissional",
-    clinic: "Página institucional",
+    clinic: "PÃ¡gina institucional",
   },
   {
-    feature: "Prontuário e documentos",
-    doctor: "Incluído",
-    clinic: "Incluído para equipe",
+    feature: "ProntuÃ¡rio e documentos",
+    doctor: "IncluÃ­do",
+    clinic: "IncluÃ­do para equipe",
   },
   {
-    feature: "Gestão de médicos",
+    feature: "GestÃ£o de mÃ©dicos",
     doctor: "Individual",
-    clinic: "Múltiplos médicos",
+    clinic: "MÃºltiplos mÃ©dicos",
   },
   {
     feature: "Suporte e crescimento",
@@ -93,13 +93,13 @@ function getPackageCta(item: PackageRow) {
   if (item.target_type === "clinic") {
     return {
       href: "/clinica/cadastro",
-      label: "Cadastrar clínica",
+      label: "Cadastrar clÃ­nica",
     };
   }
 
   return {
     href: "/profissionais",
-    label: "Começar como médico",
+    label: "ComeÃ§ar como mÃ©dico",
   };
 }
 function getPackageTag(item: PackageRow) {
@@ -110,20 +110,20 @@ function getPackageTag(item: PackageRow) {
   }
 
   if (name.includes("start") || name.includes("essencial")) {
-    return "Para começar";
+    return "Para comeÃ§ar";
   }
 
-  return item.target_type === "clinic" ? "Para clínicas" : "Para médicos";
+  return item.target_type === "clinic" ? "Para clÃ­nicas" : "Para mÃ©dicos";
 }
 
 function getPackageDescription(item: PackageRow) {
   if (item.subtitle) return item.subtitle;
 
   if (item.target_type === "clinic") {
-    return "Para clínicas que querem organizar solicitações, médicos, página pública e jornada digital.";
+    return "Para clÃ­nicas que querem organizar solicitaÃ§Ãµes, mÃ©dicos, pÃ¡gina pÃºblica e jornada digital.";
   }
 
-  return "Para médicos que querem receber solicitações, confirmar consultas e atender com mais organização.";
+  return "Para mÃ©dicos que querem receber solicitaÃ§Ãµes, confirmar consultas e atender com mais organizaÃ§Ã£o.";
 }
 
 function PackageFeature({
@@ -138,11 +138,11 @@ function PackageFeature({
       <span
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black ${
           active
-            ? "bg-[#283C7A] text-white"
+            ? "bg-[#164957] text-white"
             : "bg-slate-200 text-slate-500"
         }`}
       >
-        {active ? "✓" : "–"}
+        {active ? "âœ“" : "â€“"}
       </span>
       <span>{label}</span>
     </div>
@@ -230,35 +230,35 @@ export default function PacotesPage() {
     <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
       <section className="relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
-        <div className="absolute left-1/2 top-8 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#6E56CF]/10 blur-3xl" />
+        <div className="absolute left-1/2 top-8 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#5A4C86]/10 blur-3xl" />
 
         <section className="relative mx-auto max-w-7xl px-4 pb-12 pt-16 sm:px-6 lg:px-8 lg:pb-16 lg:pt-24">
           <div className="mx-auto max-w-5xl text-center">
-            <p className="inline-flex rounded-full border border-[#283C7A]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#283C7A] shadow-sm">
+            <p className="inline-flex rounded-full border border-[#164957]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#164957] shadow-sm">
               Pacotes MediNexus
             </p>
 
             <h1 className="mt-7 text-5xl font-black leading-[0.92] tracking-[-0.075em] text-slate-950 sm:text-6xl lg:text-7xl">
-              Planos para médicos e clínicas entrarem na nova jornada digital da saúde.
+              Planos para mÃ©dicos e clÃ­nicas entrarem na nova jornada digital da saÃºde.
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-lg leading-8 text-slate-600">
-              Escolha o pacote ideal para receber solicitações qualificadas,
-              organizar agenda, confirmar consultas, usar prontuário e construir
-              presença digital dentro da MediNexus.
+              Escolha o pacote ideal para receber solicitaÃ§Ãµes qualificadas,
+              organizar agenda, confirmar consultas, usar prontuÃ¡rio e construir
+              presenÃ§a digital dentro da MediNexus.
             </p>
 
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/clinica/cadastro"
-                className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-8 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#213366]"
+                className="inline-flex justify-center rounded-2xl bg-[#164957] px-8 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#123B46]"
               >
-                Cadastrar clínica
+                Cadastrar clÃ­nica
               </Link>
 
               <Link
                 href="/sobre"
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white/90 px-8 py-4 text-sm font-black text-[#5E4B9A] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
+                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white/90 px-8 py-4 text-sm font-black text-[#5A4C86] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
               >
                 Entender a plataforma
               </Link>
@@ -271,8 +271,8 @@ export default function PacotesPage() {
                 key={item.title}
                 className="rounded-[34px] border border-[#E0E7FF] bg-white/85 p-7 shadow-[0_24px_80px_-66px_rgba(40,60,122,0.4)] backdrop-blur"
               >
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F1F5FF] text-[#283C7A]">
-                  ✓
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F1F5FF] text-[#164957]">
+                  âœ“
                 </div>
                 <h2 className="text-2xl font-black tracking-[-0.04em] text-slate-950">
                   {item.title}
@@ -297,8 +297,8 @@ export default function PacotesPage() {
           <div className="flex flex-wrap gap-2">
             {[
               { value: "all", label: "Todos" },
-              { value: "doctor", label: "Médicos" },
-              { value: "clinic", label: "Clínicas" },
+              { value: "doctor", label: "MÃ©dicos" },
+              { value: "clinic", label: "ClÃ­nicas" },
             ].map((item) => (
               <button
                 key={item.value}
@@ -306,8 +306,8 @@ export default function PacotesPage() {
                 onClick={() => setAudienceFilter(item.value as AudienceFilter)}
                 className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
                   audienceFilter === item.value
-                    ? "bg-[#283C7A] text-white"
-                    : "bg-[#F1F5FF] text-[#283C7A] hover:bg-[#E5ECFF]"
+                    ? "bg-[#164957] text-white"
+                    : "bg-[#F1F5FF] text-[#164957] hover:bg-[#E5ECFF]"
                 }`}
               >
                 {item.label}
@@ -321,8 +321,8 @@ export default function PacotesPage() {
               onClick={() => setBillingCycle("monthly")}
               className={`rounded-xl px-5 py-2 text-sm font-black transition ${
                 billingCycle === "monthly"
-                  ? "bg-white text-[#283C7A] shadow-sm"
-                  : "text-[#6E56CF]"
+                  ? "bg-white text-[#164957] shadow-sm"
+                  : "text-[#5A4C86]"
               }`}
             >
               Mensal
@@ -332,8 +332,8 @@ export default function PacotesPage() {
               onClick={() => setBillingCycle("yearly")}
               className={`rounded-xl px-5 py-2 text-sm font-black transition ${
                 billingCycle === "yearly"
-                  ? "bg-white text-[#283C7A] shadow-sm"
-                  : "text-[#6E56CF]"
+                  ? "bg-white text-[#164957] shadow-sm"
+                  : "text-[#5A4C86]"
               }`}
             >
               Anual
@@ -347,7 +347,7 @@ export default function PacotesPage() {
               Nenhum pacote encontrado
             </h2>
             <p className="mt-2 text-slate-600">
-              Ainda não há pacotes ativos para esse filtro.
+              Ainda nÃ£o hÃ¡ pacotes ativos para esse filtro.
             </p>
           </div>
         ) : (
@@ -373,19 +373,19 @@ export default function PacotesPage() {
                   key={item.id}
                   className={`relative overflow-hidden rounded-[42px] border p-8 shadow-[0_30px_100px_-70px_rgba(40,60,122,0.55)] ${
                     isRecommended
-                      ? "border-[#6E56CF]/30 bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF]"
+                      ? "border-[#5A4C86]/30 bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF]"
                       : "border-[#E0E7FF] bg-white"
                   }`}
                 >
                   {isRecommended && (
-                    <div className="absolute right-6 top-6 rounded-full bg-[#6E56CF] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-sm">
+                    <div className="absolute right-6 top-6 rounded-full bg-[#5A4C86] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-sm">
                       Recomendado
                     </div>
                   )}
 
                   <div className="pr-0 sm:pr-32">
-                    <p className="inline-flex rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#5E4B9A] ring-1 ring-[#D9D6F4]">
-                      {item.target_type === "doctor" ? "Médico" : "Clínica"} •{" "}
+                    <p className="inline-flex rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#5A4C86] ring-1 ring-[#D9D6F4]">
+                      {item.target_type === "doctor" ? "MÃ©dico" : "ClÃ­nica"} â€¢{" "}
                       {tag}
                     </p>
 
@@ -404,44 +404,44 @@ export default function PacotesPage() {
                     </p>
 
                     <div className="mt-2 flex flex-wrap items-end gap-2">
-                      <p className="text-5xl font-black tracking-[-0.06em] text-[#283C7A]">
+                      <p className="text-5xl font-black tracking-[-0.06em] text-[#164957]">
                         {formatMoney(displayPrice)}
                       </p>
                       <p className="pb-2 text-sm font-bold text-slate-500">
-                        /mês
+                        /mÃªs
                       </p>
                     </div>
 
                     {billingCycle === "yearly" && item.yearly_price_cents && (
-                      <p className="mt-2 text-sm font-semibold text-[#6E56CF]">
-                        Cobrança anual de {formatMoney(item.yearly_price_cents)}
+                      <p className="mt-2 text-sm font-semibold text-[#5A4C86]">
+                        CobranÃ§a anual de {formatMoney(item.yearly_price_cents)}
                       </p>
                     )}
 
                     {billingCycle === "monthly" && item.yearly_price_cents && (
                       <p className="mt-2 text-sm font-semibold text-slate-500">
-                        Plano anual disponível com valor otimizado.
+                        Plano anual disponÃ­vel com valor otimizado.
                       </p>
                     )}
                   </div>
 
                   <div className="mt-6 grid gap-3">
                     <PackageFeature
-                      label={`Até ${
-                        item.max_doctors || "múltiplos"
-                      } médico(s)`}
+                      label={`AtÃ© ${
+                        item.max_doctors || "mÃºltiplos"
+                      } mÃ©dico(s)`}
                     />
                     <PackageFeature
-                      label={`Até ${
-                        item.max_appointments_per_month || "várias"
-                      } consultas/mês`}
+                      label={`AtÃ© ${
+                        item.max_appointments_per_month || "vÃ¡rias"
+                      } consultas/mÃªs`}
                     />
                     <PackageFeature
-                      label="Página pública na MediNexus"
+                      label="PÃ¡gina pÃºblica na MediNexus"
                       active={item.has_public_page}
                     />
                     <PackageFeature
-                      label="Prontuário e documentos médicos"
+                      label="ProntuÃ¡rio e documentos mÃ©dicos"
                       active={item.has_documents}
                     />
                     <PackageFeature
@@ -449,7 +449,7 @@ export default function PacotesPage() {
                       active={item.has_ai_features}
                     />
                     <PackageFeature
-                      label="Suporte prioritário"
+                      label="Suporte prioritÃ¡rio"
                       active={item.has_priority_support}
                     />
                   </div>
@@ -459,8 +459,8 @@ export default function PacotesPage() {
                       href={cta.href}
                       className={`inline-flex justify-center rounded-2xl px-6 py-4 text-sm font-black transition ${
                         isRecommended
-                          ? "bg-[#6E56CF] text-white hover:bg-[#5E4B9A]"
-                          : "bg-[#283C7A] text-white hover:bg-[#213366]"
+                          ? "bg-[#5A4C86] text-white hover:bg-[#5A4C86]"
+                          : "bg-[#164957] text-white hover:bg-[#123B46]"
                       }`}
                     >
                       {cta.label}
@@ -468,7 +468,7 @@ export default function PacotesPage() {
 
                     <Link
                       href="/sobre"
-                      className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-black text-[#5E4B9A] transition hover:bg-[#F6F3FF]"
+                      className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-black text-[#5A4C86] transition hover:bg-[#F6F3FF]"
                     >
                       Saber mais
                     </Link>
@@ -483,15 +483,15 @@ export default function PacotesPage() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[46px] bg-slate-950 shadow-[0_35px_120px_-70px_rgba(15,23,42,0.95)]">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="bg-gradient-to-br from-[#283C7A] to-[#6E56CF] p-8 text-white lg:p-12">
+            <div className="bg-gradient-to-br from-[#164957] to-[#5A4C86] p-8 text-white lg:p-12">
               <p className="text-sm font-black uppercase tracking-[0.22em] text-white/60">
                 Comparativo
               </p>
               <h2 className="mt-4 text-4xl font-black leading-none tracking-[-0.06em]">
-                Médico individual ou clínica completa: a MediNexus acompanha os dois cenários.
+                MÃ©dico individual ou clÃ­nica completa: a MediNexus acompanha os dois cenÃ¡rios.
               </h2>
               <p className="mt-5 leading-8 text-white/75">
-                Comece com o que faz sentido hoje e evolua conforme sua operação
+                Comece com o que faz sentido hoje e evolua conforme sua operaÃ§Ã£o
                 cresce.
               </p>
             </div>
@@ -505,10 +505,10 @@ export default function PacotesPage() {
                   >
                     <p className="font-black">{row.feature}</p>
                     <p className="text-sm font-semibold text-white/75">
-                      Médico: {row.doctor}
+                      MÃ©dico: {row.doctor}
                     </p>
                     <p className="text-sm font-semibold text-white/75">
-                      Clínica: {row.clinic}
+                      ClÃ­nica: {row.clinic}
                     </p>
                   </div>
                 ))}
@@ -520,82 +520,82 @@ export default function PacotesPage() {
 
       <section className="mx-auto grid max-w-7xl gap-6 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
         <div className="rounded-[42px] border border-[#E0E7FF] bg-white p-8 shadow-[0_24px_80px_-66px_rgba(40,60,122,0.45)]">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#283C7A]">
-            Para médicos
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#164957]">
+            Para mÃ©dicos
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.06em] text-slate-950">
-            Receba solicitações melhores e confirme consultas com menos atrito.
+            Receba solicitaÃ§Ãµes melhores e confirme consultas com menos atrito.
           </h2>
           <p className="mt-5 leading-8 text-slate-600">
-            Ideal para profissionais que querem organizar solicitações, reduzir
-            mensagens dispersas e atender com prontuário integrado.
+            Ideal para profissionais que querem organizar solicitaÃ§Ãµes, reduzir
+            mensagens dispersas e atender com prontuÃ¡rio integrado.
           </p>
 
           <div className="mt-7">
             <Link
               href="/profissionais"
-              className="inline-flex rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-black text-white transition hover:bg-[#213366]"
+              className="inline-flex rounded-2xl bg-[#164957] px-7 py-4 text-sm font-black text-white transition hover:bg-[#123B46]"
             >
-              Começar como médico
+              ComeÃ§ar como mÃ©dico
             </Link>
           </div>
         </div>
 
         <div className="rounded-[42px] border border-[#D9D6F4] bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF] p-8 shadow-[0_24px_80px_-66px_rgba(94,75,154,0.45)]">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#6E56CF]">
-            Para clínicas
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#5A4C86]">
+            Para clÃ­nicas
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.06em] text-slate-950">
-            Estruture sua operação digital com médicos, planos e página pública.
+            Estruture sua operaÃ§Ã£o digital com mÃ©dicos, planos e pÃ¡gina pÃºblica.
           </h2>
           <p className="mt-5 leading-8 text-slate-600">
-            Ideal para clínicas que querem receber pacientes com mais contexto,
-            organizar agenda e criar presença digital dentro da MediNexus.
+            Ideal para clÃ­nicas que querem receber pacientes com mais contexto,
+            organizar agenda e criar presenÃ§a digital dentro da MediNexus.
           </p>
 
           <div className="mt-7">
             <Link
               href="/clinica/cadastro"
-              className="inline-flex rounded-2xl bg-[#6E56CF] px-7 py-4 text-sm font-black text-white transition hover:bg-[#5E4B9A]"
+              className="inline-flex rounded-2xl bg-[#5A4C86] px-7 py-4 text-sm font-black text-white transition hover:bg-[#5A4C86]"
             >
-              Cadastrar clínica
+              Cadastrar clÃ­nica
             </Link>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
+        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#164957] via-[#5A4C86] to-[#5A4C86] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
           <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -bottom-24 left-20 h-80 w-80 rounded-full bg-[#B7A7FF]/20 blur-3xl" />
 
           <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-white/60">
-                Próxima etapa
+                PrÃ³xima etapa
               </p>
               <h2 className="mt-4 max-w-4xl text-4xl font-black leading-none tracking-[-0.06em] sm:text-5xl">
-                Em breve, esses pacotes poderão liberar acesso automaticamente após pagamento.
+                Em breve, esses pacotes poderÃ£o liberar acesso automaticamente apÃ³s pagamento.
               </h2>
               <p className="mt-5 max-w-2xl leading-8 text-white/75">
-                A base comercial já está pronta para evoluir para assinatura,
-                checkout, liberação de recursos e gestão financeira.
+                A base comercial jÃ¡ estÃ¡ pronta para evoluir para assinatura,
+                checkout, liberaÃ§Ã£o de recursos e gestÃ£o financeira.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
                 href="/clinica/cadastro"
-                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#283C7A] transition hover:bg-slate-100"
+                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#164957] transition hover:bg-slate-100"
               >
-                Cadastrar clínica
+                Cadastrar clÃ­nica
               </Link>
 
               <Link
                 href="/sobre"
                 className="inline-flex justify-center rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black text-white transition hover:bg-white/15"
               >
-                Ver visão do produto
+                Ver visÃ£o do produto
               </Link>
             </div>
           </div>
@@ -604,3 +604,5 @@ export default function PacotesPage() {
     </main>
   );
 }
+
+

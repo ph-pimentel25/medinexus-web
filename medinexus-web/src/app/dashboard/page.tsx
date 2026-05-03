@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -59,7 +59,7 @@ function getFirstName(fullName?: string | null) {
 }
 
 function formatDate(dateString?: string | null) {
-  if (!dateString) return "Não informado";
+  if (!dateString) return "NÃ£o informado";
 
   const date = new Date(dateString);
   return date.toLocaleString("pt-BR", {
@@ -118,7 +118,7 @@ export default function DashboardPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErrorMessage("Você precisa estar logado para visualizar o dashboard.");
+      setErrorMessage("VocÃª precisa estar logado para visualizar o dashboard.");
       setLoading(false);
       return;
     }
@@ -192,12 +192,12 @@ export default function DashboardPage() {
 
         return {
           ...item,
-          doctor_name: doctor?.name || "Médico não informado",
-          clinic_name: clinic?.name || "Clínica não informada",
+          doctor_name: doctor?.name || "MÃ©dico nÃ£o informado",
+          clinic_name: clinic?.name || "ClÃ­nica nÃ£o informada",
           clinic_location:
             clinic?.city && clinic?.state
               ? `${clinic.city} / ${clinic.state}`
-              : "Local não informado",
+              : "Local nÃ£o informado",
         };
       }
     );
@@ -250,42 +250,42 @@ export default function DashboardPage() {
   }, [appointments]);
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <section className="border-b border-[#E8EAF4] bg-white">
+    <main className="min-h-screen bg-[#FAF6F3]">
+      <section className="border-b border-[#E7DDD7] bg-white">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.6fr_1fr] lg:px-8">
-          <div className="rounded-[32px] border border-[#E3E8F4] bg-gradient-to-r from-[#F4F8FF] to-[#F8F5FF] p-8">
-            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4660A9]">
-              Área do paciente
+          <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
+            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
+              Ãrea do paciente
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Olá, {firstName}
+              OlÃ¡, {firstName}
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Acompanhe suas consultas, veja documentos liberados, confira suas
-              notificações e continue sua jornada de atendimento com mais
+              notificaÃ§Ãµes e continue sua jornada de atendimento com mais
               praticidade.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/busca"
-                className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
               >
                 Nova busca
               </Link>
 
               <Link
                 href="/solicitacoes"
-                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
-                Ver solicitações
+                Ver solicitaÃ§Ãµes
               </Link>
 
               <Link
                 href="/documentos"
-                className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
                 Meus documentos
               </Link>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
 
           <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rápido
+              Resumo rÃ¡pido
             </p>
 
             <div className="mt-4 grid gap-3">
@@ -316,12 +316,12 @@ export default function DashboardPage() {
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.completed}</p>
-                  <p className="mt-1 text-sm text-white/80">concluídas</p>
+                  <p className="mt-1 text-sm text-white/80">concluÃ­das</p>
                 </div>
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.unread}</p>
-                  <p className="mt-1 text-sm text-white/80">não lidas</p>
+                  <p className="mt-1 text-sm text-white/80">nÃ£o lidas</p>
                 </div>
               </div>
             </div>
@@ -337,27 +337,27 @@ export default function DashboardPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
             Carregando dashboard...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
             {/* COLUNA ESQUERDA */}
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      Próximas consultas
+                      PrÃ³ximas consultas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Seus próximos atendimentos agendados.
+                      Seus prÃ³ximos atendimentos agendados.
                     </p>
                   </div>
 
                   <Link
                     href="/solicitacoes"
-                    className="text-sm font-semibold text-[#4660A9] hover:underline"
+                    className="text-sm font-semibold text-[#164957] hover:underline"
                   >
                     Ver tudo
                   </Link>
@@ -365,24 +365,24 @@ export default function DashboardPage() {
 
                 {nextAppointments.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Você ainda não tem próximas consultas agendadas.
+                    VocÃª ainda nÃ£o tem prÃ³ximas consultas agendadas.
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {nextAppointments.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-5"
+                        className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-5"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <div className="mb-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#283C7A]">
+                              <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#164957]">
                                 {item.status || "sem status"}
                               </span>
 
                               {item.patient_confirmation_status && (
-                                <span className="rounded-full bg-[#F4F1FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#6E56CF]">
+                                <span className="rounded-full bg-[#F0EDF7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5A4C86]">
                                   {item.patient_confirmation_status}
                                 </span>
                               )}
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                             </h3>
 
                             <p className="mt-1 text-sm text-slate-600">
-                              Médico: {item.doctor_name}
+                              MÃ©dico: {item.doctor_name}
                             </p>
 
                             <p className="mt-1 text-sm text-slate-500">
@@ -414,9 +414,9 @@ export default function DashboardPage() {
                         <div className="mt-4">
                           <Link
                             href={getAppointmentHref()}
-                            className="inline-flex rounded-2xl bg-[#283C7A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                            className="inline-flex rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                           >
-                            Abrir solicitações
+                            Abrir solicitaÃ§Ãµes
                           </Link>
                         </div>
                       </div>
@@ -425,11 +425,11 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      Ações rápidas
+                      AÃ§Ãµes rÃ¡pidas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
                       Atalhos principais da sua conta.
@@ -440,28 +440,28 @@ export default function DashboardPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Link
                     href="/busca"
-                    className="rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
                     Nova busca
                   </Link>
 
                   <Link
                     href="/solicitacoes"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Ver solicitações
+                    Ver solicitaÃ§Ãµes
                   </Link>
 
                   <Link
                     href="/documentos"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Abrir documentos
                   </Link>
 
                   <Link
                     href="/perfil"
-                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Editar perfil
                   </Link>
@@ -471,20 +471,20 @@ export default function DashboardPage() {
 
             {/* COLUNA DIREITA */}
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      Notificações recentes
+                      NotificaÃ§Ãµes recentes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Últimos avisos da plataforma.
+                      Ãšltimos avisos da plataforma.
                     </p>
                   </div>
 
                   <Link
                     href="/notificacoes"
-                    className="text-sm font-semibold text-[#4660A9] hover:underline"
+                    className="text-sm font-semibold text-[#164957] hover:underline"
                   >
                     Ver tudo
                   </Link>
@@ -492,7 +492,7 @@ export default function DashboardPage() {
 
                 {notifications.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhuma notificação por enquanto.
+                    Nenhuma notificaÃ§Ã£o por enquanto.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -500,26 +500,26 @@ export default function DashboardPage() {
                       <Link
                         key={item.id}
                         href={getNotificationHref(item)}
-                        className="block rounded-2xl border border-[#E9EDF7] bg-[#FCFDFF] p-4 transition hover:bg-white"
+                        className="block rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 transition hover:bg-white"
                       >
                         <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-bold text-[#283C7A]">
+                          <span className="rounded-full bg-[#EEF3EF] px-2.5 py-1 text-[11px] font-bold text-[#164957]">
                             {item.type || "aviso"}
                           </span>
 
                           {!item.is_read && (
-                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#0F8A5F]">
+                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#7A9D8C]">
                               Nova
                             </span>
                           )}
                         </div>
 
                         <p className="text-sm font-bold text-slate-950">
-                          {item.title || "Nova notificação"}
+                          {item.title || "Nova notificaÃ§Ã£o"}
                         </p>
 
                         <p className="mt-1 text-sm text-slate-500">
-                          {item.message || "Você recebeu uma atualização."}
+                          {item.message || "VocÃª recebeu uma atualizaÃ§Ã£o."}
                         </p>
 
                         <p className="mt-2 text-xs text-slate-400">
@@ -531,7 +531,7 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-950">
                   Sua conta
                 </h2>
@@ -541,12 +541,12 @@ export default function DashboardPage() {
                     Nome cadastrado
                   </p>
                   <p className="mt-1 text-base font-bold text-slate-950">
-                    {profile?.full_name || "Paciente não informado"}
+                    {profile?.full_name || "Paciente nÃ£o informado"}
                   </p>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Consultas pendentes
                     </p>
@@ -555,11 +555,11 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Não lidas
+                      NÃ£o lidas
                     </p>
-                    <p className="mt-2 text-2xl font-bold text-[#283C7A]">
+                    <p className="mt-2 text-2xl font-bold text-[#164957]">
                       {summary.unread}
                     </p>
                   </div>
@@ -568,7 +568,7 @@ export default function DashboardPage() {
                 <div className="mt-4">
                   <Link
                     href="/perfil"
-                    className="inline-flex rounded-2xl border border-[#D9DDF0] bg-white px-4 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F7F9FF]"
+                    className="inline-flex rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
                     Atualizar meus dados
                   </Link>
@@ -581,3 +581,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+

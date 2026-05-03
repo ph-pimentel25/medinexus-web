@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -64,7 +64,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "full",
@@ -73,7 +73,7 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatShortDateTime(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -83,16 +83,16 @@ function formatShortDateTime(value?: string | null) {
 
 function getStatusLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    not_requested: "Confirmação ainda não solicitada",
-    awaiting_confirmation: "Aguardando confirmação",
-    confirmed: "Presença confirmada",
+    not_requested: "ConfirmaÃ§Ã£o ainda nÃ£o solicitada",
+    awaiting_confirmation: "Aguardando confirmaÃ§Ã£o",
+    confirmed: "PresenÃ§a confirmada",
     cancelled_by_patient: "Cancelada pelo paciente",
-    reschedule_requested: "Remarcação solicitada",
+    reschedule_requested: "RemarcaÃ§Ã£o solicitada",
     no_response: "Sem resposta",
-    no_show: "Não compareceu",
+    no_show: "NÃ£o compareceu",
   };
 
-  return labels[status || ""] || "Status não informado";
+  return labels[status || ""] || "Status nÃ£o informado";
 }
 
 function getStatusTone(status?: string | null) {
@@ -142,7 +142,7 @@ export default function ConfirmarConsultaPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para confirmar a consulta.");
+      setMessage("VocÃª precisa estar logado para confirmar a consulta.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -192,7 +192,7 @@ export default function ConfirmarConsultaPage() {
     if (error || !data) {
       setMessage(
         `Erro ao carregar consulta: ${
-          error?.message || "consulta não encontrada para este paciente"
+          error?.message || "consulta nÃ£o encontrada para este paciente"
         }`
       );
       setMessageType("error");
@@ -212,7 +212,7 @@ export default function ConfirmarConsultaPage() {
     appointment?.confirmed_start_at || appointment?.requested_start_at;
 
   const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
+    clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
 
   const clinicLocation = useMemo(() => {
     const parts = [
@@ -221,7 +221,7 @@ export default function ConfirmarConsultaPage() {
       clinic?.address_state || clinic?.state,
     ].filter(Boolean);
 
-    return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
+    return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
   }, [clinic]);
 
   const isFinalStatus =
@@ -288,7 +288,7 @@ export default function ConfirmarConsultaPage() {
       .eq("patient_id", appointment.patient_id);
 
     if (error) {
-      setMessage(`Erro ao confirmar presença: ${error.message}`);
+      setMessage(`Erro ao confirmar presenÃ§a: ${error.message}`);
       setMessageType("error");
       setSavingAction(null);
       return;
@@ -296,20 +296,20 @@ export default function ConfirmarConsultaPage() {
 
     await createEvent(
       "confirmed_by_patient",
-      "Paciente confirmou presença",
-      "O paciente confirmou presença na consulta."
+      "Paciente confirmou presenÃ§a",
+      "O paciente confirmou presenÃ§a na consulta."
     );
 
     await createNotification(
       appointment.doctor_id,
       "appointment_confirmed",
-      "Paciente confirmou presença",
-      `O paciente confirmou presença na consulta de ${formatShortDateTime(
+      "Paciente confirmou presenÃ§a",
+      `O paciente confirmou presenÃ§a na consulta de ${formatShortDateTime(
         appointmentStart
       )}.`
     );
 
-    setMessage("Presença confirmada com sucesso.");
+    setMessage("PresenÃ§a confirmada com sucesso.");
     setMessageType("success");
     await loadAppointment();
     setSavingAction(null);
@@ -382,7 +382,7 @@ export default function ConfirmarConsultaPage() {
     const trimmedReason = reason.trim();
 
     if (!trimmedReason) {
-      setMessage("Informe o motivo ou sugestão para remarcação.");
+      setMessage("Informe o motivo ou sugestÃ£o para remarcaÃ§Ã£o.");
       setMessageType("error");
       return;
     }
@@ -403,7 +403,7 @@ export default function ConfirmarConsultaPage() {
       .eq("patient_id", appointment.patient_id);
 
     if (error) {
-      setMessage(`Erro ao solicitar remarcação: ${error.message}`);
+      setMessage(`Erro ao solicitar remarcaÃ§Ã£o: ${error.message}`);
       setMessageType("error");
       setSavingAction(null);
       return;
@@ -411,20 +411,20 @@ export default function ConfirmarConsultaPage() {
 
     await createEvent(
       "reschedule_requested",
-      "Paciente solicitou remarcação",
+      "Paciente solicitou remarcaÃ§Ã£o",
       trimmedReason
     );
 
     await createNotification(
       appointment.doctor_id,
       "reschedule_requested",
-      "Paciente solicitou remarcação",
-      `O paciente solicitou remarcação da consulta de ${formatShortDateTime(
+      "Paciente solicitou remarcaÃ§Ã£o",
+      `O paciente solicitou remarcaÃ§Ã£o da consulta de ${formatShortDateTime(
         appointmentStart
       )}. Motivo: ${trimmedReason}`
     );
 
-    setMessage("Solicitação de remarcação enviada com sucesso.");
+    setMessage("SolicitaÃ§Ã£o de remarcaÃ§Ã£o enviada com sucesso.");
     setMessageType("success");
     await loadAppointment();
     setSavingAction(null);
@@ -448,7 +448,7 @@ export default function ConfirmarConsultaPage() {
 
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex rounded-2xl bg-[#283C7A] px-6 py-4 text-sm font-bold text-white"
+            className="mt-6 inline-flex rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white"
           >
             Voltar ao dashboard
           </Link>
@@ -465,25 +465,25 @@ export default function ConfirmarConsultaPage() {
         <section className="relative mx-auto max-w-5xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
-                Confirmação de consulta
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+                ConfirmaÃ§Ã£o de consulta
               </p>
 
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
-                Confirme sua presença
+                Confirme sua presenÃ§a
               </h1>
 
               <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Confirme, cancele ou solicite remarcação da sua consulta de
-                forma rápida e segura.
+                Confirme, cancele ou solicite remarcaÃ§Ã£o da sua consulta de
+                forma rÃ¡pida e segura.
               </p>
             </div>
 
             <Link
               href="/solicitacoes"
-              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5E4B9A] shadow-sm transition hover:bg-[#F6F3FF]"
+              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
             >
-              Minhas solicitações
+              Minhas solicitaÃ§Ãµes
             </Link>
           </div>
         </section>
@@ -498,7 +498,7 @@ export default function ConfirmarConsultaPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <article className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
               Consulta
             </p>
 
@@ -509,20 +509,20 @@ export default function ConfirmarConsultaPage() {
             <div className="mt-6 grid gap-4">
               <div className="rounded-[28px] bg-[#F8FAFC] p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Médico
+                  MÃ©dico
                 </p>
                 <p className="mt-2 font-bold text-slate-950">
-                  {doctor?.name || "Médico não informado"}
+                  {doctor?.name || "MÃ©dico nÃ£o informado"}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  CRM {doctor?.crm || "não informado"}
+                  CRM {doctor?.crm || "nÃ£o informado"}
                   {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}
                 </p>
               </div>
 
               <div className="rounded-[28px] bg-[#F8FAFC] p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Clínica
+                  ClÃ­nica
                 </p>
                 <p className="mt-2 font-bold text-slate-950">{clinicName}</p>
                 <p className="mt-1 text-sm text-slate-500">{clinicLocation}</p>
@@ -534,7 +534,7 @@ export default function ConfirmarConsultaPage() {
                 )}`}
               >
                 <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-70">
-                  Status da confirmação
+                  Status da confirmaÃ§Ã£o
                 </p>
                 <p className="mt-2 font-bold">
                   {getStatusLabel(appointment.patient_confirmation_status)}
@@ -544,7 +544,7 @@ export default function ConfirmarConsultaPage() {
           </article>
 
           <article className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6E56CF]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
               Sua resposta
             </p>
 
@@ -554,7 +554,7 @@ export default function ConfirmarConsultaPage() {
 
             {isFinalStatus ? (
               <div className="mt-6 rounded-[28px] bg-[#F8FAFC] p-6 text-slate-600">
-                Esta consulta já recebeu uma resposta do paciente.
+                Esta consulta jÃ¡ recebeu uma resposta do paciente.
               </div>
             ) : (
               <div className="mt-6 grid gap-4">
@@ -566,18 +566,18 @@ export default function ConfirmarConsultaPage() {
                 >
                   {savingAction === "confirm"
                     ? "Confirmando..."
-                    : "Confirmar presença"}
+                    : "Confirmar presenÃ§a"}
                 </button>
 
                 <div>
                   <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Motivo ou observação
+                    Motivo ou observaÃ§Ã£o
                   </label>
                   <textarea
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
-                    className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:bg-white"
-                    placeholder="Use este campo para cancelar ou pedir remarcação."
+                    className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#5A4C86] focus:bg-white"
+                    placeholder="Use este campo para cancelar ou pedir remarcaÃ§Ã£o."
                   />
                 </div>
 
@@ -590,7 +590,7 @@ export default function ConfirmarConsultaPage() {
                   >
                     {savingAction === "reschedule"
                       ? "Enviando..."
-                      : "Solicitar remarcação"}
+                      : "Solicitar remarcaÃ§Ã£o"}
                   </button>
 
                   <button
@@ -611,11 +611,12 @@ export default function ConfirmarConsultaPage() {
 
         <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
           <strong className="text-slate-950">Importante:</strong> confirme sua
-          presença apenas se realmente puder comparecer. Cancelamentos e
-          remarcações podem ficar registrados para controle de disponibilidade e
-          avaliação futura.
+          presenÃ§a apenas se realmente puder comparecer. Cancelamentos e
+          remarcaÃ§Ãµes podem ficar registrados para controle de disponibilidade e
+          avaliaÃ§Ã£o futura.
         </div>
       </section>
     </main>
   );
 }
+

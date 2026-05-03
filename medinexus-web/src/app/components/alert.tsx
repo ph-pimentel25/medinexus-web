@@ -1,4 +1,4 @@
-type AlertProps = {
+﻿type AlertProps = {
   variant?: "success" | "error" | "info";
   children: React.ReactNode;
 };
@@ -19,3 +19,5 @@ export default function Alert({
     </div>
   );
 }
+
+

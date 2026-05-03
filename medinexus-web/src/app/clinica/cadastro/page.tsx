@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -86,7 +86,7 @@ export default function ClinicaCadastroPage() {
     const cnpjNormalized = normalizeCnpj(formData.cnpj);
 
     if (cnpjNormalized.length !== 14) {
-      setMessage("Informe um CNPJ válido com 14 dígitos.");
+      setMessage("Informe um CNPJ vÃ¡lido com 14 dÃ­gitos.");
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -114,7 +114,7 @@ export default function ClinicaCadastroPage() {
 
     if (!data.session || !data.user) {
       setMessage(
-        "Conta criada. Faça a confirmação do e-mail antes de concluir o cadastro da clínica."
+        "Conta criada. FaÃ§a a confirmaÃ§Ã£o do e-mail antes de concluir o cadastro da clÃ­nica."
       );
       setMessageType("info");
       setSubmitting(false);
@@ -162,7 +162,7 @@ export default function ClinicaCadastroPage() {
 
     if (clinicError) {
       console.error("clinicError:", clinicError);
-      setMessage(`Erro ao criar a clínica: ${clinicError.message}`);
+      setMessage(`Erro ao criar a clÃ­nica: ${clinicError.message}`);
       setMessageType("error");
       setSubmitting(false);
       return;
@@ -176,13 +176,13 @@ export default function ClinicaCadastroPage() {
 
     if (memberError) {
       console.error("memberError:", memberError);
-      setMessage(`Erro ao vincular usuário à clínica: ${memberError.message}`);
+      setMessage(`Erro ao vincular usuÃ¡rio Ã  clÃ­nica: ${memberError.message}`);
       setMessageType("error");
       setSubmitting(false);
       return;
     }
 
-    setMessage("Clínica cadastrada com sucesso! Redirecionando...");
+    setMessage("ClÃ­nica cadastrada com sucesso! Redirecionando...");
     setMessageType("success");
 
     setTimeout(() => {
@@ -197,31 +197,31 @@ export default function ClinicaCadastroPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-2">
           <div>
-            <span className="brand-chip">Cadastro institucional da clínica</span>
+            <span className="brand-chip">Cadastro institucional da clÃ­nica</span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-              Estruture sua clínica com um cadastro mais profissional.
+              Estruture sua clÃ­nica com um cadastro mais profissional.
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              Cadastre dados institucionais, responsável, CNPJ e informações
-              essenciais para abrir a área privada da clínica na MediNexus.
+              Cadastre dados institucionais, responsÃ¡vel, CNPJ e informaÃ§Ãµes
+              essenciais para abrir a Ã¡rea privada da clÃ­nica na MediNexus.
             </p>
 
             <div className="mt-8 app-card p-6">
               <p className="text-sm font-medium text-slate-500">
-                Este cadastro já prepara
+                Este cadastro jÃ¡ prepara
               </p>
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Conta dona da clínica
+                  Conta dona da clÃ­nica
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
                   Base corporativa com CNPJ e dados institucionais
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 text-slate-700">
-                  Área privada para convênios, médicos e solicitações
+                  Ãrea privada para convÃªnios, mÃ©dicos e solicitaÃ§Ãµes
                 </div>
               </div>
             </div>
@@ -233,15 +233,15 @@ export default function ClinicaCadastroPage() {
                 href="/sobre"
                 className="text-sm font-medium text-sky-700 hover:underline"
               >
-                ← Voltar para Sobre
+                â† Voltar para Sobre
               </Link>
             </div>
 
             <h2 className="text-3xl font-bold text-slate-900">
-              Cadastrar clínica
+              Cadastrar clÃ­nica
             </h2>
             <p className="mt-2 text-slate-600">
-              Preencha os dados institucionais e da conta responsável.
+              Preencha os dados institucionais e da conta responsÃ¡vel.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -255,21 +255,21 @@ export default function ClinicaCadastroPage() {
                     value={formData.tradeName}
                     onChange={handleChange}
                     className="app-input"
-                    placeholder="Ex: Clínica MediNexus Centro"
+                    placeholder="Ex: ClÃ­nica MediNexus Centro"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Razão social
+                    RazÃ£o social
                   </label>
                   <input
                     name="legalName"
                     value={formData.legalName}
                     onChange={handleChange}
                     className="app-input"
-                    placeholder="Razão social da empresa"
+                    placeholder="RazÃ£o social da empresa"
                     required
                   />
                 </div>
@@ -292,14 +292,14 @@ export default function ClinicaCadastroPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Nome do responsável
+                    Nome do responsÃ¡vel
                   </label>
                   <input
                     name="contactName"
                     value={formData.contactName}
                     onChange={handleChange}
                     className="app-input"
-                    placeholder="Nome do responsável pela conta"
+                    placeholder="Nome do responsÃ¡vel pela conta"
                     required
                   />
                 </div>
@@ -354,14 +354,14 @@ export default function ClinicaCadastroPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Endereço
+                  EndereÃ§o
                 </label>
                 <textarea
                   name="addressText"
                   value={formData.addressText}
                   onChange={handleChange}
                   className="app-textarea"
-                  placeholder="Rua, número, complemento..."
+                  placeholder="Rua, nÃºmero, complemento..."
                   required
                 />
               </div>
@@ -432,7 +432,7 @@ export default function ClinicaCadastroPage() {
                 disabled={submitting}
                 className="app-button-primary"
               >
-                {submitting ? "Cadastrando..." : "Cadastrar clínica"}
+                {submitting ? "Cadastrando..." : "Cadastrar clÃ­nica"}
               </button>
             </form>
           </div>
@@ -441,3 +441,5 @@ export default function ClinicaCadastroPage() {
     </main>
   );
 }
+
+

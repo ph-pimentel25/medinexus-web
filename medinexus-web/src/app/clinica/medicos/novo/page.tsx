@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -74,7 +74,7 @@ export default function ClinicaNovoMedicoPage() {
       .single();
 
     if (memberError || !member) {
-      setMessage("Você não possui acesso à área da clínica.");
+      setMessage("VocÃª nÃ£o possui acesso Ã  Ã¡rea da clÃ­nica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -125,13 +125,13 @@ export default function ClinicaNovoMedicoPage() {
     setMessage("");
 
     if (!canManage) {
-      setMessage("Apenas owner/admin pode cadastrar médicos.");
+      setMessage("Apenas owner/admin pode cadastrar mÃ©dicos.");
       setMessageType("error");
       return;
     }
 
     if (!clinicId) {
-      setMessage("Clínica não encontrada.");
+      setMessage("ClÃ­nica nÃ£o encontrada.");
       setMessageType("error");
       return;
     }
@@ -141,7 +141,7 @@ export default function ClinicaNovoMedicoPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Sessão não encontrada.");
+      setMessage("SessÃ£o nÃ£o encontrada.");
       setMessageType("error");
       return;
     }
@@ -166,7 +166,7 @@ export default function ClinicaNovoMedicoPage() {
     if (insertDoctorError || !insertedDoctor) {
       console.error("insertDoctorError:", insertDoctorError);
       setMessage(
-        `Erro ao cadastrar médico: ${insertDoctorError?.message || "erro desconhecido"}`
+        `Erro ao cadastrar mÃ©dico: ${insertDoctorError?.message || "erro desconhecido"}`
       );
       setMessageType("error");
       setSubmitting(false);
@@ -186,7 +186,7 @@ export default function ClinicaNovoMedicoPage() {
       if (specialtiesError) {
         console.error("specialtiesError:", specialtiesError);
         setMessage(
-          `Médico criado, mas houve erro ao vincular especialidades: ${specialtiesError.message}`
+          `MÃ©dico criado, mas houve erro ao vincular especialidades: ${specialtiesError.message}`
         );
         setMessageType("error");
         setSubmitting(false);
@@ -194,7 +194,7 @@ export default function ClinicaNovoMedicoPage() {
       }
     }
 
-    setMessage("Médico cadastrado com sucesso.");
+    setMessage("MÃ©dico cadastrado com sucesso.");
     setMessageType("success");
     setSubmitting(false);
 
@@ -206,7 +206,7 @@ export default function ClinicaNovoMedicoPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando cadastro de médico...</p>
+        <p className="text-slate-600">Carregando cadastro de mÃ©dico...</p>
       </main>
     );
   }
@@ -219,19 +219,19 @@ export default function ClinicaNovoMedicoPage() {
             href="/clinica/medicos"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            ← Voltar para médicos
+            â† Voltar para mÃ©dicos
           </Link>
         </div>
 
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Novo médico
+            Novo mÃ©dico
           </p>
           <h1 className="mt-3 app-section-title">
-            Cadastre um profissional da clínica
+            Cadastre um profissional da clÃ­nica
           </h1>
           <p className="app-section-subtitle">
-            Preencha os dados do médico, incluindo o e-mail que ele usará para criar o próprio login.
+            Preencha os dados do mÃ©dico, incluindo o e-mail que ele usarÃ¡ para criar o prÃ³prio login.
           </p>
         </div>
 
@@ -246,14 +246,14 @@ export default function ClinicaNovoMedicoPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Nome do médico
+                  Nome do mÃ©dico
                 </label>
                 <input
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="Digite o nome do médico"
+                  placeholder="Digite o nome do mÃ©dico"
                   required
                   disabled={!canManage}
                 />
@@ -269,7 +269,7 @@ export default function ClinicaNovoMedicoPage() {
                   value={form.professionalEmail}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="email do médico"
+                  placeholder="email do mÃ©dico"
                   required
                   disabled={!canManage}
                 />
@@ -286,7 +286,7 @@ export default function ClinicaNovoMedicoPage() {
                   value={form.crm}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="Número do CRM"
+                  placeholder="NÃºmero do CRM"
                   disabled={!canManage}
                 />
               </div>
@@ -316,7 +316,7 @@ export default function ClinicaNovoMedicoPage() {
                   disabled={!canManage}
                 />
                 <span className="text-sm font-medium text-slate-700">
-                  Médico ativo
+                  MÃ©dico ativo
                 </span>
               </label>
             </div>
@@ -330,7 +330,7 @@ export default function ClinicaNovoMedicoPage() {
                 value={form.bioShort}
                 onChange={handleChange}
                 className="app-textarea"
-                placeholder="Resumo rápido sobre o profissional"
+                placeholder="Resumo rÃ¡pido sobre o profissional"
                 disabled={!canManage}
               />
             </div>
@@ -370,7 +370,7 @@ export default function ClinicaNovoMedicoPage() {
                 disabled={submitting || !canManage}
                 className="app-button-primary"
               >
-                {submitting ? "Cadastrando..." : "Cadastrar médico"}
+                {submitting ? "Cadastrando..." : "Cadastrar mÃ©dico"}
               </button>
 
               <Link href="/clinica/medicos" className="app-button-secondary text-center">
@@ -383,3 +383,5 @@ export default function ClinicaNovoMedicoPage() {
     </main>
   );
 }
+
+

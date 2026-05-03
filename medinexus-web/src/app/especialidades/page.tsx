@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -13,42 +13,42 @@ type SpecialtyRow = {
 
 const featuredGroups = [
   {
-    group: "Clínicas gerais",
+    group: "ClÃ­nicas gerais",
     title: "Cuidados essenciais",
     description:
-      "Especialidades para acompanhamento inicial, rotina, prevenção e cuidado contínuo.",
+      "Especialidades para acompanhamento inicial, rotina, prevenÃ§Ã£o e cuidado contÃ­nuo.",
   },
   {
-    group: "Especialidades clínicas",
-    title: "Diagnóstico e acompanhamento",
+    group: "Especialidades clÃ­nicas",
+    title: "DiagnÃ³stico e acompanhamento",
     description:
-      "Atendimento focado em condições específicas, acompanhamento clínico e investigação médica.",
+      "Atendimento focado em condiÃ§Ãµes especÃ­ficas, acompanhamento clÃ­nico e investigaÃ§Ã£o mÃ©dica.",
   },
   {
-    group: "Especialidades cirúrgicas",
-    title: "Avaliação especializada",
+    group: "Especialidades cirÃºrgicas",
+    title: "AvaliaÃ§Ã£o especializada",
     description:
-      "Especialidades voltadas para avaliação, indicação de procedimentos e acompanhamento pré ou pós-operatório.",
+      "Especialidades voltadas para avaliaÃ§Ã£o, indicaÃ§Ã£o de procedimentos e acompanhamento prÃ© ou pÃ³s-operatÃ³rio.",
   },
   {
-    group: "Diagnóstico",
-    title: "Apoio diagnóstico",
+    group: "DiagnÃ³stico",
+    title: "Apoio diagnÃ³stico",
     description:
-      "Especialidades e áreas ligadas à investigação, exames e suporte à decisão clínica.",
+      "Especialidades e Ã¡reas ligadas Ã  investigaÃ§Ã£o, exames e suporte Ã  decisÃ£o clÃ­nica.",
   },
   {
-    group: "Reabilitação",
-    title: "Recuperação e funcionalidade",
+    group: "ReabilitaÃ§Ã£o",
+    title: "RecuperaÃ§Ã£o e funcionalidade",
     description:
-      "Cuidados para restaurar mobilidade, função, autonomia e qualidade de vida.",
+      "Cuidados para restaurar mobilidade, funÃ§Ã£o, autonomia e qualidade de vida.",
   },
 ];
 
 const popularSpecialties = [
-  "Clínica Médica",
+  "ClÃ­nica MÃ©dica",
   "Cardiologia",
   "Dermatologia",
-  "Ginecologia e Obstetrícia",
+  "Ginecologia e ObstetrÃ­cia",
   "Pediatria",
   "Ortopedia e Traumatologia",
   "Neurologia",
@@ -152,11 +152,11 @@ export default function EspecialidadesPage() {
     <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
       <section className="relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
-        <div className="absolute left-1/2 top-8 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#6E56CF]/10 blur-3xl" />
+        <div className="absolute left-1/2 top-8 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#5A4C86]/10 blur-3xl" />
 
         <section className="relative mx-auto max-w-7xl px-4 pb-12 pt-16 sm:px-6 lg:px-8 lg:pb-16 lg:pt-24">
           <div className="mx-auto max-w-5xl text-center">
-            <p className="inline-flex rounded-full border border-[#283C7A]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#283C7A] shadow-sm">
+            <p className="inline-flex rounded-full border border-[#164957]/15 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#164957] shadow-sm">
               Especialidades MediNexus
             </p>
 
@@ -165,24 +165,24 @@ export default function EspecialidadesPage() {
             </h1>
 
             <p className="mx-auto mt-7 max-w-3xl text-lg leading-8 text-slate-600">
-              A MediNexus organiza especialidades médicas para ajudar o paciente
-              a buscar atendimento com mais clareza, seja por plano de saúde ou
+              A MediNexus organiza especialidades mÃ©dicas para ajudar o paciente
+              a buscar atendimento com mais clareza, seja por plano de saÃºde ou
               consulta particular.
             </p>
 
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/busca"
-                className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-8 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#213366]"
+                className="inline-flex justify-center rounded-2xl bg-[#164957] px-8 py-4 text-sm font-black text-white shadow-[0_22px_60px_-30px_rgba(40,60,122,0.9)] transition hover:-translate-y-0.5 hover:bg-[#123B46]"
               >
                 Buscar consulta
               </Link>
 
               <Link
                 href="/clinicas"
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white/90 px-8 py-4 text-sm font-black text-[#5E4B9A] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
+                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white/90 px-8 py-4 text-sm font-black text-[#5A4C86] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6F3FF]"
               >
-                Ver clínicas
+                Ver clÃ­nicas
               </Link>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function EspecialidadesPage() {
                 key={item.group}
                 className="rounded-[32px] border border-[#E0E7FF] bg-white/85 p-6 shadow-[0_24px_80px_-66px_rgba(40,60,122,0.4)] backdrop-blur"
               >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6E56CF]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5A4C86]">
                   {item.group}
                 </p>
                 <h2 className="mt-4 text-2xl font-black tracking-[-0.05em] text-slate-950">
@@ -218,25 +218,25 @@ export default function EspecialidadesPage() {
         <div className="rounded-[38px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <label className="mb-2 block text-sm font-black uppercase tracking-[0.16em] text-[#283C7A]">
+              <label className="mb-2 block text-sm font-black uppercase tracking-[0.16em] text-[#164957]">
                 Pesquisar especialidade
               </label>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:bg-white"
+                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#5A4C86] focus:bg-white"
                 placeholder="Ex: cardiologia, pediatria, dermatologia..."
               />
             </div>
 
             <div className="lg:min-w-[280px]">
-              <label className="mb-2 block text-sm font-black uppercase tracking-[0.16em] text-[#283C7A]">
+              <label className="mb-2 block text-sm font-black uppercase tracking-[0.16em] text-[#164957]">
                 Grupo
               </label>
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6E56CF] focus:bg-white"
+                className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#5A4C86] focus:bg-white"
               >
                 {groups.map((group) => (
                   <option key={group} value={group}>
@@ -253,7 +253,7 @@ export default function EspecialidadesPage() {
                 key={item}
                 type="button"
                 onClick={() => setSearch(item)}
-                className="rounded-full bg-[#F1F5FF] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#283C7A] transition hover:bg-[#E5ECFF]"
+                className="rounded-full bg-[#F1F5FF] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#164957] transition hover:bg-[#E5ECFF]"
               >
                 {item}
               </button>
@@ -278,7 +278,7 @@ export default function EspecialidadesPage() {
               <section key={group}>
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-sm font-black uppercase tracking-[0.22em] text-[#6E56CF]">
+                    <p className="text-sm font-black uppercase tracking-[0.22em] text-[#5A4C86]">
                       {group}
                     </p>
                     <h2 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-950">
@@ -289,7 +289,7 @@ export default function EspecialidadesPage() {
 
                   <Link
                     href="/busca"
-                    className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-black text-[#5E4B9A] transition hover:bg-[#F6F3FF]"
+                    className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-black text-[#5A4C86] transition hover:bg-[#F6F3FF]"
                   >
                     Buscar consulta
                   </Link>
@@ -299,22 +299,22 @@ export default function EspecialidadesPage() {
                   {items.map((specialty) => (
                     <article
                       key={`${group}-${specialty.name}`}
-                      className="group rounded-[30px] border border-[#E0E7FF] bg-white p-6 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)] transition hover:-translate-y-1 hover:border-[#6E56CF]/35"
+                      className="group rounded-[30px] border border-[#E0E7FF] bg-white p-6 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)] transition hover:-translate-y-1 hover:border-[#5A4C86]/35"
                     >
-                      <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F1F5FF] text-[#283C7A]">
+                      <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F1F5FF] text-[#164957]">
                         +
                       </div>
                       <h3 className="text-2xl font-black tracking-[-0.04em] text-slate-950">
                         {specialty.name}
                       </h3>
                       <p className="mt-3 text-sm leading-6 text-slate-600">
-                        Encontre médicos e clínicas que atendem essa
+                        Encontre mÃ©dicos e clÃ­nicas que atendem essa
                         especialidade dentro da MediNexus.
                       </p>
 
                       <Link
                         href="/busca"
-                        className="mt-5 inline-flex rounded-2xl bg-[#F6F3FF] px-5 py-3 text-sm font-black text-[#6E56CF] transition group-hover:bg-[#6E56CF] group-hover:text-white"
+                        className="mt-5 inline-flex rounded-2xl bg-[#F6F3FF] px-5 py-3 text-sm font-black text-[#5A4C86] transition group-hover:bg-[#5A4C86] group-hover:text-white"
                       >
                         Buscar agora
                       </Link>
@@ -328,28 +328,28 @@ export default function EspecialidadesPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#283C7A] via-[#4B4EA3] to-[#6E56CF] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
+        <div className="relative overflow-hidden rounded-[46px] bg-gradient-to-br from-[#164957] via-[#5A4C86] to-[#5A4C86] p-8 text-white shadow-[0_35px_120px_-70px_rgba(40,60,122,0.95)] lg:p-12">
           <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -bottom-24 left-20 h-80 w-80 rounded-full bg-[#B7A7FF]/20 blur-3xl" />
 
           <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-white/60">
-                Próximo passo
+                PrÃ³ximo passo
               </p>
               <h2 className="mt-4 max-w-4xl text-4xl font-black leading-none tracking-[-0.06em] sm:text-5xl">
-                Já sabe qual especialidade procurar?
+                JÃ¡ sabe qual especialidade procurar?
               </h2>
               <p className="mt-5 max-w-2xl leading-8 text-white/75">
-                Complete sua busca com localização, plano ou particular e faixa
-                de horário desejada.
+                Complete sua busca com localizaÃ§Ã£o, plano ou particular e faixa
+                de horÃ¡rio desejada.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
                 href="/busca"
-                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#283C7A] transition hover:bg-slate-100"
+                className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-black text-[#164957] transition hover:bg-slate-100"
               >
                 Buscar consulta
               </Link>
@@ -358,7 +358,7 @@ export default function EspecialidadesPage() {
                 href="/clinicas"
                 className="inline-flex justify-center rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black text-white transition hover:bg-white/15"
               >
-                Ver clínicas
+                Ver clÃ­nicas
               </Link>
             </div>
           </div>
@@ -367,3 +367,5 @@ export default function EspecialidadesPage() {
     </main>
   );
 }
+
+

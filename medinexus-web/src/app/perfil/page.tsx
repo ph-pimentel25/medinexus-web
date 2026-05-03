@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import {
@@ -148,7 +148,7 @@ export default function PerfilPage() {
       const data = await response.json();
 
       if (data?.erro) {
-        setMessage("CEP não encontrado. Preencha o endereço manualmente.");
+        setMessage("CEP nÃ£o encontrado. Preencha o endereÃ§o manualmente.");
         setMessageType("error");
         setLoadingCep(false);
         return;
@@ -164,7 +164,7 @@ export default function PerfilPage() {
         address_country: "Brasil",
       }));
     } catch {
-      setMessage("Não foi possível buscar o CEP agora. Preencha manualmente.");
+      setMessage("NÃ£o foi possÃ­vel buscar o CEP agora. Preencha manualmente.");
       setMessageType("error");
     } finally {
       setLoadingCep(false);
@@ -173,13 +173,13 @@ export default function PerfilPage() {
 
   function handleUseCurrentLocation() {
     if (!navigator.geolocation) {
-      setMessage("Seu navegador não permite capturar localização.");
+      setMessage("Seu navegador nÃ£o permite capturar localizaÃ§Ã£o.");
       setMessageType("error");
       return;
     }
 
     setCapturingLocation(true);
-    setMessage("Capturando sua localização precisa...");
+    setMessage("Capturando sua localizaÃ§Ã£o precisa...");
     setMessageType("info");
 
     navigator.geolocation.getCurrentPosition(
@@ -192,13 +192,13 @@ export default function PerfilPage() {
           longitude,
         });
 
-        setMessage("Localização precisa capturada com sucesso.");
+        setMessage("LocalizaÃ§Ã£o precisa capturada com sucesso.");
         setMessageType("success");
         setCapturingLocation(false);
       },
       () => {
         setMessage(
-          "Não foi possível capturar sua localização. Verifique a permissão do navegador."
+          "NÃ£o foi possÃ­vel capturar sua localizaÃ§Ã£o. Verifique a permissÃ£o do navegador."
         );
         setMessageType("error");
         setCapturingLocation(false);
@@ -220,7 +220,7 @@ export default function PerfilPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado para editar seu perfil.");
+      setMessage("VocÃª precisa estar logado para editar seu perfil.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -414,7 +414,7 @@ export default function PerfilPage() {
       ["Data de nascimento", form.birth_date],
       ["CEP", form.address_zipcode],
       ["Rua", form.address_street],
-      ["Número", form.address_number],
+      ["NÃºmero", form.address_number],
       ["Bairro", form.address_neighborhood],
       ["Cidade", form.address_city],
       ["Estado", form.address_state],
@@ -425,11 +425,11 @@ export default function PerfilPage() {
       .map(([label]) => label);
 
     if (form.cpf && !validateCpf(form.cpf)) {
-      missing.push("CPF válido com 11 dígitos");
+      missing.push("CPF vÃ¡lido com 11 dÃ­gitos");
     }
 
     if (!paymentMode) {
-      missing.push("Tipo de atendimento: plano de saúde ou particular");
+      missing.push("Tipo de atendimento: plano de saÃºde ou particular");
     }
 
     if (paymentMode === "health_plan") {
@@ -442,7 +442,7 @@ export default function PerfilPage() {
       }
 
       if (!form.health_plan_card_number.trim()) {
-        missing.push("Número da carteirinha");
+        missing.push("NÃºmero da carteirinha");
       }
     }
 
@@ -460,7 +460,7 @@ export default function PerfilPage() {
 
     if (requiredMissing.length > 0) {
       setMessage(
-        `Preencha os campos obrigatórios: ${requiredMissing.join(", ")}.`
+        `Preencha os campos obrigatÃ³rios: ${requiredMissing.join(", ")}.`
       );
       setMessageType("error");
       setSaving(false);
@@ -472,7 +472,7 @@ export default function PerfilPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Sessão expirada. Faça login novamente.");
+      setMessage("SessÃ£o expirada. FaÃ§a login novamente.");
       setMessageType("error");
       setSaving(false);
       return;
@@ -600,7 +600,7 @@ export default function PerfilPage() {
               Complete seu cadastro MediNexus
             </h1>
             <p className="app-section-subtitle">
-              Esses dados permitem buscar clínicas próximas, validar planos e
+              Esses dados permitem buscar clÃ­nicas prÃ³ximas, validar planos e
               organizar sua ficha.
             </p>
           </div>
@@ -654,7 +654,7 @@ export default function PerfilPage() {
                   value={form.cpf}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="Somente números"
+                  placeholder="Somente nÃºmeros"
                   required
                 />
               </div>
@@ -704,11 +704,11 @@ export default function PerfilPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-2xl font-black text-slate-950">
-                  Endereço e localização
+                  EndereÃ§o e localizaÃ§Ã£o
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  O CEP preenche o endereço. Para busca por raio com precisão,
-                  use a localização atual do dispositivo.
+                  O CEP preenche o endereÃ§o. Para busca por raio com precisÃ£o,
+                  use a localizaÃ§Ã£o atual do dispositivo.
                 </p>
               </div>
 
@@ -727,22 +727,22 @@ export default function PerfilPage() {
                 className="rounded-2xl border border-[#1B4B58]/20 bg-[#EAF1F0] px-5 py-3 text-sm font-bold text-[#1B4B58] transition hover:bg-[#DDEBE8] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {capturingLocation
-                  ? "Capturando localização..."
-                  : "Usar minha localização atual"}
+                  ? "Capturando localizaÃ§Ã£o..."
+                  : "Usar minha localizaÃ§Ã£o atual"}
               </button>
 
               {deviceCoordinates.latitude && deviceCoordinates.longitude ? (
                 <p className="text-sm font-semibold text-emerald-700">
-                  Localização precisa capturada.
+                  LocalizaÃ§Ã£o precisa capturada.
                 </p>
               ) : savedCoordinates.latitude && savedCoordinates.longitude ? (
                 <p className="text-sm text-slate-500">
-                  Localização salva: {formatCoordinate(savedCoordinates.latitude)}
+                  LocalizaÃ§Ã£o salva: {formatCoordinate(savedCoordinates.latitude)}
                   , {formatCoordinate(savedCoordinates.longitude)}
                 </p>
               ) : (
                 <p className="text-sm text-slate-500">
-                  Nenhuma localização precisa salva ainda.
+                  Nenhuma localizaÃ§Ã£o precisa salva ainda.
                 </p>
               )}
             </div>
@@ -777,7 +777,7 @@ export default function PerfilPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Número *
+                  NÃºmero *
                 </label>
                 <input
                   name="address_number"
@@ -843,7 +843,7 @@ export default function PerfilPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  País
+                  PaÃ­s
                 </label>
                 <input
                   name="address_country"
@@ -870,9 +870,9 @@ export default function PerfilPage() {
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                <p className="text-lg font-black">Tenho plano de saúde</p>
+                <p className="text-lg font-black">Tenho plano de saÃºde</p>
                 <p className="mt-2 text-sm">
-                  Quero buscar clínicas e médicos compatíveis com meu convênio.
+                  Quero buscar clÃ­nicas e mÃ©dicos compatÃ­veis com meu convÃªnio.
                 </p>
               </button>
 
@@ -887,7 +887,7 @@ export default function PerfilPage() {
               >
                 <p className="text-lg font-black">Consulta particular</p>
                 <p className="mt-2 text-sm">
-                  Não tenho plano ou prefiro receber opções de atendimento
+                  NÃ£o tenho plano ou prefiro receber opÃ§Ãµes de atendimento
                   particular.
                 </p>
               </button>
@@ -897,7 +897,7 @@ export default function PerfilPage() {
           {paymentMode === "health_plan" && (
             <div className="app-card p-8">
               <h2 className="text-2xl font-black text-slate-950">
-                Plano de saúde
+                Plano de saÃºde
               </h2>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -911,7 +911,7 @@ export default function PerfilPage() {
                     onChange={handleChange}
                     className="app-input"
                   >
-                    <option value="">Não selecionar</option>
+                    <option value="">NÃ£o selecionar</option>
                     {healthPlans.map((plan) => (
                       <option key={plan.id} value={plan.id}>
                         {plan.name}
@@ -929,7 +929,7 @@ export default function PerfilPage() {
                     value={form.health_plan_operator}
                     onChange={handleChange}
                     className="app-input"
-                    placeholder="Ex: Bradesco Saúde"
+                    placeholder="Ex: Bradesco SaÃºde"
                     required={paymentMode === "health_plan"}
                   />
                 </div>
@@ -950,7 +950,7 @@ export default function PerfilPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Número da carteirinha *
+                    NÃºmero da carteirinha *
                   </label>
                   <input
                     name="health_plan_card_number"
@@ -963,7 +963,7 @@ export default function PerfilPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Acomodação
+                    AcomodaÃ§Ã£o
                   </label>
                   <select
                     name="health_plan_accommodation"
@@ -971,12 +971,12 @@ export default function PerfilPage() {
                     onChange={handleChange}
                     className="app-input"
                   >
-                    <option value="">Não informado</option>
+                    <option value="">NÃ£o informado</option>
                     <option value="Enfermaria">Enfermaria</option>
                     <option value="Apartamento/Quarto">
                       Apartamento/Quarto
                     </option>
-                    <option value="Sem internação">Sem internação</option>
+                    <option value="Sem internaÃ§Ã£o">Sem internaÃ§Ã£o</option>
                   </select>
                 </div>
 
@@ -995,7 +995,7 @@ export default function PerfilPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Segmentação
+                    SegmentaÃ§Ã£o
                   </label>
                   <select
                     name="health_plan_segment"
@@ -1003,14 +1003,14 @@ export default function PerfilPage() {
                     onChange={handleChange}
                     className="app-input"
                   >
-                    <option value="">Não informado</option>
+                    <option value="">NÃ£o informado</option>
                     <option value="Ambulatorial">Ambulatorial</option>
                     <option value="Hospitalar">Hospitalar</option>
-                    <option value="Hospitalar com obstetrícia">
-                      Hospitalar com obstetrícia
+                    <option value="Hospitalar com obstetrÃ­cia">
+                      Hospitalar com obstetrÃ­cia
                     </option>
-                    <option value="Referência">Referência</option>
-                    <option value="Odontológico">Odontológico</option>
+                    <option value="ReferÃªncia">ReferÃªncia</option>
+                    <option value="OdontolÃ³gico">OdontolÃ³gico</option>
                   </select>
                 </div>
 
@@ -1023,7 +1023,7 @@ export default function PerfilPage() {
                     value={form.health_plan_extra_info}
                     onChange={handleChange}
                     className="app-textarea"
-                    placeholder="Ex: coparticipação, reembolso, restrições, observações..."
+                    placeholder="Ex: coparticipaÃ§Ã£o, reembolso, restriÃ§Ãµes, observaÃ§Ãµes..."
                   />
                 </div>
               </div>
@@ -1034,28 +1034,28 @@ export default function PerfilPage() {
             <div className="rounded-3xl border border-purple-200 bg-purple-50 p-6 text-purple-800">
               <p className="font-black">Atendimento particular selecionado</p>
               <p className="mt-2 text-sm leading-6">
-                Os campos de plano de saúde não serão exigidos. A busca poderá
-                mostrar clínicas e médicos que aceitam consulta particular.
+                Os campos de plano de saÃºde nÃ£o serÃ£o exigidos. A busca poderÃ¡
+                mostrar clÃ­nicas e mÃ©dicos que aceitam consulta particular.
               </p>
             </div>
           )}
 
           <div className="app-card p-8">
             <h2 className="text-2xl font-black text-slate-950">
-              Observações e consentimento
+              ObservaÃ§Ãµes e consentimento
             </h2>
 
             <div className="mt-6 grid gap-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Observações pessoais para atendimento
+                  ObservaÃ§Ãµes pessoais para atendimento
                 </label>
                 <textarea
                   name="patient_notes"
                   value={form.patient_notes}
                   onChange={handleChange}
                   className="app-textarea"
-                  placeholder="Ex: preferência de horário, observações de contato, necessidades específicas..."
+                  placeholder="Ex: preferÃªncia de horÃ¡rio, observaÃ§Ãµes de contato, necessidades especÃ­ficas..."
                 />
               </div>
 
@@ -1074,8 +1074,8 @@ export default function PerfilPage() {
                     MediNexus *
                   </span>
                   <span className="mt-1 block text-sm text-slate-600">
-                    Os dados serão usados para busca de consultas,
-                    compatibilidade com clínicas, documentos médicos e
+                    Os dados serÃ£o usados para busca de consultas,
+                    compatibilidade com clÃ­nicas, documentos mÃ©dicos e
                     atendimento.
                   </span>
                 </span>
@@ -1101,3 +1101,5 @@ export default function PerfilPage() {
     </main>
   );
 }
+
+

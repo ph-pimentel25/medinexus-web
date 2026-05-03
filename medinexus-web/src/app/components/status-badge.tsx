@@ -1,4 +1,4 @@
-type Status =
+﻿type Status =
   | "pending"
   | "confirmed"
   | "rejected"
@@ -27,7 +27,7 @@ const config = {
     className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
   },
   completed: {
-    label: "Concluída",
+    label: "ConcluÃ­da",
     className: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
   },
 };
@@ -43,3 +43,5 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     </span>
   );
 }
+
+

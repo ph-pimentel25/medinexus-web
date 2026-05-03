@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -107,27 +107,27 @@ const documentTypeOptions: {
 }[] = [
   {
     value: "prescription",
-    label: "Receita médica",
-    description: "Prescrição de medicamento, orientações e conduta.",
+    label: "Receita mÃ©dica",
+    description: "PrescriÃ§Ã£o de medicamento, orientaÃ§Ãµes e conduta.",
   },
   {
     value: "exam_request",
-    label: "Solicitação de exame",
-    description: "Pedido de exame com indicação clínica e observações.",
+    label: "SolicitaÃ§Ã£o de exame",
+    description: "Pedido de exame com indicaÃ§Ã£o clÃ­nica e observaÃ§Ãµes.",
   },
   {
     value: "medical_certificate",
-    label: "Atestado médico",
+    label: "Atestado mÃ©dico",
     description: "Afastamento com CID, dias e finalidade.",
   },
   {
     value: "attendance_declaration",
-    label: "Declaração de comparecimento",
-    description: "Comprova presença do paciente no atendimento.",
+    label: "DeclaraÃ§Ã£o de comparecimento",
+    description: "Comprova presenÃ§a do paciente no atendimento.",
   },
   {
     value: "clinical_summary",
-    label: "Resumo clínico",
+    label: "Resumo clÃ­nico",
     description: "Resumo objetivo da consulta e conduta.",
   },
 ];
@@ -138,7 +138,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -147,7 +147,7 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
@@ -155,16 +155,16 @@ function formatDate(value?: string | null) {
 function getDocumentLabel(type: DocumentType) {
   return (
     documentTypeOptions.find((item) => item.value === type)?.label ||
-    "Documento médico"
+    "Documento mÃ©dico"
   );
 }
 
 function getDefaultTitle(type: DocumentType) {
-  if (type === "prescription") return "Receita médica";
-  if (type === "exam_request") return "Solicitação de exame";
-  if (type === "medical_certificate") return "Atestado médico";
-  if (type === "attendance_declaration") return "Declaração de comparecimento";
-  return "Resumo clínico";
+  if (type === "prescription") return "Receita mÃ©dica";
+  if (type === "exam_request") return "SolicitaÃ§Ã£o de exame";
+  if (type === "medical_certificate") return "Atestado mÃ©dico";
+  if (type === "attendance_declaration") return "DeclaraÃ§Ã£o de comparecimento";
+  return "Resumo clÃ­nico";
 }
 
 function createPlainText(form: FormState, patientName: string) {
@@ -172,11 +172,11 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "Receita médica",
+      "Receita mÃ©dica",
       "",
       form.medicationName ? `Medicamento: ${form.medicationName}` : "",
       form.medicationUse ? `Modo de uso: ${form.medicationUse}` : "",
-      form.plainText ? `Orientações: ${form.plainText}` : "",
+      form.plainText ? `OrientaÃ§Ãµes: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -186,13 +186,13 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "Solicitação de exame",
+      "SolicitaÃ§Ã£o de exame",
       "",
       form.examName ? `Exame solicitado: ${form.examName}` : "",
       form.clinicalIndication
-        ? `Indicação clínica: ${form.clinicalIndication}`
+        ? `IndicaÃ§Ã£o clÃ­nica: ${form.clinicalIndication}`
         : "",
-      form.examObservation ? `Observação: ${form.examObservation}` : "",
+      form.examObservation ? `ObservaÃ§Ã£o: ${form.examObservation}` : "",
       form.cidCode ? `CID: ${form.cidCode}` : "",
     ]
       .filter(Boolean)
@@ -203,15 +203,15 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "Atestado médico",
+      "Atestado mÃ©dico",
       "",
       `Atesto, para os devidos fins, que o(a) paciente acima identificado(a) necessita de afastamento por ${
         form.daysOff || "0"
       } dia(s).`,
       form.cidCode ? `CID: ${form.cidCode}` : "",
-      form.cidDescription ? `Descrição: ${form.cidDescription}` : "",
+      form.cidDescription ? `DescriÃ§Ã£o: ${form.cidDescription}` : "",
       form.purpose ? `Finalidade: ${form.purpose}` : "",
-      form.plainText ? `Observações: ${form.plainText}` : "",
+      form.plainText ? `ObservaÃ§Ãµes: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -219,9 +219,9 @@ function createPlainText(form: FormState, patientName: string) {
 
   if (form.documentType === "attendance_declaration") {
     return [
-      `Declaro, para os devidos fins, que ${patientName} compareceu ao atendimento médico nesta unidade.`,
+      `Declaro, para os devidos fins, que ${patientName} compareceu ao atendimento mÃ©dico nesta unidade.`,
       form.purpose ? `Finalidade: ${form.purpose}` : "",
-      form.plainText ? `Observações: ${form.plainText}` : "",
+      form.plainText ? `ObservaÃ§Ãµes: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -230,10 +230,10 @@ function createPlainText(form: FormState, patientName: string) {
   return [
     `Paciente: ${patientName}`,
     "",
-    "Resumo clínico",
+    "Resumo clÃ­nico",
     "",
     form.clinicalIndication ? `Resumo: ${form.clinicalIndication}` : "",
-    form.plainText ? `Conduta/observações: ${form.plainText}` : "",
+    form.plainText ? `Conduta/observaÃ§Ãµes: ${form.plainText}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -268,7 +268,7 @@ export default function ConsultaDocumentosPage() {
 
   const [form, setForm] = useState<FormState>({
     documentType: "prescription",
-    title: "Receita médica",
+    title: "Receita mÃ©dica",
     clinicalIndication: "",
     cidCode: "",
     cidDescription: "",
@@ -331,7 +331,7 @@ export default function ConsultaDocumentosPage() {
     if (appointmentError || !appointmentData) {
       setMessage(
         `Erro ao carregar consulta: ${
-          appointmentError?.message || "consulta não encontrada"
+          appointmentError?.message || "consulta nÃ£o encontrada"
         }`
       );
       setMessageType("error");
@@ -371,10 +371,10 @@ export default function ConsultaDocumentosPage() {
   const doctor = pickOne(appointment?.doctors);
   const clinic = pickOne(appointment?.clinics);
 
-  const patientName = patient?.full_name || "Paciente não informado";
-  const doctorName = doctor?.name || "Médico não informado";
+  const patientName = patient?.full_name || "Paciente nÃ£o informado";
+  const doctorName = doctor?.name || "MÃ©dico nÃ£o informado";
   const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
+    clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
 
   const appointmentStart =
     appointment?.confirmed_start_at || appointment?.requested_start_at;
@@ -411,7 +411,7 @@ export default function ConsultaDocumentosPage() {
     const plainText = createPlainText(form, patientName);
 
     if (!plainText.trim()) {
-      setMessage("Preencha o conteúdo do documento antes de emitir.");
+      setMessage("Preencha o conteÃºdo do documento antes de emitir.");
       setMessageType("error");
       setSaving(false);
       return;
@@ -489,23 +489,23 @@ export default function ConsultaDocumentosPage() {
         <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
-                Documentos médicos
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+                Documentos mÃ©dicos
               </p>
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
                 Emitir documentos da consulta
               </h1>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Gere receita, solicitação de exame, atestado, declaração e resumo
-                clínico vinculados ao atendimento.
+                Gere receita, solicitaÃ§Ã£o de exame, atestado, declaraÃ§Ã£o e resumo
+                clÃ­nico vinculados ao atendimento.
               </p>
             </div>
 
             <Link
               href={`/medico/consultas/${appointmentId}`}
-              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5E4B9A] shadow-sm transition hover:bg-[#F6F3FF]"
+              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
             >
-              Voltar ao prontuário
+              Voltar ao prontuÃ¡rio
             </Link>
           </div>
         </section>
@@ -525,24 +525,24 @@ export default function ConsultaDocumentosPage() {
             </p>
             <p className="mt-2 font-bold text-slate-950">{patientName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              CPF: {patient?.cpf || "Não informado"}
+              CPF: {patient?.cpf || "NÃ£o informado"}
             </p>
           </div>
 
           <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Médico
+              MÃ©dico
             </p>
             <p className="mt-2 font-bold text-slate-950">{doctorName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              CRM {doctor?.crm || "não informado"}
+              CRM {doctor?.crm || "nÃ£o informado"}
               {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}
             </p>
           </div>
 
           <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Clínica
+              ClÃ­nica
             </p>
             <p className="mt-2 font-bold text-slate-950">{clinicName}</p>
             <p className="mt-1 text-sm text-slate-500">
@@ -558,14 +558,14 @@ export default function ConsultaDocumentosPage() {
               {formatDateTime(appointmentStart)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Status: {appointment?.status || "não informado"}
+              Status: {appointment?.status || "nÃ£o informado"}
             </p>
           </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
               Novo documento
             </p>
 
@@ -581,7 +581,7 @@ export default function ConsultaDocumentosPage() {
                   onClick={() => handleChangeType(item.value)}
                   className={`rounded-[26px] border p-5 text-left transition ${
                     form.documentType === item.value
-                      ? "border-[#6E56CF] bg-[#F6F3FF]"
+                      ? "border-[#5A4C86] bg-[#F6F3FF]"
                       : "border-[#E0E7FF] bg-[#F8FAFC] hover:bg-white"
                   }`}
                 >
@@ -595,23 +595,23 @@ export default function ConsultaDocumentosPage() {
           </section>
 
           <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6E56CF]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
               {selectedType.label}
             </p>
 
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
-              Conteúdo do documento
+              ConteÃºdo do documento
             </h2>
 
             <div className="mt-6 grid gap-4">
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Título
+                  TÃ­tulo
                 </label>
                 <input
                   value={form.title}
                   onChange={(event) => updateForm("title", event.target.value)}
-                  className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                  className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                 />
               </div>
 
@@ -626,7 +626,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("medicationName", event.target.value)
                       }
-                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                       placeholder="Ex: Dipirona 500mg"
                     />
                   </div>
@@ -640,7 +640,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("medicationUse", event.target.value)
                       }
-                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                       placeholder="Ex: Tomar 1 comprimido a cada 6 horas por 3 dias."
                     />
                   </div>
@@ -658,36 +658,36 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("examName", event.target.value)
                       }
-                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                       placeholder="Ex: Ultrassonografia de abdome total"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      Indicação clínica
+                      IndicaÃ§Ã£o clÃ­nica
                     </label>
                     <textarea
                       value={form.clinicalIndication}
                       onChange={(event) =>
                         updateForm("clinicalIndication", event.target.value)
                       }
-                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
-                      placeholder="Ex: Investigação de dor abdominal."
+                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      placeholder="Ex: InvestigaÃ§Ã£o de dor abdominal."
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      Observação
+                      ObservaÃ§Ã£o
                     </label>
                     <textarea
                       value={form.examObservation}
                       onChange={(event) =>
                         updateForm("examObservation", event.target.value)
                       }
-                      className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
-                      placeholder="Jejum, preparo ou observações adicionais."
+                      className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      placeholder="Jejum, preparo ou observaÃ§Ãµes adicionais."
                     />
                   </div>
                 </>
@@ -707,7 +707,7 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("daysOff", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                       />
                     </div>
 
@@ -720,7 +720,7 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("cidCode", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                         placeholder="Ex: J11"
                       />
                     </div>
@@ -734,11 +734,11 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("purpose", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                       >
                         <option value="">Selecione</option>
                         <option value="Trabalhista">Trabalhista</option>
-                        <option value="Acadêmica">Acadêmica</option>
+                        <option value="AcadÃªmica">AcadÃªmica</option>
                         <option value="Esportiva">Esportiva</option>
                         <option value="Outros fins">Outros fins</option>
                       </select>
@@ -747,14 +747,14 @@ export default function ConsultaDocumentosPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      Descrição do CID / observação médica
+                      DescriÃ§Ã£o do CID / observaÃ§Ã£o mÃ©dica
                     </label>
                     <textarea
                       value={form.cidDescription}
                       onChange={(event) =>
                         updateForm("cidDescription", event.target.value)
                       }
-                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
+                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
                     />
                   </div>
                 </>
@@ -772,8 +772,8 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("clinicalIndication", event.target.value)
                       }
-                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
-                      placeholder="Descreva a finalidade ou resumo clínico."
+                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      placeholder="Descreva a finalidade ou resumo clÃ­nico."
                     />
                   </div>
                 </>
@@ -781,15 +781,15 @@ export default function ConsultaDocumentosPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Observações adicionais
+                  ObservaÃ§Ãµes adicionais
                 </label>
                 <textarea
                   value={form.plainText}
                   onChange={(event) =>
                     updateForm("plainText", event.target.value)
                   }
-                  className="min-h-[110px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#6E56CF] focus:bg-white"
-                  placeholder="Orientações adicionais, conduta ou observações."
+                  className="min-h-[110px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                  placeholder="OrientaÃ§Ãµes adicionais, conduta ou observaÃ§Ãµes."
                 />
               </div>
 
@@ -808,7 +808,7 @@ export default function ConsultaDocumentosPage() {
                 type="button"
                 onClick={handleIssueDocument}
                 disabled={saving}
-                className="inline-flex justify-center rounded-2xl bg-[#283C7A] px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#213366] disabled:opacity-50"
+                className="inline-flex justify-center rounded-2xl bg-[#164957] px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#164957] disabled:opacity-50"
               >
                 {saving ? "Emitindo..." : "Emitir documento"}
               </button>
@@ -819,11 +819,11 @@ export default function ConsultaDocumentosPage() {
         <section className="mt-8 rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#283C7A]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
                 Documentos emitidos
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                Histórico documental da consulta
+                HistÃ³rico documental da consulta
               </h2>
             </div>
           </div>
@@ -840,14 +840,14 @@ export default function ConsultaDocumentosPage() {
                   className="grid gap-4 rounded-[28px] border border-[#E0E7FF] bg-[#F8FAFC] p-5 md:grid-cols-[1fr_auto]"
                 >
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6E56CF]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#5A4C86]">
                       {getDocumentLabel(document.document_type)}
                     </p>
                     <Link
   href={`/documentos-medicos/${document.id}`}
-  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#6E56CF]"
+  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#5A4C86]"
 >
-  {document.title || "Documento médico"}
+  {document.title || "Documento mÃ©dico"}
 </Link>
                     <p className="mt-1 text-sm text-slate-500">
                       Emitido em:{" "}
@@ -883,3 +883,4 @@ export default function ConsultaDocumentosPage() {
     </main>
   );
 }
+

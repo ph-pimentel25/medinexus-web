@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -34,7 +34,7 @@ function normalize(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
+  if (!value) return "NÃ£o informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -43,7 +43,7 @@ function formatDate(value?: string | null) {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "Clínica";
+  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica";
 }
 
 function getDoctorStatusLabel(item: DoctorRow) {
@@ -83,7 +83,7 @@ export default function ClinicaMedicosPage() {
     if (!user) {
       return {
         clinicId: null,
-        errorMessage: "Você precisa estar logado como clínica.",
+        errorMessage: "VocÃª precisa estar logado como clÃ­nica.",
       };
     }
 
@@ -97,14 +97,14 @@ export default function ClinicaMedicosPage() {
     if (memberError) {
       return {
         clinicId: null,
-        errorMessage: `Erro ao carregar vínculo da clínica: ${memberError.message}`,
+        errorMessage: `Erro ao carregar vÃ­nculo da clÃ­nica: ${memberError.message}`,
       };
     }
 
     if (!memberData?.clinic_id) {
       return {
         clinicId: null,
-        errorMessage: "Nenhuma clínica vinculada a este usuário.",
+        errorMessage: "Nenhuma clÃ­nica vinculada a este usuÃ¡rio.",
       };
     }
 
@@ -141,7 +141,7 @@ export default function ClinicaMedicosPage() {
       .order("created_at", { ascending: false });
 
     if (doctorsError) {
-      setMessage(`Erro ao carregar médicos: ${doctorsError.message}`);
+      setMessage(`Erro ao carregar mÃ©dicos: ${doctorsError.message}`);
       setMessageType("error");
       setDoctors([]);
       setLoading(false);
@@ -165,7 +165,7 @@ export default function ClinicaMedicosPage() {
       .eq("id", item.id);
 
     if (error) {
-      setMessage(`Erro ao atualizar médico: ${error.message}`);
+      setMessage(`Erro ao atualizar mÃ©dico: ${error.message}`);
       setMessageType("error");
       setActionLoadingId(null);
       return;
@@ -173,8 +173,8 @@ export default function ClinicaMedicosPage() {
 
     setMessage(
       item.is_active === false
-        ? "Médico ativado com sucesso."
-        : "Médico desativado com sucesso."
+        ? "MÃ©dico ativado com sucesso."
+        : "MÃ©dico desativado com sucesso."
     );
     setMessageType("success");
     await loadPage();
@@ -207,21 +207,21 @@ export default function ClinicaMedicosPage() {
   }, [doctors, filter, search]);
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <section className="border-b border-[#E8EAF4] bg-white">
+    <main className="min-h-screen bg-[#FAF6F3]">
+      <section className="border-b border-[#E7DDD7] bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
-              Equipe médica
+            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
+              Equipe mÃ©dica
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Médicos da clínica
+              MÃ©dicos da clÃ­nica
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Acompanhe os profissionais vinculados à clínica, status de
-              exibição e dados profissionais principais.
+              Acompanhe os profissionais vinculados Ã  clÃ­nica, status de
+              exibiÃ§Ã£o e dados profissionais principais.
             </p>
 
             {clinic && (
@@ -234,16 +234,16 @@ export default function ClinicaMedicosPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/clinica/dashboard"
-              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
             >
               Dashboard
             </Link>
 
             <Link
               href="/clinica/solicitacoes"
-              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              Solicitações
+              SolicitaÃ§Ãµes
             </Link>
           </div>
         </div>
@@ -259,12 +259,12 @@ export default function ClinicaMedicosPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { label: "Total", value: stats.total, tone: "text-slate-950" },
-            { label: "Ativos", value: stats.active, tone: "text-[#0F8A5F]" },
+            { label: "Ativos", value: stats.active, tone: "text-[#7A9D8C]" },
             { label: "Inativos", value: stats.inactive, tone: "text-[#B26B00]" },
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-3xl border border-[#E3E8F4] bg-white p-5 shadow-sm"
+              className="rounded-3xl border border-[#E7DDD7] bg-white p-5 shadow-sm"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 {item.label}
@@ -276,17 +276,17 @@ export default function ClinicaMedicosPage() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm">
+        <div className="mt-6 rounded-[28px] border border-[#E7DDD7] bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="w-full xl:max-w-xl">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar médico
+                Buscar mÃ©dico
               </label>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Busque por nome, CRM, UF ou bio"
-                className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
 
@@ -302,8 +302,8 @@ export default function ClinicaMedicosPage() {
                   onClick={() => setFilter(item.value as FilterType)}
                   className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     filter === item.value
-                      ? "bg-[#283C7A] text-white"
-                      : "border border-[#D9DDF0] bg-white text-[#5E4B9A] hover:bg-[#F8FAFF]"
+                      ? "bg-[#164957] text-white"
+                      : "border border-[#D8CCC5] bg-white text-[#5A4C86] hover:bg-[#FAF6F3]"
                   }`}
                 >
                   {item.label}
@@ -315,24 +315,24 @@ export default function ClinicaMedicosPage() {
 
         <div className="mt-6 grid gap-4">
           {loading ? (
-            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando médicos...
+            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+              Carregando mÃ©dicos...
             </div>
           ) : filteredDoctors.length === 0 ? (
-            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-10 text-center shadow-sm">
+            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhum médico encontrado
+                Nenhum mÃ©dico encontrado
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Quando houver profissionais vinculados à clínica, eles
-                aparecerão aqui.
+                Quando houver profissionais vinculados Ã  clÃ­nica, eles
+                aparecerÃ£o aqui.
               </p>
             </div>
           ) : (
             filteredDoctors.map((item) => (
               <article
                 key={item.id}
-                className="rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm"
+                className="rounded-[28px] border border-[#E7DDD7] bg-white p-5 shadow-sm"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
@@ -345,13 +345,13 @@ export default function ClinicaMedicosPage() {
                         {getDoctorStatusLabel(item)}
                       </span>
 
-                      <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#283C7A]">
-                        Médico
+                      <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#164957]">
+                        MÃ©dico
                       </span>
                     </div>
 
                     <h3 className="text-xl font-bold text-slate-950">
-                      {item.name || "Médico sem nome"}
+                      {item.name || "MÃ©dico sem nome"}
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
@@ -377,15 +377,15 @@ export default function ClinicaMedicosPage() {
                       disabled={actionLoadingId === item.id}
                       className={`w-full rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${
                         item.is_active === false
-                          ? "bg-[#283C7A] text-white hover:bg-[#22356E]"
+                          ? "bg-[#164957] text-white hover:bg-[#123B46]"
                           : "border border-red-100 bg-red-50 text-red-600 hover:bg-red-100"
                       }`}
                     >
                       {actionLoadingId === item.id
                         ? "Atualizando..."
                         : item.is_active === false
-                        ? "Ativar médico"
-                        : "Desativar médico"}
+                        ? "Ativar mÃ©dico"
+                        : "Desativar mÃ©dico"}
                     </button>
                   </div>
                 </div>
@@ -397,3 +397,5 @@ export default function ClinicaMedicosPage() {
     </main>
   );
 }
+
+
