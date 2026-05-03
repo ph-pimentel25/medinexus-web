@@ -5,71 +5,75 @@ import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
 
-type MemberRow = {
-  doctor_id: string | null;
-};
-
 type DoctorRow = {
   id: string;
+  user_id: string | null;
+  clinic_id: string | null;
   name: string | null;
   crm: string | null;
   crm_state: string | null;
-  cpf: string | null;
-  rqe: string | null;
-  professional_phone: string | null;
-  average_consultation_minutes: number | null;
-  accepts_private_consultation: boolean | null;
-  private_price_cents: number | null;
-  doctor_completed: boolean | null;
+  bio: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
 };
 
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, "");
+type ClinicRow = {
+  id: string;
+  trade_name: string | null;
+  legal_name: string | null;
+  city: string | null;
+  state: string | null;
+  address_city: string | null;
+  address_state: string | null;
+  address_neighborhood: string | null;
+};
+
+function formatDate(value?: string | null) {
+  if (!value) return "Não informado";
+
+  return new Date(value).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
-function validateCpf(value: string) {
-  return onlyDigits(value).length === 11;
+function getClinicName(clinic: ClinicRow | null) {
+  return clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
 }
 
-function moneyToCents(value: string) {
-  const normalized = value.replace(/\./g, "").replace(",", ".");
-  const number = Number(normalized);
-  if (Number.isNaN(number)) return null;
-  return Math.round(number * 100);
-}
+function getClinicLocation(clinic: ClinicRow | null) {
+  const parts = [
+    clinic?.address_neighborhood,
+    clinic?.address_city || clinic?.city,
+    clinic?.address_state || clinic?.state,
+  ].filter(Boolean);
 
-function centsToMoney(value: number | null) {
-  if (!value) return "";
-  return (value / 100).toFixed(2).replace(".", ",");
+  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 export default function MedicoPerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [doctorId, setDoctorId] = useState("");
+  const [doctor, setDoctor] = useState<DoctorRow | null>(null);
+  const [clinic, setClinic] = useState<ClinicRow | null>(null);
+
+  const [name, setName] = useState("");
+  const [crm, setCrm] = useState("");
+  const [crmState, setCrmState] = useState("");
+  const [bio, setBio] = useState("");
+  const [isActive, setIsActive] = useState(true);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
     "info"
   );
 
-  const [form, setForm] = useState({
-    name: "",
-    cpf: "",
-    crm: "",
-    crm_state: "",
-    rqe: "",
-    professional_phone: "",
-    average_consultation_minutes: "20",
-    accepts_private_consultation: true,
-    private_price: "",
-  });
-
   useEffect(() => {
-    loadDoctor();
+    loadProfile();
   }, []);
 
-  async function loadDoctor() {
+  async function loadProfile() {
     setLoading(true);
     setMessage("");
 
@@ -78,155 +82,101 @@ export default function MedicoPerfilPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Você precisa estar logado.");
+      setMessage("Você precisa estar logado como médico.");
       setMessageType("error");
       setLoading(false);
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("doctor_id")
-      .eq("user_id", user.id)
-      .eq("member_role", "doctor")
-      .maybeSingle<MemberRow>();
-
-    if (memberError || !member?.doctor_id) {
-      setMessage("Médico não encontrado para esta conta.");
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    setDoctorId(member.doctor_id);
-
-    const { data: doctor, error: doctorError } = await supabase
+    const { data: doctorData, error: doctorError } = await supabase
       .from("doctors")
-      .select(`
-        id,
-        name,
-        crm,
-        crm_state,
-        cpf,
-        rqe,
-        professional_phone,
-        average_consultation_minutes,
-        accepts_private_consultation,
-        private_price_cents,
-        doctor_completed
-      `)
-      .eq("id", member.doctor_id)
-      .maybeSingle<DoctorRow>();
+      .select("id, user_id, clinic_id, name, crm, crm_state, bio, is_active, created_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (doctorError || !doctor) {
-      setMessage(`Erro ao carregar médico: ${doctorError?.message || "não encontrado"}`);
+    if (doctorError) {
+      setMessage(`Erro ao carregar perfil médico: ${doctorError.message}`);
       setMessageType("error");
       setLoading(false);
       return;
     }
 
-    setForm({
-      name: doctor.name || "",
-      cpf: doctor.cpf || "",
-      crm: doctor.crm || "",
-      crm_state: doctor.crm_state || "",
-      rqe: doctor.rqe || "",
-      professional_phone: doctor.professional_phone || "",
-      average_consultation_minutes: String(
-        doctor.average_consultation_minutes || 20
-      ),
-      accepts_private_consultation:
-        doctor.accepts_private_consultation ?? true,
-      private_price: centsToMoney(doctor.private_price_cents),
-    });
+    if (!doctorData?.id) {
+      setMessage("Nenhum cadastro médico encontrado para este usuário.");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+
+    const loadedDoctor = doctorData as DoctorRow;
+
+    setDoctor(loadedDoctor);
+    setName(loadedDoctor.name || "");
+    setCrm(loadedDoctor.crm || "");
+    setCrmState(loadedDoctor.crm_state || "");
+    setBio(loadedDoctor.bio || "");
+    setIsActive(loadedDoctor.is_active ?? true);
+
+    if (loadedDoctor.clinic_id) {
+      const { data: clinicData } = await supabase
+        .from("clinics")
+        .select(
+          "id, trade_name, legal_name, city, state, address_city, address_state, address_neighborhood"
+        )
+        .eq("id", loadedDoctor.clinic_id)
+        .maybeSingle();
+
+      setClinic((clinicData as ClinicRow) || null);
+    } else {
+      setClinic(null);
+    }
 
     setLoading(false);
   }
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) {
-    const { name, value, type } = e.target;
+  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    if (type === "checkbox") {
-      const checked = (e.target as HTMLInputElement).checked;
-
-      setForm((prev) => ({
-        ...prev,
-        [name]: checked,
-      }));
-
+    if (!doctor?.id) {
+      setMessage("Cadastro médico não encontrado.");
+      setMessageType("error");
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-
-  const requiredMissing = useMemo(() => {
-    const requiredFields = [
-      ["Nome profissional", form.name],
-      ["CPF", form.cpf],
-      ["CRM", form.crm],
-      ["UF do CRM", form.crm_state],
-      ["Telefone profissional", form.professional_phone],
-      ["Tempo médio de consulta", form.average_consultation_minutes],
-    ];
-
-    const missing = requiredFields
-      .filter(([, value]) => !String(value || "").trim())
-      .map(([label]) => label);
-
-    if (form.cpf && !validateCpf(form.cpf)) {
-      missing.push("CPF válido com 11 dígitos");
+    if (!name.trim()) {
+      setMessage("Informe o nome profissional.");
+      setMessageType("error");
+      return;
     }
 
-    return missing;
-  }, [form]);
+    if (!crm.trim()) {
+      setMessage("Informe o CRM.");
+      setMessageType("error");
+      return;
+    }
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    if (!crmState.trim()) {
+      setMessage("Informe o estado do CRM.");
+      setMessageType("error");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
-
-    if (!doctorId) {
-      setMessage("Médico não encontrado.");
-      setMessageType("error");
-      setSaving(false);
-      return;
-    }
-
-    if (requiredMissing.length > 0) {
-      setMessage(`Preencha os campos obrigatórios: ${requiredMissing.join(", ")}.`);
-      setMessageType("error");
-      setSaving(false);
-      return;
-    }
 
     const { error } = await supabase
       .from("doctors")
       .update({
-        name: form.name.trim(),
-        cpf: onlyDigits(form.cpf),
-        crm: form.crm.trim(),
-        crm_state: form.crm_state.trim().toUpperCase(),
-        rqe: form.rqe.trim() || null,
-        professional_phone: form.professional_phone.trim(),
-        average_consultation_minutes: Number(
-          form.average_consultation_minutes || 20
-        ),
-        accepts_private_consultation: form.accepts_private_consultation,
-        private_price_cents: form.private_price
-          ? moneyToCents(form.private_price)
-          : null,
-        doctor_completed: true,
+        name: name.trim(),
+        crm: crm.trim(),
+        crm_state: crmState.trim().toUpperCase(),
+        bio: bio.trim() || null,
+        is_active: isActive,
       })
-      .eq("id", doctorId);
+      .eq("id", doctor.id);
 
     if (error) {
-      setMessage(`Erro ao salvar perfil médico: ${error.message}`);
+      setMessage(`Erro ao salvar perfil: ${error.message}`);
       setMessageType("error");
       setSaving(false);
       return;
@@ -234,214 +184,275 @@ export default function MedicoPerfilPage() {
 
     setMessage("Perfil médico atualizado com sucesso.");
     setMessageType("success");
+    await loadProfile();
     setSaving(false);
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando perfil médico...</p>
-      </main>
-    );
-  }
+  const completion = useMemo(() => {
+    const fields = [name.trim(), crm.trim(), crmState.trim(), bio.trim()];
+    const completed = fields.filter(Boolean).length;
+    return Math.round((completed / fields.length) * 100);
+  }, [name, crm, crmState, bio]);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EAF1F0_0,#F8FAFC_34%,#FFFFFF_100%)]">
-      <section className="app-shell py-10">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <section className="border-b border-[#E8EAF4] bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1B4B58]">
+            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
               Perfil médico
-            </p>
-            <h1 className="mt-3 app-section-title">
-              Complete seu cadastro profissional
+            </span>
+
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Meus dados profissionais
             </h1>
-            <p className="app-section-subtitle">
-              Dados usados no prontuário, documentos médicos, receituários e disponibilidade.
+
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Atualize seu nome profissional, CRM, bio e status de exibição na
+              plataforma.
             </p>
           </div>
 
-          <Link href="/medico/dashboard" className="app-button-secondary text-center">
-            Voltar ao dashboard
-          </Link>
-        </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/medico/dashboard"
+              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+            >
+              Dashboard
+            </Link>
 
+            <Link
+              href="/medico/solicitacoes"
+              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+            >
+              Solicitações
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
           <div className="mb-6">
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
-        {requiredMissing.length > 0 && (
-          <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-800">
-            <p className="font-bold">Cadastro médico incompleto</p>
-            <p className="mt-1 text-sm">
-              Campos pendentes: {requiredMissing.join(", ")}.
-            </p>
+        {loading ? (
+          <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+            Carregando perfil médico...
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.2fr]">
+            <aside className="space-y-6">
+              <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#283C7A] to-[#6E56CF] text-xl font-bold text-white">
+                    {name ? name.slice(0, 2).toUpperCase() : "MD"}
+                  </div>
+
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold text-slate-950">
+                      {name || "Nome profissional"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      CRM {crm || "N/I"}
+                      {crmState ? ` / ${crmState.toUpperCase()}` : ""}
+                    </p>
+
+                    <span
+                      className={`mt-3 inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                        isActive
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {isActive ? "Perfil ativo" : "Perfil inativo"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl bg-[#F7F9FD] p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-700">
+                      Completude do perfil
+                    </p>
+                    <p className="text-sm font-bold text-[#283C7A]">
+                      {completion}%
+                    </p>
+                  </div>
+
+                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-white">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#283C7A] to-[#6E56CF]"
+                      style={{ width: `${completion}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3">
+                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Cadastro criado em
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-950">
+                      {formatDate(doctor?.created_at)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#E9EDF7] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Clínica vinculada
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-950">
+                      {getClinicName(clinic)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {getClinicLocation(clinic)}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-slate-950">
+                  Atalhos
+                </h2>
+
+                <div className="mt-5 grid gap-3">
+                  <Link
+                    href="/medico/dashboard"
+                    className="rounded-2xl bg-[#283C7A] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+                  >
+                    Abrir dashboard
+                  </Link>
+
+                  <Link
+                    href="/medico/disponibilidade"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                  >
+                    Editar disponibilidade
+                  </Link>
+
+                  <Link
+                    href="/medico/solicitacoes"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-4 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                  >
+                    Ver solicitações
+                  </Link>
+                </div>
+              </section>
+            </aside>
+
+            <section className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-950">
+                Editar informações
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Esses dados aparecem para pacientes e clínicas dentro da
+                plataforma.
+              </p>
+
+              <form onSubmit={handleSave} className="mt-6 grid gap-5">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Nome profissional
+                  </label>
+                  <input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ex.: Dra. Ana Souza"
+                    className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                  />
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      CRM
+                    </label>
+                    <input
+                      value={crm}
+                      onChange={(event) => setCrm(event.target.value)}
+                      placeholder="Ex.: 123456"
+                      className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Estado do CRM
+                    </label>
+                    <input
+                      value={crmState}
+                      onChange={(event) => setCrmState(event.target.value)}
+                      placeholder="Ex.: RJ"
+                      maxLength={2}
+                      className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm uppercase text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Bio profissional
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(event) => setBio(event.target.value)}
+                    placeholder="Descreva sua atuação, experiência, abordagem e informações úteis para pacientes."
+                    rows={7}
+                    className="w-full resize-none rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-[#E3E8F4] bg-[#FBFCFF] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-slate-950">
+                        Exibir perfil na plataforma
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Quando ativo, seu perfil pode aparecer para pacientes e
+                        clínicas.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsActive((prev) => !prev)}
+                      className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${
+                        isActive
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {isActive ? "Ativo" : "Inativo"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 border-t border-[#EEF1FA] pt-5">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-2xl bg-[#283C7A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E] disabled:opacity-50"
+                  >
+                    {saving ? "Salvando..." : "Salvar perfil"}
+                  </button>
+
+                  <Link
+                    href="/medico/dashboard"
+                    className="rounded-2xl border border-[#D9DDF0] bg-white px-6 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+                  >
+                    Cancelar
+                  </Link>
+                </div>
+              </form>
+            </section>
           </div>
         )}
-
-        <form onSubmit={handleSave} className="grid gap-6">
-          <div className="app-card p-8">
-            <h2 className="text-2xl font-black text-slate-950">
-              Dados profissionais
-            </h2>
-
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Nome profissional *
-                </label>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="app-input"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  CPF *
-                </label>
-                <input
-                  name="cpf"
-                  value={form.cpf}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Somente números"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  CRM *
-                </label>
-                <input
-                  name="crm"
-                  value={form.crm}
-                  onChange={handleChange}
-                  className="app-input"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  UF do CRM *
-                </label>
-                <input
-                  name="crm_state"
-                  value={form.crm_state}
-                  onChange={handleChange}
-                  className="app-input"
-                  maxLength={2}
-                  placeholder="RJ"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  RQE
-                </label>
-                <input
-                  name="rqe"
-                  value={form.rqe}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Registro de Qualificação de Especialista"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Telefone profissional *
-                </label>
-                <input
-                  name="professional_phone"
-                  value={form.professional_phone}
-                  onChange={handleChange}
-                  className="app-input"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="app-card p-8">
-            <h2 className="text-2xl font-black text-slate-950">
-              Atendimento
-            </h2>
-
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Tempo médio de consulta em minutos *
-                </label>
-                <input
-                  type="number"
-                  name="average_consultation_minutes"
-                  value={form.average_consultation_minutes}
-                  onChange={handleChange}
-                  className="app-input"
-                  min={5}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Valor particular
-                </label>
-                <input
-                  name="private_price"
-                  value={form.private_price}
-                  onChange={handleChange}
-                  className="app-input"
-                  placeholder="Ex: 200,00"
-                />
-              </div>
-
-              <label className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:col-span-2">
-                <input
-                  type="checkbox"
-                  name="accepts_private_consultation"
-                  checked={form.accepts_private_consultation}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="block font-semibold text-slate-900">
-                    Aceito consulta particular
-                  </span>
-                  <span className="mt-1 block text-sm text-slate-600">
-                    Permite que pacientes encontrem você mesmo sem plano compatível.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="submit"
-              disabled={saving}
-              className="app-button-primary"
-            >
-              {saving ? "Salvando..." : "Salvar perfil médico"}
-            </button>
-
-            <Link
-              href="/medico/dashboard"
-              className="app-button-secondary text-center"
-            >
-              Cancelar
-            </Link>
-          </div>
-        </form>
       </section>
     </main>
   );
