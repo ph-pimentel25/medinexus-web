@@ -2,350 +2,397 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
 
+type ClinicRow = {
+  id: string;
+  trade_name: string | null;
+  legal_name: string | null;
+};
+
 type DoctorRow = {
   id: string;
-  name: string;
-  professional_email: string | null;
+  user_id: string | null;
+  clinic_id: string | null;
+  name: string | null;
   crm: string | null;
   crm_state: string | null;
-  bio_short: string | null;
-  is_active: boolean;
+  bio: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
 };
 
-type DoctorSpecialtyRow = {
-  doctor_id: string;
-  specialty_id: string;
-};
+type FilterType = "all" | "active" | "inactive";
 
-type Specialty = {
-  id: string;
-  name: string;
-};
+function normalize(value?: string | null) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
 
-type DoctorItem = {
-  id: string;
-  name: string;
-  professionalEmail: string | null;
-  crm: string | null;
-  crmState: string | null;
-  bioShort: string | null;
-  isActive: boolean;
-  specialtyIds: string[];
-};
+function formatDate(value?: string | null) {
+  if (!value) return "Não informado";
+
+  return new Date(value).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function getClinicName(clinic: ClinicRow | null) {
+  return clinic?.trade_name || clinic?.legal_name || "Clínica";
+}
+
+function getDoctorStatusLabel(item: DoctorRow) {
+  return item.is_active === false ? "Inativo" : "Ativo";
+}
+
+function getDoctorStatusClass(item: DoctorRow) {
+  return item.is_active === false
+    ? "bg-slate-100 text-slate-500"
+    : "bg-emerald-50 text-emerald-700";
+}
 
 export default function ClinicaMedicosPage() {
-  const router = useRouter();
-
   const [loading, setLoading] = useState(true);
+  const [clinic, setClinic] = useState<ClinicRow | null>(null);
+  const [doctors, setDoctors] = useState<DoctorRow[]>([]);
+
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [search, setSearch] = useState("");
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
     "info"
   );
 
-  const [clinicId, setClinicId] = useState("");
-  const [memberRole, setMemberRole] = useState<"owner" | "admin" | "doctor" | "">(
-    ""
-  );
-
-  const [doctors, setDoctors] = useState<DoctorItem[]>([]);
-  const [specialties, setSpecialties] = useState<Specialty[]>([]);
-
-  const specialtyNameMap = useMemo(() => {
-    return Object.fromEntries(specialties.map((item) => [item.id, item.name]));
-  }, [specialties]);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDoctorsPage();
+    loadPage();
   }, []);
 
-  async function loadDoctorsPage() {
-    setLoading(true);
-    setMessage("");
-
+  async function getClinicIdForCurrentUser() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
-      return;
+      return {
+        clinicId: null,
+        errorMessage: "Você precisa estar logado como clínica.",
+      };
     }
 
-    const { data: member, error: memberError } = await supabase
+    const { data: memberData, error: memberError } = await supabase
       .from("clinic_members")
-      .select("clinic_id, member_role")
+      .select("clinic_id")
       .eq("user_id", user.id)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
-    if (memberError || !member) {
-      setMessage("Você não possui acesso à área da clínica.");
+    if (memberError) {
+      return {
+        clinicId: null,
+        errorMessage: `Erro ao carregar vínculo da clínica: ${memberError.message}`,
+      };
+    }
+
+    if (!memberData?.clinic_id) {
+      return {
+        clinicId: null,
+        errorMessage: "Nenhuma clínica vinculada a este usuário.",
+      };
+    }
+
+    return {
+      clinicId: memberData.clinic_id as string,
+      errorMessage: "",
+    };
+  }
+
+  async function loadPage() {
+    setLoading(true);
+    setMessage("");
+
+    const { clinicId, errorMessage } = await getClinicIdForCurrentUser();
+
+    if (!clinicId) {
+      setMessage(errorMessage);
       setMessageType("error");
+      setDoctors([]);
       setLoading(false);
       return;
     }
 
-    setClinicId(member.clinic_id);
-    setMemberRole(member.member_role);
-
-    const { data: specialtiesData, error: specialtiesError } = await supabase
-      .from("specialties")
-      .select("id, name")
-      .order("name", { ascending: true });
-
-    if (specialtiesError) {
-      setMessage("Erro ao carregar especialidades.");
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-
-    setSpecialties(specialtiesData || []);
+    const { data: clinicData } = await supabase
+      .from("clinics")
+      .select("id, trade_name, legal_name")
+      .eq("id", clinicId)
+      .maybeSingle();
 
     const { data: doctorsData, error: doctorsError } = await supabase
       .from("doctors")
-      .select("id, name, professional_email, crm, crm_state, bio_short, is_active")
-      .eq("clinic_id", member.clinic_id)
-      .order("name", { ascending: true });
+      .select("id, user_id, clinic_id, name, crm, crm_state, bio, is_active, created_at")
+      .eq("clinic_id", clinicId)
+      .order("created_at", { ascending: false });
 
     if (doctorsError) {
-      setMessage("Erro ao carregar médicos da clínica.");
+      setMessage(`Erro ao carregar médicos: ${doctorsError.message}`);
       setMessageType("error");
+      setDoctors([]);
       setLoading(false);
       return;
     }
 
-    const doctorIds = (doctorsData || []).map((doctor) => doctor.id);
-
-    let doctorSpecialtiesData: DoctorSpecialtyRow[] = [];
-
-    if (doctorIds.length > 0) {
-      const { data: dsData, error: dsError } = await supabase
-        .from("doctor_specialties")
-        .select("doctor_id, specialty_id")
-        .in("doctor_id", doctorIds);
-
-      if (dsError) {
-        setMessage("Erro ao carregar especialidades dos médicos.");
-        setMessageType("error");
-        setLoading(false);
-        return;
-      }
-
-      doctorSpecialtiesData = dsData || [];
-    }
-
-    const specialtyMap: Record<string, string[]> = {};
-    doctorIds.forEach((id) => {
-      specialtyMap[id] = [];
-    });
-
-    doctorSpecialtiesData.forEach((row) => {
-      if (!specialtyMap[row.doctor_id]) {
-        specialtyMap[row.doctor_id] = [];
-      }
-      specialtyMap[row.doctor_id].push(row.specialty_id);
-    });
-
-    const combinedDoctors: DoctorItem[] = ((doctorsData || []) as DoctorRow[]).map(
-      (doctor) => ({
-        id: doctor.id,
-        name: doctor.name,
-        professionalEmail: doctor.professional_email,
-        crm: doctor.crm,
-        crmState: doctor.crm_state,
-        bioShort: doctor.bio_short,
-        isActive: doctor.is_active,
-        specialtyIds: specialtyMap[doctor.id] || [],
-      })
-    );
-
-    setDoctors(combinedDoctors);
+    setClinic((clinicData as ClinicRow) || null);
+    setDoctors((doctorsData || []) as DoctorRow[]);
     setLoading(false);
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando médicos...</p>
-      </main>
+  async function handleToggleDoctor(item: DoctorRow) {
+    setActionLoadingId(item.id);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("doctors")
+      .update({
+        is_active: !(item.is_active ?? true),
+      })
+      .eq("id", item.id);
+
+    if (error) {
+      setMessage(`Erro ao atualizar médico: ${error.message}`);
+      setMessageType("error");
+      setActionLoadingId(null);
+      return;
+    }
+
+    setMessage(
+      item.is_active === false
+        ? "Médico ativado com sucesso."
+        : "Médico desativado com sucesso."
     );
+    setMessageType("success");
+    await loadPage();
+    setActionLoadingId(null);
   }
 
-  return (
-    <main className="min-h-screen bg-slate-50">
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            href="/clinica/dashboard"
-            className="text-sm font-medium text-sky-700 hover:underline"
-          >
-            ← Voltar para o dashboard da clínica
-          </Link>
+  const stats = useMemo(() => {
+    return {
+      total: doctors.length,
+      active: doctors.filter((item) => item.is_active !== false).length,
+      inactive: doctors.filter((item) => item.is_active === false).length,
+    };
+  }, [doctors]);
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href="/clinica/solicitacoes" className="app-button-secondary text-center">
-              Ver solicitações
+  const filteredDoctors = useMemo(() => {
+    const query = normalize(search);
+
+    return doctors.filter((item) => {
+      const matchesFilter =
+        filter === "all" ||
+        (filter === "active" && item.is_active !== false) ||
+        (filter === "inactive" && item.is_active === false);
+
+      const searchable = normalize(
+        [item.name, item.crm, item.crm_state, item.bio].join(" ")
+      );
+
+      return matchesFilter && (!query || searchable.includes(query));
+    });
+  }, [doctors, filter, search]);
+
+  return (
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <section className="border-b border-[#E8EAF4] bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+          <div>
+            <span className="inline-flex rounded-full border border-[#D8DDF0] bg-[#F8FAFF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4660A9]">
+              Equipe médica
+            </span>
+
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Médicos da clínica
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+              Acompanhe os profissionais vinculados à clínica, status de
+              exibição e dados profissionais principais.
+            </p>
+
+            {clinic && (
+              <p className="mt-3 text-sm font-semibold text-slate-500">
+                {getClinicName(clinic)}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/clinica/dashboard"
+              className="rounded-2xl border border-[#D9DDF0] bg-white px-5 py-3 text-sm font-semibold text-[#5E4B9A] transition hover:bg-[#F8FAFF]"
+            >
+              Dashboard
             </Link>
-            <Link href="/clinica/medicos/novo" className="app-button-primary text-center">
-              Cadastrar médico
+
+            <Link
+              href="/clinica/solicitacoes"
+              className="rounded-2xl bg-[#283C7A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22356E]"
+            >
+              Solicitações
             </Link>
           </div>
         </div>
+      </section>
 
-        <div className="mb-8">
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Médicos da clínica
-          </p>
-          <h1 className="mt-3 app-section-title">
-            Gerencie a equipe médica
-          </h1>
-          <p className="app-section-subtitle">
-            Visualize os médicos cadastrados, confira status e edite os dados de cada profissional.
-          </p>
-        </div>
-
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
           <div className="mb-6">
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="metric-card metric-card--neutral">
-            <p className="text-sm text-slate-500">Total de médicos</p>
-            <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {doctors.length}
-            </h3>
-          </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { label: "Total", value: stats.total, tone: "text-slate-950" },
+            { label: "Ativos", value: stats.active, tone: "text-[#0F8A5F]" },
+            { label: "Inativos", value: stats.inactive, tone: "text-[#B26B00]" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-[#E3E8F4] bg-white p-5 shadow-sm"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {item.label}
+              </p>
+              <p className={`mt-3 text-3xl font-bold ${item.tone}`}>
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
 
-          <div className="metric-card metric-card--success">
-            <p className="text-sm text-green-700">Ativos</p>
-            <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {doctors.filter((doctor) => doctor.isActive).length}
-            </h3>
-          </div>
+        <div className="mt-6 rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="w-full xl:max-w-xl">
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Buscar médico
+              </label>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Busque por nome, CRM, UF ou bio"
+                className="w-full rounded-2xl border border-[#DCE1F1] bg-[#FBFCFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+              />
+            </div>
 
-          <div className="metric-card metric-card--danger">
-            <p className="text-sm text-red-700">Inativos</p>
-            <h3 className="mt-3 text-3xl font-bold text-slate-900">
-              {doctors.filter((doctor) => !doctor.isActive).length}
-            </h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "all", label: "Todos" },
+                { value: "active", label: "Ativos" },
+                { value: "inactive", label: "Inativos" },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setFilter(item.value as FilterType)}
+                  className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                    filter === item.value
+                      ? "bg-[#283C7A] text-white"
+                      : "border border-[#D9DDF0] bg-white text-[#5E4B9A] hover:bg-[#F8FAFF]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {doctors.length === 0 ? (
-          <div className="app-card p-8">
-            <p className="text-slate-700">Nenhum médico cadastrado ainda.</p>
-
-            {(memberRole === "owner" || memberRole === "admin") && (
-              <div className="mt-6">
-                <Link href="/clinica/medicos/novo" className="app-button-primary inline-block">
-                  Cadastrar primeiro médico
-                </Link>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {doctors.map((doctor) => (
-              <div key={doctor.id} className="app-card p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex-1">
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl font-bold text-slate-900">
-                        {doctor.name}
-                      </h2>
-
+        <div className="mt-6 grid gap-4">
+          {loading ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-6 text-sm text-slate-500 shadow-sm">
+              Carregando médicos...
+            </div>
+          ) : filteredDoctors.length === 0 ? (
+            <div className="rounded-[28px] border border-[#E3E8F4] bg-white p-10 text-center shadow-sm">
+              <h2 className="text-xl font-bold text-slate-950">
+                Nenhum médico encontrado
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Quando houver profissionais vinculados à clínica, eles
+                aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            filteredDoctors.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-[28px] border border-[#E3E8F4] bg-white p-5 shadow-sm"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${
-                          doctor.isActive
-                            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                            : "bg-slate-100 text-slate-700 ring-1 ring-slate-200"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${getDoctorStatusClass(
+                          item
+                        )}`}
                       >
-                        {doctor.isActive ? "Ativo" : "Inativo"}
+                        {getDoctorStatusLabel(item)}
+                      </span>
+
+                      <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#283C7A]">
+                        Médico
                       </span>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          E-mail profissional
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900 break-all">
-                          {doctor.professionalEmail || "Não informado"}
-                        </p>
-                      </div>
+                    <h3 className="text-xl font-bold text-slate-950">
+                      {item.name || "Médico sem nome"}
+                    </h3>
 
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          CRM
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-900">
-                          {doctor.crm || "Não informado"}
-                          {doctor.crmState ? ` / ${doctor.crmState}` : ""}
-                        </p>
-                      </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      CRM {item.crm || "N/I"}
+                      {item.crm_state ? ` / ${item.crm_state}` : ""}
+                    </p>
 
-                      <div className="app-card-soft p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Especialidades
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {doctor.specialtyIds.length > 0 ? (
-                            doctor.specialtyIds.map((specialtyId) => (
-                              <span
-                                key={specialtyId}
-                                className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200"
-                              >
-                                {specialtyNameMap[specialtyId] || "Especialidade"}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-sm text-slate-500">
-                              Sem especialidades vinculadas
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {doctor.bioShort && (
-                      <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-                        <p className="text-sm text-slate-700">{doctor.bioShort}</p>
-                      </div>
+                    {item.bio && (
+                      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+                        {item.bio}
+                      </p>
                     )}
+
+                    <p className="mt-3 text-xs text-slate-400">
+                      Vinculado em {formatDate(item.created_at)}
+                    </p>
                   </div>
 
-                  <div className="lg:w-[220px]">
-                    {(memberRole === "owner" || memberRole === "admin") ? (
-                      <Link
-                        href={`/clinica/medicos/${doctor.id}`}
-                        className="app-button-secondary block text-center"
-                      >
-                        Editar médico
-                      </Link>
-                    ) : (
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        Visualização somente leitura
-                      </div>
-                    )}
+                  <div className="flex shrink-0 flex-wrap gap-2 lg:max-w-[220px]">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDoctor(item)}
+                      disabled={actionLoadingId === item.id}
+                      className={`w-full rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${
+                        item.is_active === false
+                          ? "bg-[#283C7A] text-white hover:bg-[#22356E]"
+                          : "border border-red-100 bg-red-50 text-red-600 hover:bg-red-100"
+                      }`}
+                    >
+                      {actionLoadingId === item.id
+                        ? "Atualizando..."
+                        : item.is_active === false
+                        ? "Ativar médico"
+                        : "Desativar médico"}
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {clinicId && (
-          <div className="mt-8 text-sm text-slate-500">
-            Clínica vinculada: {clinicId}
-          </div>
-        )}
+              </article>
+            ))
+          )}
+        </div>
       </section>
     </main>
   );
