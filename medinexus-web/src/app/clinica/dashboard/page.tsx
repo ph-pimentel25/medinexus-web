@@ -81,7 +81,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica";
+  return clinic?.trade_name || clinic?.legal_name || "Clínica";
 }
 
 function getClinicLocation(clinic: ClinicRow | null) {
@@ -91,17 +91,17 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
 }
 
 function getFirstName(value?: string | null) {
   const cleaned = String(value || "").trim();
-  if (!cleaned) return "ClÃ­nica";
+  if (!cleaned) return "Clínica";
   return cleaned.split(" ")[0];
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -115,17 +115,17 @@ function getAppointmentDate(item: AppointmentRow) {
 
 function getPatientName(item: AppointmentRow) {
   const patient = pickOne(item.patients);
-  return patient?.full_name || "Paciente nÃ£o informado";
+  return patient?.full_name || "Paciente não informado";
 }
 
 function getDoctorName(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  return doctor?.name || "MÃ©dico nÃ£o informado";
+  return doctor?.name || "Médico não informado";
 }
 
 function getDoctorCrm(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  if (!doctor?.crm) return "CRM nÃ£o informado";
+  if (!doctor?.crm) return "CRM não informado";
   return `CRM ${doctor.crm}${doctor.crm_state ? ` / ${doctor.crm_state}` : ""}`;
 }
 
@@ -134,27 +134,27 @@ function getStatusLabel(status?: string | null) {
     pending: "Pendente",
     confirmed: "Confirmada",
     cancelled_by_patient: "Cancelada pelo paciente",
-    cancelled_by_clinic: "Cancelada pela clÃ­nica",
-    completed: "ConcluÃ­da",
-    no_show: "NÃ£o compareceu",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    completed: "Concluída",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || status || "Status nÃ£o informado";
+  return labels[status || ""] || status || "Status não informado";
 }
 
 function getConfirmationLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    not_requested: "Sem confirmaÃ§Ã£o necessÃ¡ria",
+    not_requested: "Sem confirmação necessária",
     awaiting_confirmation: "Aguardando paciente",
     confirmed: "Paciente confirmou",
     cancelled_by_patient: "Paciente cancelou",
-    cancelled_by_clinic: "Cancelada pela clÃ­nica",
-    reschedule_requested: "Pedido de remarcaÃ§Ã£o",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    reschedule_requested: "Pedido de remarcação",
     no_response: "Sem resposta",
-    no_show: "NÃ£o compareceu",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || "Sem confirmaÃ§Ã£o necessÃ¡ria";
+  return labels[status || ""] || "Sem confirmação necessária";
 }
 
 function getRawNotificationType(item: NotificationRow) {
@@ -162,11 +162,11 @@ function getRawNotificationType(item: NotificationRow) {
 }
 
 function getNotificationTitle(item: NotificationRow) {
-  return item.title || "Nova notificaÃ§Ã£o";
+  return item.title || "Nova notificação";
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.body || item.message || "VocÃª recebeu uma nova atualizaÃ§Ã£o.";
+  return item.body || item.message || "Você recebeu uma nova atualização.";
 }
 
 function getNotificationTypeLabel(item: NotificationRow) {
@@ -175,7 +175,7 @@ function getNotificationTypeLabel(item: NotificationRow) {
   if (raw.includes("document")) return "Documento";
   if (raw.includes("appointment")) return "Consulta";
   if (raw.includes("consulta")) return "Consulta";
-  if (raw.includes("confirm")) return "ConfirmaÃ§Ã£o";
+  if (raw.includes("confirm")) return "Confirmação";
   if (raw.includes("cancel")) return "Cancelamento";
 
   return "Aviso";
@@ -217,7 +217,7 @@ export default function ClinicaDashboardPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("VocÃª precisa estar logado como clÃ­nica.");
+      setMessage("Você precisa estar logado como clínica.");
       setLoading(false);
       return;
     }
@@ -230,13 +230,13 @@ export default function ClinicaDashboardPage() {
       .maybeSingle();
 
     if (memberError) {
-      setMessage(`Erro ao carregar vÃ­nculo da clÃ­nica: ${memberError.message}`);
+      setMessage(`Erro ao carregar vínculo da clínica: ${memberError.message}`);
       setLoading(false);
       return;
     }
 
     if (!memberData?.clinic_id) {
-      setMessage("Nenhuma clÃ­nica vinculada a este usuÃ¡rio.");
+      setMessage("Nenhuma clínica vinculada a este usuário.");
       setLoading(false);
       return;
     }
@@ -250,7 +250,7 @@ export default function ClinicaDashboardPage() {
       .maybeSingle();
 
     if (clinicError) {
-      setMessage(`Erro ao carregar clÃ­nica: ${clinicError.message}`);
+      setMessage(`Erro ao carregar clínica: ${clinicError.message}`);
       setLoading(false);
       return;
     }
@@ -342,16 +342,16 @@ export default function ClinicaDashboardPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.55fr_1fr] lg:px-8">
           <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
-              Ãrea da clÃ­nica
+              Área da clínica
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              OlÃ¡, {getFirstName(getClinicName(clinic))}
+              Olá, {getFirstName(getClinicName(clinic))}
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Gerencie mÃ©dicos vinculados, acompanhe solicitaÃ§Ãµes de consulta e
-              mantenha os dados da clÃ­nica organizados.
+              Gerencie médicos vinculados, acompanhe solicitações de consulta e
+              mantenha os dados da clínica organizados.
             </p>
 
             <p className="mt-3 text-sm font-semibold text-slate-500">
@@ -363,42 +363,42 @@ export default function ClinicaDashboardPage() {
                 href="/clinica/solicitacoes"
                 className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
               >
-                Ver solicitaÃ§Ãµes
+                Ver solicitações
               </Link>
 
               <Link
                 href="/clinica/medicos"
                 className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
-                MÃ©dicos da clÃ­nica
+                Médicos da clínica
               </Link>
 
               <Link
                 href="/clinica/configuracoes"
                 className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
-                ConfiguraÃ§Ãµes
+                Configurações
               </Link>
             </div>
           </div>
 
           <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rÃ¡pido
+              Resumo rápido
             </p>
 
             <div className="mt-4 grid gap-3">
               <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                 <p className="text-3xl font-bold">{summary.totalAppointments}</p>
                 <p className="mt-1 text-sm text-white/80">
-                  solicitaÃ§Ãµes recentes
+                  solicitações recentes
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.doctors}</p>
-                  <p className="mt-1 text-sm text-white/80">mÃ©dicos</p>
+                  <p className="mt-1 text-sm text-white/80">médicos</p>
                 </div>
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
@@ -413,7 +413,7 @@ export default function ClinicaDashboardPage() {
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.unread}</p>
-                  <p className="mt-1 text-sm text-white/80">nÃ£o lidas</p>
+                  <p className="mt-1 text-sm text-white/80">não lidas</p>
                 </div>
               </div>
             </div>
@@ -430,7 +430,7 @@ export default function ClinicaDashboardPage() {
 
         {loading ? (
           <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando painel da clÃ­nica...
+            Carregando painel da clínica...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
@@ -439,10 +439,10 @@ export default function ClinicaDashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      PrÃ³ximas consultas
+                      Próximas consultas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      SolicitaÃ§Ãµes futuras vinculadas Ã  clÃ­nica.
+                      Solicitações futuras vinculadas Ã  clínica.
                     </p>
                   </div>
 
@@ -510,10 +510,10 @@ export default function ClinicaDashboardPage() {
               <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
                 <div className="mb-5">
                   <h2 className="text-xl font-bold text-slate-950">
-                    AÃ§Ãµes rÃ¡pidas
+                    Ações rápidas
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Atalhos principais da administraÃ§Ã£o da clÃ­nica.
+                    Atalhos principais da administração da clínica.
                   </p>
                 </div>
 
@@ -522,28 +522,28 @@ export default function ClinicaDashboardPage() {
                     href="/clinica/solicitacoes"
                     className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
-                    Ver solicitaÃ§Ãµes
+                    Ver solicitações
                   </Link>
 
                   <Link
                     href="/clinica/medicos"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Gerenciar mÃ©dicos
+                    Gerenciar médicos
                   </Link>
 
                   <Link
                     href="/clinica/configuracoes"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    ConfiguraÃ§Ãµes
+                    Configurações
                   </Link>
 
                   <Link
                     href="/notificacoes"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    NotificaÃ§Ãµes
+                    Notificações
                   </Link>
                 </div>
               </section>
@@ -554,10 +554,10 @@ export default function ClinicaDashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      MÃ©dicos vinculados
+                      Médicos vinculados
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Profissionais cadastrados nessa clÃ­nica.
+                      Profissionais cadastrados nessa clínica.
                     </p>
                   </div>
 
@@ -571,7 +571,7 @@ export default function ClinicaDashboardPage() {
 
                 {doctors.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhum mÃ©dico vinculado ainda.
+                    Nenhum médico vinculado ainda.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -583,7 +583,7 @@ export default function ClinicaDashboardPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-bold text-slate-950">
-                              {doctor.name || "MÃ©dico sem nome"}
+                              {doctor.name || "Médico sem nome"}
                             </p>
                             <p className="mt-1 text-sm text-slate-500">
                               CRM {doctor.crm || "N/I"}
@@ -611,10 +611,10 @@ export default function ClinicaDashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      NotificaÃ§Ãµes recentes
+                      Notificações recentes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Ãšltimos avisos da plataforma.
+                      Últimos avisos da plataforma.
                     </p>
                   </div>
 
@@ -628,7 +628,7 @@ export default function ClinicaDashboardPage() {
 
                 {notifications.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhuma notificaÃ§Ã£o por enquanto.
+                    Nenhuma notificação por enquanto.
                   </div>
                 ) : (
                   <div className="space-y-3">

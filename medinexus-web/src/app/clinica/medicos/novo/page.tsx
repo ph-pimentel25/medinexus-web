@@ -74,7 +74,7 @@ export default function ClinicaNovoMedicoPage() {
       .single();
 
     if (memberError || !member) {
-      setMessage("VocÃª nÃ£o possui acesso Ã  Ã¡rea da clÃ­nica.");
+      setMessage("Você não possui acesso Ã  área da clínica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -125,13 +125,13 @@ export default function ClinicaNovoMedicoPage() {
     setMessage("");
 
     if (!canManage) {
-      setMessage("Apenas owner/admin pode cadastrar mÃ©dicos.");
+      setMessage("Apenas owner/admin pode cadastrar médicos.");
       setMessageType("error");
       return;
     }
 
     if (!clinicId) {
-      setMessage("ClÃ­nica nÃ£o encontrada.");
+      setMessage("Clínica não encontrada.");
       setMessageType("error");
       return;
     }
@@ -141,7 +141,7 @@ export default function ClinicaNovoMedicoPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("SessÃ£o nÃ£o encontrada.");
+      setMessage("Sessão não encontrada.");
       setMessageType("error");
       return;
     }
@@ -166,7 +166,7 @@ export default function ClinicaNovoMedicoPage() {
     if (insertDoctorError || !insertedDoctor) {
       console.error("insertDoctorError:", insertDoctorError);
       setMessage(
-        `Erro ao cadastrar mÃ©dico: ${insertDoctorError?.message || "erro desconhecido"}`
+        `Erro ao cadastrar médico: ${insertDoctorError?.message || "erro desconhecido"}`
       );
       setMessageType("error");
       setSubmitting(false);
@@ -186,7 +186,7 @@ export default function ClinicaNovoMedicoPage() {
       if (specialtiesError) {
         console.error("specialtiesError:", specialtiesError);
         setMessage(
-          `MÃ©dico criado, mas houve erro ao vincular especialidades: ${specialtiesError.message}`
+          `Médico criado, mas houve erro ao vincular especialidades: ${specialtiesError.message}`
         );
         setMessageType("error");
         setSubmitting(false);
@@ -194,7 +194,7 @@ export default function ClinicaNovoMedicoPage() {
       }
     }
 
-    setMessage("MÃ©dico cadastrado com sucesso.");
+    setMessage("Médico cadastrado com sucesso.");
     setMessageType("success");
     setSubmitting(false);
 
@@ -206,7 +206,7 @@ export default function ClinicaNovoMedicoPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando cadastro de mÃ©dico...</p>
+        <p className="text-slate-600">Carregando cadastro de médico...</p>
       </main>
     );
   }
@@ -219,19 +219,19 @@ export default function ClinicaNovoMedicoPage() {
             href="/clinica/medicos"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para mÃ©dicos
+            â† Voltar para médicos
           </Link>
         </div>
 
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Novo mÃ©dico
+            Novo médico
           </p>
           <h1 className="mt-3 app-section-title">
-            Cadastre um profissional da clÃ­nica
+            Cadastre um profissional da clínica
           </h1>
           <p className="app-section-subtitle">
-            Preencha os dados do mÃ©dico, incluindo o e-mail que ele usarÃ¡ para criar o prÃ³prio login.
+            Preencha os dados do médico, incluindo o e-mail que ele usará para criar o próprio login.
           </p>
         </div>
 
@@ -246,14 +246,14 @@ export default function ClinicaNovoMedicoPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Nome do mÃ©dico
+                  Nome do médico
                 </label>
                 <input
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="Digite o nome do mÃ©dico"
+                  placeholder="Digite o nome do médico"
                   required
                   disabled={!canManage}
                 />
@@ -269,7 +269,7 @@ export default function ClinicaNovoMedicoPage() {
                   value={form.professionalEmail}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="email do mÃ©dico"
+                  placeholder="email do médico"
                   required
                   disabled={!canManage}
                 />
@@ -286,7 +286,7 @@ export default function ClinicaNovoMedicoPage() {
                   value={form.crm}
                   onChange={handleChange}
                   className="app-input"
-                  placeholder="NÃºmero do CRM"
+                  placeholder="Número do CRM"
                   disabled={!canManage}
                 />
               </div>
@@ -316,7 +316,7 @@ export default function ClinicaNovoMedicoPage() {
                   disabled={!canManage}
                 />
                 <span className="text-sm font-medium text-slate-700">
-                  MÃ©dico ativo
+                  Médico ativo
                 </span>
               </label>
             </div>
@@ -330,7 +330,7 @@ export default function ClinicaNovoMedicoPage() {
                 value={form.bioShort}
                 onChange={handleChange}
                 className="app-textarea"
-                placeholder="Resumo rÃ¡pido sobre o profissional"
+                placeholder="Resumo rápido sobre o profissional"
                 disabled={!canManage}
               />
             </div>
@@ -370,7 +370,7 @@ export default function ClinicaNovoMedicoPage() {
                 disabled={submitting || !canManage}
                 className="app-button-primary"
               >
-                {submitting ? "Cadastrando..." : "Cadastrar mÃ©dico"}
+                {submitting ? "Cadastrando..." : "Cadastrar médico"}
               </button>
 
               <Link href="/clinica/medicos" className="app-button-secondary text-center">

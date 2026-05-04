@@ -76,7 +76,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -97,12 +97,12 @@ function getStatusLabel(status?: string | null) {
     pending: "Pendente",
     confirmed: "Confirmada",
     cancelled_by_patient: "Cancelada pelo paciente",
-    cancelled_by_clinic: "Cancelada pela clÃ­nica",
-    completed: "ConcluÃ­da",
-    no_show: "NÃ£o compareceu",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    completed: "Concluída",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || status || "Status nÃ£o informado";
+  return labels[status || ""] || status || "Status não informado";
 }
 
 function getStatusTone(status?: string | null) {
@@ -124,17 +124,17 @@ function getStatusTone(status?: string | null) {
 
 function getConfirmationLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    not_requested: "Sem confirmaÃ§Ã£o necessÃ¡ria",
+    not_requested: "Sem confirmação necessária",
     awaiting_confirmation: "Aguardando paciente",
     confirmed: "Paciente confirmou",
     cancelled_by_patient: "Paciente cancelou",
-    cancelled_by_clinic: "Cancelada pela clÃ­nica",
-    reschedule_requested: "Pedido de remarcaÃ§Ã£o",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    reschedule_requested: "Pedido de remarcação",
     no_response: "Sem resposta",
-    no_show: "NÃ£o compareceu",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || "Sem confirmaÃ§Ã£o necessÃ¡ria";
+  return labels[status || ""] || "Sem confirmação necessária";
 }
 
 function getConfirmationTone(status?: string | null) {
@@ -155,17 +155,17 @@ function getConfirmationTone(status?: string | null) {
 
 function getPatientName(item: AppointmentRow) {
   const patient = pickOne(item.patients);
-  return patient?.full_name || "Paciente nÃ£o informado";
+  return patient?.full_name || "Paciente não informado";
 }
 
 function getDoctorName(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  return doctor?.name || "MÃ©dico nÃ£o informado";
+  return doctor?.name || "Médico não informado";
 }
 
 function getDoctorCrm(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  if (!doctor?.crm) return "CRM nÃ£o informado";
+  if (!doctor?.crm) return "CRM não informado";
   return `CRM ${doctor.crm}${doctor.crm_state ? ` / ${doctor.crm_state}` : ""}`;
 }
 
@@ -204,7 +204,7 @@ export default function ClinicaSolicitacoesPage() {
     if (!user) {
       return {
         clinicId: null,
-        errorMessage: "VocÃª precisa estar logado como clÃ­nica.",
+        errorMessage: "Você precisa estar logado como clínica.",
       };
     }
 
@@ -218,14 +218,14 @@ export default function ClinicaSolicitacoesPage() {
     if (memberError) {
       return {
         clinicId: null,
-        errorMessage: `Erro ao carregar vÃ­nculo da clÃ­nica: ${memberError.message}`,
+        errorMessage: `Erro ao carregar vínculo da clínica: ${memberError.message}`,
       };
     }
 
     if (!memberData?.clinic_id) {
       return {
         clinicId: null,
-        errorMessage: "Nenhuma clÃ­nica vinculada a este usuÃ¡rio.",
+        errorMessage: "Nenhuma clínica vinculada a este usuário.",
       };
     }
 
@@ -288,7 +288,7 @@ export default function ClinicaSolicitacoesPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage(`Erro ao carregar solicitaÃ§Ãµes: ${error.message}`);
+      setMessage(`Erro ao carregar solicitações: ${error.message}`);
       setMessageType("error");
       setAppointments([]);
       setLoading(false);
@@ -352,7 +352,7 @@ export default function ClinicaSolicitacoesPage() {
 
   async function handleCancelAppointment(appointment: AppointmentRow) {
     const confirmed = window.confirm(
-      "Tem certeza que deseja cancelar esta consulta pela clÃ­nica?"
+      "Tem certeza que deseja cancelar esta consulta pela clínica?"
     );
 
     if (!confirmed) return;
@@ -368,7 +368,7 @@ export default function ClinicaSolicitacoesPage() {
         status: "cancelled_by_clinic",
         patient_confirmation_status: "cancelled_by_clinic",
         patient_cancelled_at: now,
-        patient_cancellation_reason: "Cancelada pela clÃ­nica.",
+        patient_cancellation_reason: "Cancelada pela clínica.",
       })
       .eq("id", appointment.id)
       .eq("clinic_id", appointment.clinic_id);
@@ -386,8 +386,8 @@ export default function ClinicaSolicitacoesPage() {
       doctor_id: appointment.doctor_id,
       clinic_id: appointment.clinic_id,
       event_type: "cancelled_by_clinic",
-      title: "ClÃ­nica cancelou a consulta",
-      description: "Consulta cancelada pela clÃ­nica.",
+      title: "Clínica cancelou a consulta",
+      description: "Consulta cancelada pela clínica.",
       metadata: {
         source: "clinic_requests_page",
       },
@@ -405,16 +405,16 @@ export default function ClinicaSolicitacoesPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              SolicitaÃ§Ãµes
+              Solicitações
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Consultas da clÃ­nica
+              Consultas da clínica
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Acompanhe solicitaÃ§Ãµes vinculadas Ã  clÃ­nica, mÃ©dicos responsÃ¡veis
-              e status de confirmaÃ§Ã£o dos pacientes.
+              Acompanhe solicitações vinculadas Ã  clínica, médicos responsáveis
+              e status de confirmação dos pacientes.
             </p>
           </div>
 
@@ -430,7 +430,7 @@ export default function ClinicaSolicitacoesPage() {
               href="/clinica/medicos"
               className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              MÃ©dicos
+              Médicos
             </Link>
           </div>
         </div>
@@ -458,7 +458,7 @@ export default function ClinicaSolicitacoesPage() {
               value: stats.patientConfirmed,
               tone: "text-[#5A4C86]",
             },
-            { label: "ConcluÃ­das", value: stats.completed, tone: "text-slate-700" },
+            { label: "Concluídas", value: stats.completed, tone: "text-slate-700" },
           ].map((item) => (
             <div
               key={item.label}
@@ -483,7 +483,7 @@ export default function ClinicaSolicitacoesPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Busque por paciente, mÃ©dico, CRM ou status"
+                placeholder="Busque por paciente, médico, CRM ou status"
                 className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
@@ -496,7 +496,7 @@ export default function ClinicaSolicitacoesPage() {
                 { value: "awaiting_confirmation", label: "Aguardando paciente" },
                 { value: "patient_confirmed", label: "Paciente confirmou" },
                 { value: "cancelled", label: "Canceladas" },
-                { value: "completed", label: "ConcluÃ­das" },
+                { value: "completed", label: "Concluídas" },
               ].map((item) => (
                 <button
                   key={item.value}
@@ -518,15 +518,15 @@ export default function ClinicaSolicitacoesPage() {
         <div className="mt-6 grid gap-4">
           {loading ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando solicitaÃ§Ãµes...
+              Carregando solicitações...
             </div>
           ) : filteredAppointments.length === 0 ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhuma solicitaÃ§Ã£o encontrada
+                Nenhuma solicitação encontrada
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                As consultas vinculadas Ã  clÃ­nica aparecerÃ£o aqui.
+                As consultas vinculadas Ã  clínica aparecerão aqui.
               </p>
             </div>
           ) : (
@@ -575,31 +575,31 @@ export default function ClinicaSolicitacoesPage() {
 
                       <p>
                         <strong className="text-slate-800">
-                          HorÃ¡rio sugerido:
+                          Horário sugerido:
                         </strong>{" "}
                         {formatDateTime(item.requested_start_at)}
                       </p>
 
                       <p>
                         <strong className="text-slate-800">
-                          HorÃ¡rio confirmado:
+                          Horário confirmado:
                         </strong>{" "}
                         {item.confirmed_start_at
                           ? `${formatDateTime(
                               item.confirmed_start_at
-                            )} atÃ© ${formatDateTime(getAppointmentEnd(item))}`
-                          : "Ainda nÃ£o confirmado"}
+                            )} até ${formatDateTime(getAppointmentEnd(item))}`
+                          : "Ainda não confirmado"}
                       </p>
 
                       <p>
-                        <strong className="text-slate-800">ConfirmaÃ§Ã£o:</strong>{" "}
+                        <strong className="text-slate-800">Confirmação:</strong>{" "}
                         {getConfirmationLabel(item.patient_confirmation_status)}
                       </p>
                     </div>
 
                     {item.reschedule_reason && (
                       <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-                        <strong>Pedido de remarcaÃ§Ã£o:</strong>{" "}
+                        <strong>Pedido de remarcação:</strong>{" "}
                         {item.reschedule_reason}
                       </div>
                     )}
@@ -618,7 +618,7 @@ export default function ClinicaSolicitacoesPage() {
                         href={`/medico/consultas/${item.id}`}
                         className="w-full rounded-2xl bg-[#5A4C86] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#5A4C86]"
                       >
-                        Abrir prontuÃ¡rio
+                        Abrir prontuário
                       </Link>
                     )}
 

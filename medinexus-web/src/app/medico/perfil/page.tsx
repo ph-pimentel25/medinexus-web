@@ -29,7 +29,7 @@ type ClinicRow = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -38,7 +38,7 @@ function formatDate(value?: string | null) {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
+  return clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
 }
 
 function getClinicLocation(clinic: ClinicRow | null) {
@@ -48,7 +48,7 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
 }
 
 export default function MedicoPerfilPage() {
@@ -82,7 +82,7 @@ export default function MedicoPerfilPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("VocÃª precisa estar logado como mÃ©dico.");
+      setMessage("Você precisa estar logado como médico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -95,14 +95,14 @@ export default function MedicoPerfilPage() {
       .maybeSingle();
 
     if (doctorError) {
-      setMessage(`Erro ao carregar perfil mÃ©dico: ${doctorError.message}`);
+      setMessage(`Erro ao carregar perfil médico: ${doctorError.message}`);
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (!doctorData?.id) {
-      setMessage("Nenhum cadastro mÃ©dico encontrado para este usuÃ¡rio.");
+      setMessage("Nenhum cadastro médico encontrado para este usuário.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -138,7 +138,7 @@ export default function MedicoPerfilPage() {
     event.preventDefault();
 
     if (!doctor?.id) {
-      setMessage("Cadastro mÃ©dico nÃ£o encontrado.");
+      setMessage("Cadastro médico não encontrado.");
       setMessageType("error");
       return;
     }
@@ -182,7 +182,7 @@ export default function MedicoPerfilPage() {
       return;
     }
 
-    setMessage("Perfil mÃ©dico atualizado com sucesso.");
+    setMessage("Perfil médico atualizado com sucesso.");
     setMessageType("success");
     await loadProfile();
     setSaving(false);
@@ -200,7 +200,7 @@ export default function MedicoPerfilPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              Perfil mÃ©dico
+              Perfil médico
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -208,7 +208,7 @@ export default function MedicoPerfilPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Atualize seu nome profissional, CRM, bio e status de exibiÃ§Ã£o na
+              Atualize seu nome profissional, CRM, bio e status de exibição na
               plataforma.
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function MedicoPerfilPage() {
               href="/medico/solicitacoes"
               className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              SolicitaÃ§Ãµes
+              Solicitações
             </Link>
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function MedicoPerfilPage() {
 
         {loading ? (
           <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando perfil mÃ©dico...
+            Carregando perfil médico...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.2fr]">
@@ -302,7 +302,7 @@ export default function MedicoPerfilPage() {
 
                   <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      ClÃ­nica vinculada
+                      Clínica vinculada
                     </p>
                     <p className="mt-1 text-sm font-bold text-slate-950">
                       {getClinicName(clinic)}
@@ -338,7 +338,7 @@ export default function MedicoPerfilPage() {
                     href="/medico/solicitacoes"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Ver solicitaÃ§Ãµes
+                    Ver solicitações
                   </Link>
                 </div>
               </section>
@@ -346,11 +346,11 @@ export default function MedicoPerfilPage() {
 
             <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Editar informaÃ§Ãµes
+                Editar informações
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Esses dados aparecem para pacientes e clÃ­nicas dentro da
+                Esses dados aparecem para pacientes e clínicas dentro da
                 plataforma.
               </p>
 
@@ -401,7 +401,7 @@ export default function MedicoPerfilPage() {
                   <textarea
                     value={bio}
                     onChange={(event) => setBio(event.target.value)}
-                    placeholder="Descreva sua atuaÃ§Ã£o, experiÃªncia, abordagem e informaÃ§Ãµes Ãºteis para pacientes."
+                    placeholder="Descreva sua atuação, experiência, abordagem e informações úteis para pacientes."
                     rows={7}
                     className="w-full resize-none rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                   />
@@ -415,7 +415,7 @@ export default function MedicoPerfilPage() {
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
                         Quando ativo, seu perfil pode aparecer para pacientes e
-                        clÃ­nicas.
+                        clínicas.
                       </p>
                     </div>
 

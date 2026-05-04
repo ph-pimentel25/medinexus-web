@@ -59,7 +59,7 @@ function getFirstName(fullName?: string | null) {
 }
 
 function formatDate(dateString?: string | null) {
-  if (!dateString) return "NÃ£o informado";
+  if (!dateString) return "Não informado";
 
   const date = new Date(dateString);
   return date.toLocaleString("pt-BR", {
@@ -118,7 +118,7 @@ export default function DashboardPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErrorMessage("VocÃª precisa estar logado para visualizar o dashboard.");
+      setErrorMessage("Você precisa estar logado para visualizar o dashboard.");
       setLoading(false);
       return;
     }
@@ -192,12 +192,12 @@ export default function DashboardPage() {
 
         return {
           ...item,
-          doctor_name: doctor?.name || "MÃ©dico nÃ£o informado",
-          clinic_name: clinic?.name || "ClÃ­nica nÃ£o informada",
+          doctor_name: doctor?.name || "Médico não informado",
+          clinic_name: clinic?.name || "Clínica não informada",
           clinic_location:
             clinic?.city && clinic?.state
               ? `${clinic.city} / ${clinic.state}`
-              : "Local nÃ£o informado",
+              : "Local não informado",
         };
       }
     );
@@ -255,16 +255,16 @@ export default function DashboardPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.6fr_1fr] lg:px-8">
           <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
-              Ãrea do paciente
+              Área do paciente
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              OlÃ¡, {firstName}
+              Olá, {firstName}
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Acompanhe suas consultas, veja documentos liberados, confira suas
-              notificaÃ§Ãµes e continue sua jornada de atendimento com mais
+              notificações e continue sua jornada de atendimento com mais
               praticidade.
             </p>
 
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                 href="/solicitacoes"
                 className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
-                Ver solicitaÃ§Ãµes
+                Ver solicitações
               </Link>
 
               <Link
@@ -294,7 +294,7 @@ export default function DashboardPage() {
 
           <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rÃ¡pido
+              Resumo rápido
             </p>
 
             <div className="mt-4 grid gap-3">
@@ -316,12 +316,12 @@ export default function DashboardPage() {
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.completed}</p>
-                  <p className="mt-1 text-sm text-white/80">concluÃ­das</p>
+                  <p className="mt-1 text-sm text-white/80">concluídas</p>
                 </div>
 
                 <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
                   <p className="text-2xl font-bold">{summary.unread}</p>
-                  <p className="mt-1 text-sm text-white/80">nÃ£o lidas</p>
+                  <p className="mt-1 text-sm text-white/80">não lidas</p>
                 </div>
               </div>
             </div>
@@ -348,10 +348,10 @@ export default function DashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      PrÃ³ximas consultas
+                      Próximas consultas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Seus prÃ³ximos atendimentos agendados.
+                      Seus próximos atendimentos agendados.
                     </p>
                   </div>
 
@@ -365,7 +365,7 @@ export default function DashboardPage() {
 
                 {nextAppointments.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    VocÃª ainda nÃ£o tem prÃ³ximas consultas agendadas.
+                    Você ainda não tem próximas consultas agendadas.
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                             </h3>
 
                             <p className="mt-1 text-sm text-slate-600">
-                              MÃ©dico: {item.doctor_name}
+                              Médico: {item.doctor_name}
                             </p>
 
                             <p className="mt-1 text-sm text-slate-500">
@@ -416,7 +416,7 @@ export default function DashboardPage() {
                             href={getAppointmentHref()}
                             className="inline-flex rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                           >
-                            Abrir solicitaÃ§Ãµes
+                            Abrir solicitações
                           </Link>
                         </div>
                       </div>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      AÃ§Ãµes rÃ¡pidas
+                      Ações rápidas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
                       Atalhos principais da sua conta.
@@ -449,7 +449,7 @@ export default function DashboardPage() {
                     href="/solicitacoes"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Ver solicitaÃ§Ãµes
+                    Ver solicitações
                   </Link>
 
                   <Link
@@ -475,10 +475,10 @@ export default function DashboardPage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
-                      NotificaÃ§Ãµes recentes
+                      Notificações recentes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Ãšltimos avisos da plataforma.
+                      Últimos avisos da plataforma.
                     </p>
                   </div>
 
@@ -492,7 +492,7 @@ export default function DashboardPage() {
 
                 {notifications.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhuma notificaÃ§Ã£o por enquanto.
+                    Nenhuma notificação por enquanto.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -515,11 +515,11 @@ export default function DashboardPage() {
                         </div>
 
                         <p className="text-sm font-bold text-slate-950">
-                          {item.title || "Nova notificaÃ§Ã£o"}
+                          {item.title || "Nova notificação"}
                         </p>
 
                         <p className="mt-1 text-sm text-slate-500">
-                          {item.message || "VocÃª recebeu uma atualizaÃ§Ã£o."}
+                          {item.message || "Você recebeu uma atualização."}
                         </p>
 
                         <p className="mt-2 text-xs text-slate-400">
@@ -541,7 +541,7 @@ export default function DashboardPage() {
                     Nome cadastrado
                   </p>
                   <p className="mt-1 text-base font-bold text-slate-950">
-                    {profile?.full_name || "Paciente nÃ£o informado"}
+                    {profile?.full_name || "Paciente não informado"}
                   </p>
                 </div>
 
@@ -557,7 +557,7 @@ export default function DashboardPage() {
 
                   <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      NÃ£o lidas
+                      Não lidas
                     </p>
                     <p className="mt-2 text-2xl font-bold text-[#164957]">
                       {summary.unread}

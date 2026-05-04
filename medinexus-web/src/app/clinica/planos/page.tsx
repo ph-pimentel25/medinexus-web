@@ -48,7 +48,7 @@ export default function ClinicaPlanosPage() {
         .single();
 
       if (memberError || !member) {
-        setMessage("VocÃª nÃ£o possui acesso Ã  Ã¡rea da clÃ­nica.");
+        setMessage("Você não possui acesso Ã  área da clínica.");
         setMessageType("error");
         setLoading(false);
         return;
@@ -68,7 +68,7 @@ export default function ClinicaPlanosPage() {
         .eq("clinic_id", member.clinic_id);
 
       if (allPlansError || clinicPlansError) {
-        setMessage("NÃ£o foi possÃ­vel carregar os planos.");
+        setMessage("Não foi possível carregar os planos.");
         setMessageType("error");
         setLoading(false);
         return;
@@ -149,7 +149,7 @@ export default function ClinicaPlanosPage() {
             href="/clinica/dashboard"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para o dashboard da clÃ­nica
+            â† Voltar para o dashboard da clínica
           </Link>
         </div>
 
@@ -158,10 +158,10 @@ export default function ClinicaPlanosPage() {
             Planos aceitos
           </p>
           <h1 className="mt-3 app-section-title">
-            Configure os convÃªnios da clÃ­nica
+            Configure os convênios da clínica
           </h1>
           <p className="app-section-subtitle">
-            Selecione os planos que sua clÃ­nica aceita atender.
+            Selecione os planos que sua clínica aceita atender.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function ClinicaPlanosPage() {
                     {plan.name}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {accepted ? "Plano jÃ¡ aceito pela clÃ­nica" : "Plano ainda nÃ£o aceito"}
+                    {accepted ? "Plano já aceito pela clínica" : "Plano ainda não aceito"}
                   </p>
                 </div>
 

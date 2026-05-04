@@ -107,27 +107,27 @@ const documentTypeOptions: {
 }[] = [
   {
     value: "prescription",
-    label: "Receita mÃ©dica",
-    description: "PrescriÃ§Ã£o de medicamento, orientaÃ§Ãµes e conduta.",
+    label: "Receita médica",
+    description: "Prescrição de medicamento, orientações e conduta.",
   },
   {
     value: "exam_request",
-    label: "SolicitaÃ§Ã£o de exame",
-    description: "Pedido de exame com indicaÃ§Ã£o clÃ­nica e observaÃ§Ãµes.",
+    label: "Solicitação de exame",
+    description: "Pedido de exame com indicação clínica e observações.",
   },
   {
     value: "medical_certificate",
-    label: "Atestado mÃ©dico",
+    label: "Atestado médico",
     description: "Afastamento com CID, dias e finalidade.",
   },
   {
     value: "attendance_declaration",
-    label: "DeclaraÃ§Ã£o de comparecimento",
-    description: "Comprova presenÃ§a do paciente no atendimento.",
+    label: "Declaração de comparecimento",
+    description: "Comprova presença do paciente no atendimento.",
   },
   {
     value: "clinical_summary",
-    label: "Resumo clÃ­nico",
+    label: "Resumo clínico",
     description: "Resumo objetivo da consulta e conduta.",
   },
 ];
@@ -138,7 +138,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -147,7 +147,7 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
@@ -155,16 +155,16 @@ function formatDate(value?: string | null) {
 function getDocumentLabel(type: DocumentType) {
   return (
     documentTypeOptions.find((item) => item.value === type)?.label ||
-    "Documento mÃ©dico"
+    "Documento médico"
   );
 }
 
 function getDefaultTitle(type: DocumentType) {
-  if (type === "prescription") return "Receita mÃ©dica";
-  if (type === "exam_request") return "SolicitaÃ§Ã£o de exame";
-  if (type === "medical_certificate") return "Atestado mÃ©dico";
-  if (type === "attendance_declaration") return "DeclaraÃ§Ã£o de comparecimento";
-  return "Resumo clÃ­nico";
+  if (type === "prescription") return "Receita médica";
+  if (type === "exam_request") return "Solicitação de exame";
+  if (type === "medical_certificate") return "Atestado médico";
+  if (type === "attendance_declaration") return "Declaração de comparecimento";
+  return "Resumo clínico";
 }
 
 function createPlainText(form: FormState, patientName: string) {
@@ -172,11 +172,11 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "Receita mÃ©dica",
+      "Receita médica",
       "",
       form.medicationName ? `Medicamento: ${form.medicationName}` : "",
       form.medicationUse ? `Modo de uso: ${form.medicationUse}` : "",
-      form.plainText ? `OrientaÃ§Ãµes: ${form.plainText}` : "",
+      form.plainText ? `Orientações: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -186,13 +186,13 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "SolicitaÃ§Ã£o de exame",
+      "Solicitação de exame",
       "",
       form.examName ? `Exame solicitado: ${form.examName}` : "",
       form.clinicalIndication
-        ? `IndicaÃ§Ã£o clÃ­nica: ${form.clinicalIndication}`
+        ? `Indicação clínica: ${form.clinicalIndication}`
         : "",
-      form.examObservation ? `ObservaÃ§Ã£o: ${form.examObservation}` : "",
+      form.examObservation ? `Observação: ${form.examObservation}` : "",
       form.cidCode ? `CID: ${form.cidCode}` : "",
     ]
       .filter(Boolean)
@@ -203,15 +203,15 @@ function createPlainText(form: FormState, patientName: string) {
     return [
       `Paciente: ${patientName}`,
       "",
-      "Atestado mÃ©dico",
+      "Atestado médico",
       "",
       `Atesto, para os devidos fins, que o(a) paciente acima identificado(a) necessita de afastamento por ${
         form.daysOff || "0"
       } dia(s).`,
       form.cidCode ? `CID: ${form.cidCode}` : "",
-      form.cidDescription ? `DescriÃ§Ã£o: ${form.cidDescription}` : "",
+      form.cidDescription ? `Descrição: ${form.cidDescription}` : "",
       form.purpose ? `Finalidade: ${form.purpose}` : "",
-      form.plainText ? `ObservaÃ§Ãµes: ${form.plainText}` : "",
+      form.plainText ? `Observações: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -219,9 +219,9 @@ function createPlainText(form: FormState, patientName: string) {
 
   if (form.documentType === "attendance_declaration") {
     return [
-      `Declaro, para os devidos fins, que ${patientName} compareceu ao atendimento mÃ©dico nesta unidade.`,
+      `Declaro, para os devidos fins, que ${patientName} compareceu ao atendimento médico nesta unidade.`,
       form.purpose ? `Finalidade: ${form.purpose}` : "",
-      form.plainText ? `ObservaÃ§Ãµes: ${form.plainText}` : "",
+      form.plainText ? `Observações: ${form.plainText}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -230,10 +230,10 @@ function createPlainText(form: FormState, patientName: string) {
   return [
     `Paciente: ${patientName}`,
     "",
-    "Resumo clÃ­nico",
+    "Resumo clínico",
     "",
     form.clinicalIndication ? `Resumo: ${form.clinicalIndication}` : "",
-    form.plainText ? `Conduta/observaÃ§Ãµes: ${form.plainText}` : "",
+    form.plainText ? `Conduta/observações: ${form.plainText}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -268,7 +268,7 @@ export default function ConsultaDocumentosPage() {
 
   const [form, setForm] = useState<FormState>({
     documentType: "prescription",
-    title: "Receita mÃ©dica",
+    title: "Receita médica",
     clinicalIndication: "",
     cidCode: "",
     cidDescription: "",
@@ -331,7 +331,7 @@ export default function ConsultaDocumentosPage() {
     if (appointmentError || !appointmentData) {
       setMessage(
         `Erro ao carregar consulta: ${
-          appointmentError?.message || "consulta nÃ£o encontrada"
+          appointmentError?.message || "consulta não encontrada"
         }`
       );
       setMessageType("error");
@@ -371,10 +371,10 @@ export default function ConsultaDocumentosPage() {
   const doctor = pickOne(appointment?.doctors);
   const clinic = pickOne(appointment?.clinics);
 
-  const patientName = patient?.full_name || "Paciente nÃ£o informado";
-  const doctorName = doctor?.name || "MÃ©dico nÃ£o informado";
+  const patientName = patient?.full_name || "Paciente não informado";
+  const doctorName = doctor?.name || "Médico não informado";
   const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
+    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
 
   const appointmentStart =
     appointment?.confirmed_start_at || appointment?.requested_start_at;
@@ -411,7 +411,7 @@ export default function ConsultaDocumentosPage() {
     const plainText = createPlainText(form, patientName);
 
     if (!plainText.trim()) {
-      setMessage("Preencha o conteÃºdo do documento antes de emitir.");
+      setMessage("Preencha o conteúdo do documento antes de emitir.");
       setMessageType("error");
       setSaving(false);
       return;
@@ -490,14 +490,14 @@ export default function ConsultaDocumentosPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
-                Documentos mÃ©dicos
+                Documentos médicos
               </p>
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
                 Emitir documentos da consulta
               </h1>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Gere receita, solicitaÃ§Ã£o de exame, atestado, declaraÃ§Ã£o e resumo
-                clÃ­nico vinculados ao atendimento.
+                Gere receita, solicitação de exame, atestado, declaração e resumo
+                clínico vinculados ao atendimento.
               </p>
             </div>
 
@@ -505,7 +505,7 @@ export default function ConsultaDocumentosPage() {
               href={`/medico/consultas/${appointmentId}`}
               className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
             >
-              Voltar ao prontuÃ¡rio
+              Voltar ao prontuário
             </Link>
           </div>
         </section>
@@ -525,24 +525,24 @@ export default function ConsultaDocumentosPage() {
             </p>
             <p className="mt-2 font-bold text-slate-950">{patientName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              CPF: {patient?.cpf || "NÃ£o informado"}
+              CPF: {patient?.cpf || "Não informado"}
             </p>
           </div>
 
           <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              MÃ©dico
+              Médico
             </p>
             <p className="mt-2 font-bold text-slate-950">{doctorName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              CRM {doctor?.crm || "nÃ£o informado"}
+              CRM {doctor?.crm || "não informado"}
               {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""}
             </p>
           </div>
 
           <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              ClÃ­nica
+              Clínica
             </p>
             <p className="mt-2 font-bold text-slate-950">{clinicName}</p>
             <p className="mt-1 text-sm text-slate-500">
@@ -558,7 +558,7 @@ export default function ConsultaDocumentosPage() {
               {formatDateTime(appointmentStart)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Status: {appointment?.status || "nÃ£o informado"}
+              Status: {appointment?.status || "não informado"}
             </p>
           </div>
         </div>
@@ -600,13 +600,13 @@ export default function ConsultaDocumentosPage() {
             </p>
 
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
-              ConteÃºdo do documento
+              Conteúdo do documento
             </h2>
 
             <div className="mt-6 grid gap-4">
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  TÃ­tulo
+                  Título
                 </label>
                 <input
                   value={form.title}
@@ -665,7 +665,7 @@ export default function ConsultaDocumentosPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      IndicaÃ§Ã£o clÃ­nica
+                      Indicação clínica
                     </label>
                     <textarea
                       value={form.clinicalIndication}
@@ -673,13 +673,13 @@ export default function ConsultaDocumentosPage() {
                         updateForm("clinicalIndication", event.target.value)
                       }
                       className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
-                      placeholder="Ex: InvestigaÃ§Ã£o de dor abdominal."
+                      placeholder="Ex: Investigação de dor abdominal."
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      ObservaÃ§Ã£o
+                      Observação
                     </label>
                     <textarea
                       value={form.examObservation}
@@ -687,7 +687,7 @@ export default function ConsultaDocumentosPage() {
                         updateForm("examObservation", event.target.value)
                       }
                       className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
-                      placeholder="Jejum, preparo ou observaÃ§Ãµes adicionais."
+                      placeholder="Jejum, preparo ou observações adicionais."
                     />
                   </div>
                 </>
@@ -738,7 +738,7 @@ export default function ConsultaDocumentosPage() {
                       >
                         <option value="">Selecione</option>
                         <option value="Trabalhista">Trabalhista</option>
-                        <option value="AcadÃªmica">AcadÃªmica</option>
+                        <option value="Acadêmica">Acadêmica</option>
                         <option value="Esportiva">Esportiva</option>
                         <option value="Outros fins">Outros fins</option>
                       </select>
@@ -747,7 +747,7 @@ export default function ConsultaDocumentosPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      DescriÃ§Ã£o do CID / observaÃ§Ã£o mÃ©dica
+                      Descrição do CID / observação médica
                     </label>
                     <textarea
                       value={form.cidDescription}
@@ -773,7 +773,7 @@ export default function ConsultaDocumentosPage() {
                         updateForm("clinicalIndication", event.target.value)
                       }
                       className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
-                      placeholder="Descreva a finalidade ou resumo clÃ­nico."
+                      placeholder="Descreva a finalidade ou resumo clínico."
                     />
                   </div>
                 </>
@@ -781,7 +781,7 @@ export default function ConsultaDocumentosPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  ObservaÃ§Ãµes adicionais
+                  Observações adicionais
                 </label>
                 <textarea
                   value={form.plainText}
@@ -789,7 +789,7 @@ export default function ConsultaDocumentosPage() {
                     updateForm("plainText", event.target.value)
                   }
                   className="min-h-[110px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
-                  placeholder="OrientaÃ§Ãµes adicionais, conduta ou observaÃ§Ãµes."
+                  placeholder="Orientações adicionais, conduta ou observações."
                 />
               </div>
 
@@ -823,7 +823,7 @@ export default function ConsultaDocumentosPage() {
                 Documentos emitidos
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                HistÃ³rico documental da consulta
+                Histórico documental da consulta
               </h2>
             </div>
           </div>
@@ -847,7 +847,7 @@ export default function ConsultaDocumentosPage() {
   href={`/documentos-medicos/${document.id}`}
   className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#5A4C86]"
 >
-  {document.title || "Documento mÃ©dico"}
+  {document.title || "Documento médico"}
 </Link>
                     <p className="mt-1 text-sm text-slate-500">
                       Emitido em:{" "}

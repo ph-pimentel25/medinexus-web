@@ -98,7 +98,7 @@ export default function HistoricoClinicoPage() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      setMessage("FaÃ§a login para visualizar seu histÃ³rico clÃ­nico.");
+      setMessage("Faça login para visualizar seu histórico clínico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -121,7 +121,7 @@ export default function HistoricoClinicoPage() {
       .order("confirmed_start_at", { ascending: false });
 
     if (appointmentsError) {
-      setMessage("Erro ao carregar o histÃ³rico clÃ­nico.");
+      setMessage("Erro ao carregar o histórico clínico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -168,11 +168,11 @@ export default function HistoricoClinicoPage() {
 
       return {
         id: appointment.id,
-        clinicName: clinic?.trade_name || "ClÃ­nica MediNexus",
+        clinicName: clinic?.trade_name || "Clínica MediNexus",
         clinicLocation: `${clinic?.city || "-"}${clinic?.state ? ` / ${clinic.state}` : ""}`,
-        doctorName: doctor?.full_name || "MÃ©dico nÃ£o identificado",
+        doctorName: doctor?.full_name || "Médico não identificado",
         doctorCrm: doctor?.crm || "-",
-        specialtyName: specialty?.name || "Especialidade nÃ£o informada",
+        specialtyName: specialty?.name || "Especialidade não informada",
         consultationDate: formatDateTime(appointment.confirmed_start_at),
         characterLabel: getCharacterLabel(
           appointment.created_at,
@@ -180,7 +180,7 @@ export default function HistoricoClinicoPage() {
         ),
         summary:
           note?.summary?.trim() ||
-          "Ainda nÃ£o hÃ¡ resumo clÃ­nico registrado para esta consulta.",
+          "Ainda não há resumo clínico registrado para esta consulta.",
         hasPrescription: Boolean(prescription),
         prescriptionTitle: prescription?.title || null,
       };
@@ -196,14 +196,14 @@ export default function HistoricoClinicoPage() {
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
       <div className="mb-8">
         <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand,#1B4B58)]">
-          HistÃ³rico clÃ­nico
+          Histórico clínico
         </span>
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-[var(--color-graphite,#303B41)]">
-          Sua jornada clÃ­nica em um sÃ³ lugar
+          Sua jornada clínica em um só lugar
         </h1>
         <p className="mt-3 max-w-3xl text-base text-slate-600">
-          Consulte atendimentos anteriores, resumos mÃ©dicos e acompanhe a evoluÃ§Ã£o
-          do seu histÃ³rico na MediNexus.
+          Consulte atendimentos anteriores, resumos médicos e acompanhe a evolução
+          do seu histórico na MediNexus.
         </p>
       </div>
 
@@ -215,21 +215,21 @@ export default function HistoricoClinicoPage() {
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Consultas no histÃ³rico</p>
+          <p className="text-sm text-slate-500">Consultas no histórico</p>
           <p className="mt-2 text-4xl font-bold text-[var(--color-graphite,#303B41)]">
             {totalConsultations}
           </p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Ãrea do paciente</p>
+          <p className="text-sm text-slate-500">Área do paciente</p>
           <p className="mt-2 text-lg font-semibold text-[var(--color-brand,#1B4B58)]">
-            HistÃ³rico consolidado
+            Histórico consolidado
           </p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Acesso rÃ¡pido</p>
+          <p className="text-sm text-slate-500">Acesso rápido</p>
           <Link
             href="/busca"
             className="mt-3 inline-flex rounded-xl bg-[var(--color-brand,#1B4B58)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
@@ -241,12 +241,12 @@ export default function HistoricoClinicoPage() {
 
       {loading ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-slate-600">Carregando histÃ³rico...</p>
+          <p className="text-slate-600">Carregando histórico...</p>
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-slate-600">
-            VocÃª ainda nÃ£o possui consultas concluÃ­das/confirmadas no histÃ³rico.
+            Você ainda não possui consultas concluídas/confirmadas no histórico.
           </p>
         </div>
       ) : (
@@ -263,11 +263,11 @@ export default function HistoricoClinicoPage() {
                       {item.specialtyName}
                     </span>
                     <span className="inline-flex rounded-full bg-[var(--color-plum-soft,#efe8ff)] px-3 py-1 text-xs font-semibold text-[var(--color-plum,#594E86)]">
-                      CarÃ¡ter da solicitaÃ§Ã£o: {item.characterLabel}
+                      Caráter da solicitação: {item.characterLabel}
                     </span>
                     {item.hasPrescription && (
                       <span className="inline-flex rounded-full bg-[var(--color-sage-soft,#edf5f1)] px-3 py-1 text-xs font-semibold text-[var(--color-sage,#7A9D8D)]">
-                        ReceituÃ¡rio disponÃ­vel
+                        Receituário disponível
                       </span>
                     )}
                   </div>
@@ -278,7 +278,7 @@ export default function HistoricoClinicoPage() {
 
                   <div className="mt-3 space-y-1 text-sm text-slate-600">
                     <p>
-                      <strong>MÃ©dico:</strong> {item.doctorName} â€¢ CRM {item.doctorCrm}
+                      <strong>Médico:</strong> {item.doctorName} â€¢ CRM {item.doctorCrm}
                     </p>
                     <p>
                       <strong>Local:</strong> {item.clinicLocation}
@@ -288,7 +288,7 @@ export default function HistoricoClinicoPage() {
                     </p>
                     {item.prescriptionTitle && (
                       <p>
-                        <strong>ReceituÃ¡rio:</strong> {item.prescriptionTitle}
+                        <strong>Receituário:</strong> {item.prescriptionTitle}
                       </p>
                     )}
                   </div>

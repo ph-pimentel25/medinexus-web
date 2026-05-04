@@ -25,7 +25,7 @@ type NotificationRow = {
 type FilterType = "all" | "unread" | "read" | "consultas" | "documentos";
 
 function formatDate(dateString?: string | null) {
-  if (!dateString) return "Agora hÃ¡ pouco";
+  if (!dateString) return "Agora há pouco";
 
   return new Date(dateString).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -34,7 +34,7 @@ function formatDate(dateString?: string | null) {
 }
 
 function formatRelativeDate(dateString?: string | null) {
-  if (!dateString) return "Agora hÃ¡ pouco";
+  if (!dateString) return "Agora há pouco";
 
   const date = new Date(dateString);
   const diffMs = Date.now() - date.getTime();
@@ -43,20 +43,20 @@ function formatRelativeDate(dateString?: string | null) {
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
 
-  if (minutes < 1) return "Agora hÃ¡ pouco";
-  if (minutes < 60) return `${minutes} min atrÃ¡s`;
-  if (hours < 24) return `${hours} h atrÃ¡s`;
-  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrÃ¡s`;
+  if (minutes < 1) return "Agora há pouco";
+  if (minutes < 60) return `${minutes} min atrás`;
+  if (hours < 24) return `${hours} h atrás`;
+  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrás`;
 
   return date.toLocaleDateString("pt-BR");
 }
 
 function getNotificationTitle(item: NotificationRow) {
-  return item.title || "Nova notificaÃ§Ã£o";
+  return item.title || "Nova notificação";
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.body || item.message || "VocÃª recebeu uma nova atualizaÃ§Ã£o.";
+  return item.body || item.message || "Você recebeu uma nova atualização.";
 }
 
 function getRawType(item: NotificationRow) {
@@ -69,7 +69,7 @@ function getTypeLabel(item: NotificationRow) {
   if (raw.includes("document")) return "Documento";
   if (raw.includes("consulta")) return "Consulta";
   if (raw.includes("appointment")) return "Consulta";
-  if (raw.includes("confirm")) return "ConfirmaÃ§Ã£o";
+  if (raw.includes("confirm")) return "Confirmação";
   if (raw.includes("cancel")) return "Cancelamento";
   return "Aviso";
 }
@@ -136,7 +136,7 @@ export default function NotificacoesPage() {
 
     if (!user) {
       setNotifications([]);
-      setMessage("VocÃª precisa estar logado para visualizar suas notificaÃ§Ãµes.");
+      setMessage("Você precisa estar logado para visualizar suas notificações.");
       setLoading(false);
       return;
     }
@@ -149,7 +149,7 @@ export default function NotificacoesPage() {
 
     if (error) {
       setNotifications([]);
-      setMessage(`Erro ao carregar notificaÃ§Ãµes: ${error.message}`);
+      setMessage(`Erro ao carregar notificações: ${error.message}`);
       setLoading(false);
       return;
     }
@@ -241,12 +241,12 @@ export default function NotificacoesPage() {
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              NotificaÃ§Ãµes
+              Notificações
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Consulte avisos de consultas, confirmaÃ§Ãµes, documentos liberados e
-              atualizaÃ§Ãµes importantes da sua conta.
+              Consulte avisos de consultas, confirmações, documentos liberados e
+              atualizações importantes da sua conta.
             </p>
           </div>
 
@@ -279,7 +279,7 @@ export default function NotificacoesPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "Total", value: summary.total, tone: "text-slate-950" },
-            { label: "NÃ£o lidas", value: summary.unread, tone: "text-[#164957]" },
+            { label: "Não lidas", value: summary.unread, tone: "text-[#164957]" },
             { label: "Lidas", value: summary.read, tone: "text-[#5A4C86]" },
             { label: "Consultas", value: summary.consultas, tone: "text-[#7A9D8C]" },
             { label: "Documentos", value: summary.documentos, tone: "text-[#B26B00]" },
@@ -302,12 +302,12 @@ export default function NotificacoesPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="w-full xl:max-w-xl">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar notificaÃ§Ã£o
+                Buscar notificação
               </label>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Busque por consulta, documento, confirmaÃ§Ã£o ou aviso"
+                placeholder="Busque por consulta, documento, confirmação ou aviso"
                 className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
@@ -315,7 +315,7 @@ export default function NotificacoesPage() {
             <div className="flex flex-wrap gap-2">
               {[
                 { key: "all", label: "Todas" },
-                { key: "unread", label: "NÃ£o lidas" },
+                { key: "unread", label: "Não lidas" },
                 { key: "read", label: "Lidas" },
                 { key: "consultas", label: "Consultas" },
                 { key: "documentos", label: "Documentos" },
@@ -340,15 +340,15 @@ export default function NotificacoesPage() {
         <div className="mt-6 space-y-4">
           {loading ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando notificaÃ§Ãµes...
+              Carregando notificações...
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhuma notificaÃ§Ã£o encontrada
+                Nenhuma notificação encontrada
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                NÃ£o hÃ¡ itens com os filtros aplicados no momento.
+                Não há itens com os filtros aplicados no momento.
               </p>
             </div>
           ) : (
@@ -376,7 +376,7 @@ export default function NotificacoesPage() {
                               : "bg-[#F3F5FA] text-slate-500"
                           }`}
                         >
-                          {unread ? "NÃ£o lida" : "Lida"}
+                          {unread ? "Não lida" : "Lida"}
                         </span>
 
                         <span className="text-xs text-slate-400">

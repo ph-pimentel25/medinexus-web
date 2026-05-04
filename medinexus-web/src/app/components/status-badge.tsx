@@ -27,7 +27,7 @@ const config = {
     className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
   },
   completed: {
-    label: "ConcluÃ­da",
+    label: "Concluída",
     className: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
   },
 };

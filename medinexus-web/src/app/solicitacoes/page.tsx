@@ -97,7 +97,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -117,13 +117,13 @@ function getStatusLabel(status?: string | null) {
   const labels: Record<string, string> = {
     pending: "Pendente",
     confirmed: "Confirmada",
-    cancelled_by_patient: "Cancelada por vocÃª",
-    cancelled_by_clinic: "Cancelada pela clÃ­nica",
-    completed: "ConcluÃ­da",
-    no_show: "NÃ£o compareceu",
+    cancelled_by_patient: "Cancelada por você",
+    cancelled_by_clinic: "Cancelada pela clínica",
+    completed: "Concluída",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || status || "Status nÃ£o informado";
+  return labels[status || ""] || status || "Status não informado";
 }
 
 function getStatusTone(status?: string | null) {
@@ -145,36 +145,36 @@ function getStatusTone(status?: string | null) {
 
 function getConfirmationLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    not_requested: "Sem confirmaÃ§Ã£o necessÃ¡ria",
-    awaiting_confirmation: "Confirme sua presenÃ§a",
-    confirmed: "PresenÃ§a confirmada",
-    cancelled_by_patient: "VocÃª cancelou",
-    reschedule_requested: "VocÃª pediu remarcaÃ§Ã£o",
+    not_requested: "Sem confirmação necessária",
+    awaiting_confirmation: "Confirme sua presença",
+    confirmed: "Presença confirmada",
+    cancelled_by_patient: "Você cancelou",
+    reschedule_requested: "Você pediu remarcação",
     no_response: "Sem resposta",
-    no_show: "NÃ£o compareceu",
+    no_show: "Não compareceu",
   };
 
-  return labels[status || ""] || "Sem confirmaÃ§Ã£o necessÃ¡ria";
+  return labels[status || ""] || "Sem confirmação necessária";
 }
 
 function getClinicName(item: AppointmentRow) {
   const clinic = pickOne(item.clinics);
-  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
+  return clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
 }
 
 function getPatientName(item: AppointmentRow) {
   const patient = pickOne(item.patients);
-  return patient?.full_name || "Paciente nÃ£o informado";
+  return patient?.full_name || "Paciente não informado";
 }
 
 function getDoctorName(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  return doctor?.name || "MÃ©dico nÃ£o informado";
+  return doctor?.name || "Médico não informado";
 }
 
 function getDoctorCrm(item: AppointmentRow) {
   const doctor = pickOne(item.doctors);
-  if (!doctor?.crm) return "CRM nÃ£o informado";
+  if (!doctor?.crm) return "CRM não informado";
   return `CRM ${doctor.crm}${doctor.crm_state ? ` / ${doctor.crm_state}` : ""}`;
 }
 
@@ -192,7 +192,7 @@ function getClinicLocation(item: AppointmentRow) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
 }
 
 export default function SolicitacoesPage() {
@@ -221,7 +221,7 @@ export default function SolicitacoesPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("VocÃª precisa estar logado para ver suas solicitaÃ§Ãµes.");
+      setMessage("Você precisa estar logado para ver suas solicitações.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -275,7 +275,7 @@ export default function SolicitacoesPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage(`Erro ao carregar solicitaÃ§Ãµes: ${error.message}`);
+      setMessage(`Erro ao carregar solicitações: ${error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -372,7 +372,7 @@ export default function SolicitacoesPage() {
         patient_confirmation_status: "cancelled_by_patient",
         patient_cancelled_at: now,
         patient_cancellation_reason:
-          "Cancelada pelo paciente antes da confirmaÃ§Ã£o.",
+          "Cancelada pelo paciente antes da confirmação.",
       })
       .eq("id", appointment.id)
       .eq("patient_id", appointment.patient_id);
@@ -388,7 +388,7 @@ export default function SolicitacoesPage() {
       appointment,
       "cancelled_by_patient",
       "Paciente cancelou a consulta",
-      "Consulta cancelada pelo paciente na Ã¡rea de solicitaÃ§Ãµes."
+      "Consulta cancelada pelo paciente na área de solicitações."
     );
 
     setMessage("Consulta cancelada com sucesso.");
@@ -407,12 +407,12 @@ export default function SolicitacoesPage() {
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              SolicitaÃ§Ãµes e confirmaÃ§Ãµes
+              Solicitações e confirmações
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Acompanhe consultas solicitadas, horÃ¡rios confirmados e pendÃªncias
-              de confirmaÃ§Ã£o de presenÃ§a.
+              Acompanhe consultas solicitadas, horários confirmados e pendências
+              de confirmação de presença.
             </p>
           </div>
 
@@ -447,7 +447,7 @@ export default function SolicitacoesPage() {
             { label: "Pendentes", value: stats.pending, tone: "text-[#B26B00]" },
             { label: "Confirmadas", value: stats.confirmed, tone: "text-[#7A9D8C]" },
             { label: "A confirmar", value: stats.toConfirm, tone: "text-[#164957]" },
-            { label: "ConcluÃ­das", value: stats.completed, tone: "text-[#5A4C86]" },
+            { label: "Concluídas", value: stats.completed, tone: "text-[#5A4C86]" },
           ].map((item) => (
             <div
               key={item.label}
@@ -472,7 +472,7 @@ export default function SolicitacoesPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Busque por clÃ­nica, mÃ©dico, especialidade ou status"
+                placeholder="Busque por clínica, médico, especialidade ou status"
                 className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
@@ -482,10 +482,10 @@ export default function SolicitacoesPage() {
                 { value: "all", label: "Todas" },
                 { value: "pending", label: "Pendentes" },
                 { value: "confirmed", label: "Confirmadas" },
-                { value: "awaiting_confirmation", label: "Confirmar presenÃ§a" },
+                { value: "awaiting_confirmation", label: "Confirmar presença" },
                 { value: "patient_confirmed", label: "Confirmadas por mim" },
                 { value: "cancelled", label: "Canceladas" },
-                { value: "completed", label: "ConcluÃ­das" },
+                { value: "completed", label: "Concluídas" },
               ].map((item) => (
                 <button
                   key={item.value}
@@ -507,15 +507,15 @@ export default function SolicitacoesPage() {
         <div className="mt-6 grid gap-4">
           {loading ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando solicitaÃ§Ãµes...
+              Carregando solicitações...
             </div>
           ) : filteredAppointments.length === 0 ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhuma solicitaÃ§Ã£o encontrada
+                Nenhuma solicitação encontrada
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Quando vocÃª solicitar consultas, elas aparecerÃ£o aqui.
+                Quando você solicitar consultas, elas aparecerão aqui.
               </p>
             </div>
           ) : (
@@ -559,7 +559,7 @@ export default function SolicitacoesPage() {
 
                       <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                         <p>
-                          <strong className="text-slate-800">MÃ©dico:</strong>{" "}
+                          <strong className="text-slate-800">Médico:</strong>{" "}
                           {getDoctorName(item)}
                         </p>
 
@@ -575,22 +575,22 @@ export default function SolicitacoesPage() {
 
                         <p>
                           <strong className="text-slate-800">
-                            HorÃ¡rio sugerido:
+                            Horário sugerido:
                           </strong>{" "}
                           {formatDateTime(item.requested_start_at)}
                         </p>
 
                         <p>
                           <strong className="text-slate-800">
-                            HorÃ¡rio confirmado:
+                            Horário confirmado:
                           </strong>{" "}
                           {item.confirmed_start_at
                             ? formatDateTime(item.confirmed_start_at)
-                            : "Ainda nÃ£o confirmado"}
+                            : "Ainda não confirmado"}
                         </p>
 
                         <p>
-                          <strong className="text-slate-800">ConfirmaÃ§Ã£o:</strong>{" "}
+                          <strong className="text-slate-800">Confirmação:</strong>{" "}
                           {getConfirmationLabel(item.patient_confirmation_status)}
                         </p>
                       </div>
@@ -602,7 +602,7 @@ export default function SolicitacoesPage() {
                           href={`/consultas/${item.id}/confirmar`}
                           className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                         >
-                          Confirmar presenÃ§a
+                          Confirmar presença
                         </Link>
                       )}
 
@@ -625,7 +625,7 @@ export default function SolicitacoesPage() {
                             href={`/consultas/${item.id}/confirmar`}
                             className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                           >
-                            Ver confirmaÃ§Ã£o
+                            Ver confirmação
                           </Link>
                         )}
                     </div>

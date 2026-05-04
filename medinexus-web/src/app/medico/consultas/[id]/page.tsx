@@ -138,7 +138,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -147,13 +147,13 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
 function getAge(birthDate?: string | null) {
-  if (!birthDate) return "NÃ£o informado";
+  if (!birthDate) return "Não informado";
 
   const birth = new Date(`${birthDate}T00:00:00`);
   const today = new Date();
@@ -183,21 +183,21 @@ function secondsToClock(totalSeconds: number) {
 
 function getDocumentLabel(type: MedicalDocumentRow["document_type"]) {
   const labels = {
-    prescription: "Receita mÃ©dica",
-    exam_request: "SolicitaÃ§Ã£o de exame",
-    medical_certificate: "Atestado mÃ©dico",
-    attendance_declaration: "DeclaraÃ§Ã£o de comparecimento",
-    clinical_summary: "Resumo clÃ­nico",
+    prescription: "Receita médica",
+    exam_request: "Solicitação de exame",
+    medical_certificate: "Atestado médico",
+    attendance_declaration: "Declaração de comparecimento",
+    clinical_summary: "Resumo clínico",
   };
 
-  return labels[type] || "Documento mÃ©dico";
+  return labels[type] || "Documento médico";
 }
 
 function buildSummary(notes: NotesForm) {
   const parts = [
-    notes.subjective ? `Queixa/evoluÃ§Ã£o: ${notes.subjective}` : "",
+    notes.subjective ? `Queixa/evolução: ${notes.subjective}` : "",
     notes.objective ? `Exame/achados: ${notes.objective}` : "",
-    notes.assessment ? `AvaliaÃ§Ã£o: ${notes.assessment}` : "",
+    notes.assessment ? `Avaliação: ${notes.assessment}` : "",
     notes.plan ? `Conduta: ${notes.plan}` : "",
   ].filter(Boolean);
 
@@ -322,7 +322,7 @@ export default function MedicoConsultaPage() {
     if (appointmentError || !appointmentData) {
       setMessage(
         `Erro ao carregar consulta: ${
-          appointmentError?.message || "consulta nÃ£o encontrada"
+          appointmentError?.message || "consulta não encontrada"
         }`
       );
       setMessageType("error");
@@ -493,7 +493,7 @@ export default function MedicoConsultaPage() {
 
     if (previousResponse.error) {
       setMessage(
-        `Erro ao carregar histÃ³rico anterior: ${previousResponse.error.message}`
+        `Erro ao carregar histórico anterior: ${previousResponse.error.message}`
       );
       setMessageType("error");
       setLoading(false);
@@ -535,10 +535,10 @@ export default function MedicoConsultaPage() {
   const doctor = pickOne(appointment?.doctors);
   const clinic = pickOne(appointment?.clinics);
 
-  const patientName = patient?.full_name || "Paciente nÃ£o informado";
-  const doctorName = doctor?.name || "MÃ©dico nÃ£o informado";
+  const patientName = patient?.full_name || "Paciente não informado";
+  const doctorName = doctor?.name || "Médico não informado";
   const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "ClÃ­nica nÃ£o informada";
+    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
 
   const appointmentStart =
     appointment?.confirmed_start_at || appointment?.requested_start_at;
@@ -676,7 +676,7 @@ export default function MedicoConsultaPage() {
     if (!appointment) return;
 
     const confirmClose = window.confirm(
-      "Deseja encerrar este atendimento? Depois disso, o prontuÃ¡rio ficarÃ¡ fechado para ediÃ§Ã£o."
+      "Deseja encerrar este atendimento? Depois disso, o prontuário ficará fechado para edição."
     );
 
     if (!confirmClose) return;
@@ -783,12 +783,12 @@ export default function MedicoConsultaPage() {
 
     const patientLines = [
       `Nome: ${patientName}`,
-      `CPF: ${patient?.cpf || "NÃ£o informado"}`,
+      `CPF: ${patient?.cpf || "Não informado"}`,
       `Nascimento: ${formatDate(patient?.birth_date)} (${getAge(
         patient?.birth_date
       )})`,
-      `Telefone: ${patient?.phone || "NÃ£o informado"}`,
-      `Plano: ${patient?.health_plan_operator || "Particular/NÃ£o informado"} ${
+      `Telefone: ${patient?.phone || "Não informado"}`,
+      `Plano: ${patient?.health_plan_operator || "Particular/Não informado"} ${
         patient?.health_plan_product_name || ""
       }`,
     ];
@@ -803,11 +803,11 @@ export default function MedicoConsultaPage() {
     const sections = [
       ["Anamnese base", recordForm.base_anamnesis],
       ["Alergias", recordForm.allergies],
-      ["CondiÃ§Ãµes crÃ´nicas", recordForm.chronic_conditions],
-      ["MedicaÃ§Ãµes contÃ­nuas", recordForm.continuous_medications],
-      ["HistÃ³rico familiar", recordForm.family_history],
-      ["HistÃ³rico cirÃºrgico", recordForm.surgical_history],
-      ["HÃ¡bitos e estilo de vida", recordForm.lifestyle_notes],
+      ["Condições crônicas", recordForm.chronic_conditions],
+      ["Medicações contínuas", recordForm.continuous_medications],
+      ["Histórico familiar", recordForm.family_history],
+      ["Histórico cirúrgico", recordForm.surgical_history],
+      ["Hábitos e estilo de vida", recordForm.lifestyle_notes],
     ];
 
     sections.forEach(([title, content]) => {
@@ -825,7 +825,7 @@ export default function MedicoConsultaPage() {
       doc.setFontSize(10);
 
       const lines = doc.splitTextToSize(
-        content || "NÃ£o informado.",
+        content || "Não informado.",
         pageWidth - margin * 2
       );
 
@@ -849,7 +849,7 @@ export default function MedicoConsultaPage() {
     return (
       <main className="min-h-screen bg-[#F8FAFC]">
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-slate-600">Carregando prontuÃ¡rio...</p>
+          <p className="text-slate-600">Carregando prontuário...</p>
         </section>
       </main>
     );
@@ -860,7 +860,7 @@ export default function MedicoConsultaPage() {
       <main className="min-h-screen bg-[#F8FAFC]">
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="rounded-[28px] border border-red-200 bg-red-50 p-6 text-red-700">
-            {message || "Consulta nÃ£o encontrada."}
+            {message || "Consulta não encontrada."}
           </div>
         </section>
       </main>
@@ -876,14 +876,14 @@ export default function MedicoConsultaPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
-                ProntuÃ¡rio mÃ©dico
+                Prontuário médico
               </p>
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
                 Atendimento de {patientName}
               </h1>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Registre anamnese, notas da consulta, documentos mÃ©dicos e
-                histÃ³rico clÃ­nico do paciente.
+                Registre anamnese, notas da consulta, documentos médicos e
+                histórico clínico do paciente.
               </p>
             </div>
 
@@ -926,8 +926,8 @@ export default function MedicoConsultaPage() {
 
         {isClosed && (
           <div className="mb-6 rounded-[28px] border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
-            Este atendimento foi encerrado. Por polÃ­tica interna, os registros
-            ficam preservados para histÃ³rico e nÃ£o devem ser alterados.
+            Este atendimento foi encerrado. Por política interna, os registros
+            ficam preservados para histórico e não devem ser alterados.
           </div>
         )}
 
@@ -950,7 +950,7 @@ export default function MedicoConsultaPage() {
               {formatDateTime(appointmentStart)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Status: {appointment.status || "nÃ£o informado"}
+              Status: {appointment.status || "não informado"}
             </p>
           </div>
 
@@ -964,7 +964,7 @@ export default function MedicoConsultaPage() {
                 : secondsToClock(elapsedSeconds)}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              InÃ­cio: {formatDateTime(appointment.started_at)}
+              Início: {formatDateTime(appointment.started_at)}
             </p>
           </div>
 
@@ -993,10 +993,10 @@ export default function MedicoConsultaPage() {
                   Contato
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.phone || "Telefone nÃ£o informado"}
+                  {patient?.phone || "Telefone não informado"}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {patient?.email || "E-mail nÃ£o informado"}
+                  {patient?.email || "E-mail não informado"}
                 </p>
               </div>
 
@@ -1005,16 +1005,16 @@ export default function MedicoConsultaPage() {
                   Plano
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.health_plan_operator || "Particular/NÃ£o informado"}
+                  {patient?.health_plan_operator || "Particular/Não informado"}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {patient?.health_plan_product_name || "Modelo nÃ£o informado"}
+                  {patient?.health_plan_product_name || "Modelo não informado"}
                 </p>
               </div>
 
               <div className="rounded-3xl bg-[#F8FAFC] p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  MÃ©dico e clÃ­nica
+                  Médico e clínica
                 </p>
                 <p className="mt-2 font-semibold text-slate-800">
                   {doctorName}
@@ -1030,7 +1030,7 @@ export default function MedicoConsultaPage() {
 
           <section className="rounded-[38px] border border-[#D9D6F4] bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF] p-7 shadow-[0_24px_80px_-70px_rgba(94,75,154,0.45)]">
             <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
-              HistÃ³rico recente
+              Histórico recente
             </p>
 
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
@@ -1075,7 +1075,7 @@ export default function MedicoConsultaPage() {
                   Anamnese base
                 </p>
                 <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                  Ficha mÃ©dica do paciente
+                  Ficha médica do paciente
                 </h2>
               </div>
 
@@ -1096,7 +1096,7 @@ export default function MedicoConsultaPage() {
                 }
                 disabled={isClosed}
                 className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="HistÃ³ria clÃ­nica geral, queixas recorrentes, informaÃ§Ãµes importantes..."
+                placeholder="História clínica geral, queixas recorrentes, informações importantes..."
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1117,7 +1117,7 @@ export default function MedicoConsultaPage() {
                   }
                   disabled={isClosed}
                   className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                  placeholder="CondiÃ§Ãµes crÃ´nicas"
+                  placeholder="Condições crônicas"
                 />
 
                 <textarea
@@ -1127,7 +1127,7 @@ export default function MedicoConsultaPage() {
                   }
                   disabled={isClosed}
                   className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                  placeholder="MedicaÃ§Ãµes contÃ­nuas"
+                  placeholder="Medicações contínuas"
                 />
 
                 <textarea
@@ -1137,7 +1137,7 @@ export default function MedicoConsultaPage() {
                   }
                   disabled={isClosed}
                   className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                  placeholder="HistÃ³rico familiar"
+                  placeholder="Histórico familiar"
                 />
 
                 <textarea
@@ -1147,7 +1147,7 @@ export default function MedicoConsultaPage() {
                   }
                   disabled={isClosed}
                   className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                  placeholder="HistÃ³rico cirÃºrgico"
+                  placeholder="Histórico cirúrgico"
                 />
 
                 <textarea
@@ -1157,7 +1157,7 @@ export default function MedicoConsultaPage() {
                   }
                   disabled={isClosed}
                   className="min-h-[100px] rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                  placeholder="HÃ¡bitos e estilo de vida"
+                  placeholder="Hábitos e estilo de vida"
                 />
               </div>
 
@@ -1200,7 +1200,7 @@ export default function MedicoConsultaPage() {
                 }
                 disabled={isClosed}
                 className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="Exame fÃ­sico / achados objetivos"
+                placeholder="Exame físico / achados objetivos"
               />
 
               <textarea
@@ -1210,7 +1210,7 @@ export default function MedicoConsultaPage() {
                 }
                 disabled={isClosed}
                 className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="AvaliaÃ§Ã£o / hipÃ³tese diagnÃ³stica"
+                placeholder="Avaliação / hipótese diagnóstica"
               />
 
               <textarea
@@ -1218,7 +1218,7 @@ export default function MedicoConsultaPage() {
                 onChange={(event) => updateNotes("plan", event.target.value)}
                 disabled={isClosed}
                 className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="Conduta / plano terapÃªutico"
+                placeholder="Conduta / plano terapêutico"
               />
 
               <textarea
@@ -1228,7 +1228,7 @@ export default function MedicoConsultaPage() {
                 }
                 disabled={isClosed}
                 className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="Resumo da consulta para histÃ³rico"
+                placeholder="Resumo da consulta para histórico"
               />
 
               <textarea
@@ -1238,7 +1238,7 @@ export default function MedicoConsultaPage() {
                 }
                 disabled={isClosed}
                 className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white disabled:opacity-70"
-                placeholder="Notas privadas do mÃ©dico"
+                placeholder="Notas privadas do médico"
               />
 
               {!isClosed && (
@@ -1262,7 +1262,7 @@ export default function MedicoConsultaPage() {
                 Documentos emitidos
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                Receita, exames, atestados e declaraÃ§Ãµes
+                Receita, exames, atestados e declarações
               </h2>
             </div>
 
@@ -1293,7 +1293,7 @@ export default function MedicoConsultaPage() {
   href={`/documentos-medicos/${document.id}`}
   className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#5A4C86]"
 >
-  {document.title || "Documento mÃ©dico"}
+  {document.title || "Documento médico"}
 </Link>
                     <p className="mt-1 text-sm text-slate-500">
                       Emitido em:{" "}

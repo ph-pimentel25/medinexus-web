@@ -42,13 +42,13 @@ export default function PrescriptionEditor({
   initialNotes,
   onSave,
 }: PrescriptionEditorProps) {
-  const [title, setTitle] = useState(initialTitle || "ReceituÃ¡rio mÃ©dico");
+  const [title, setTitle] = useState(initialTitle || "Receituário médico");
   const [content, setContent] = useState(initialContent || "");
   const [notes, setNotes] = useState(initialNotes || "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setTitle(initialTitle || "ReceituÃ¡rio mÃ©dico");
+    setTitle(initialTitle || "Receituário médico");
     setContent(initialContent || "");
     setNotes(initialNotes || "");
   }, [initialTitle, initialContent, initialNotes]);
@@ -88,13 +88,13 @@ export default function PrescriptionEditor({
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <span className="inline-flex rounded-full bg-[var(--color-plum-soft,#efe8ff)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-plum,#594E86)]">
-              CarÃ¡ter da solicitaÃ§Ã£o: {characterLabel}
+              Caráter da solicitação: {characterLabel}
             </span>
             <h2 className="mt-3 text-2xl font-bold text-[var(--color-graphite,#303B41)]">
-              ReceituÃ¡rio premium
+              Receituário premium
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Escreva o receituÃ¡rio, salve no histÃ³rico e gere PDF/ impressÃ£o.
+              Escreva o receituário, salve no histórico e gere PDF/ impressão.
             </p>
           </div>
 
@@ -121,7 +121,7 @@ export default function PrescriptionEditor({
               disabled={saving}
               className="rounded-xl bg-[var(--color-brand,#1B4B58)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
             >
-              {saving ? "Salvando..." : "Salvar receituÃ¡rio"}
+              {saving ? "Salvando..." : "Salvar receituário"}
             </button>
           </div>
         </div>
@@ -130,19 +130,19 @@ export default function PrescriptionEditor({
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                TÃ­tulo
+                Título
               </label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-brand,#1B4B58)] focus:ring-2 focus:ring-[var(--color-brand,#1B4B58)]/15"
-                placeholder="Ex.: ReceituÃ¡rio mÃ©dico"
+                placeholder="Ex.: Receituário médico"
               />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                PrescriÃ§Ã£o / orientaÃ§Ãµes
+                Prescrição / orientações
               </label>
               <textarea
                 value={content}
@@ -155,14 +155,14 @@ export default function PrescriptionEditor({
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                ObservaÃ§Ãµes complementares
+                Observações complementares
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={5}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-brand,#1B4B58)] focus:ring-2 focus:ring-[var(--color-brand,#1B4B58)]/15"
-                placeholder="ObservaÃ§Ãµes adicionais, retorno, recomendaÃ§Ãµes..."
+                placeholder="Observações adicionais, retorno, recomendações..."
               />
             </div>
           </div>
@@ -170,21 +170,21 @@ export default function PrescriptionEditor({
           <div className="rounded-[28px] border border-slate-200 bg-[var(--color-offwhite,#F8F4F2)] p-5 shadow-sm">
             <div className="rounded-[24px] bg-[var(--color-brand,#1B4B58)] p-5 text-white">
               <h3 className="text-2xl font-bold">MediNexus</h3>
-              <p className="mt-1 text-sm text-white/80">ReceituÃ¡rio mÃ©dico digital</p>
+              <p className="mt-1 text-sm text-white/80">Receituário médico digital</p>
             </div>
 
             <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <span className="inline-flex rounded-full bg-[var(--color-plum-soft,#efe8ff)] px-3 py-1 text-xs font-semibold text-[var(--color-plum,#594E86)]">
-                CarÃ¡ter da solicitaÃ§Ã£o: {characterLabel}
+                Caráter da solicitação: {characterLabel}
               </span>
 
               <h4 className="mt-4 text-2xl font-bold text-[var(--color-graphite,#303B41)]">
-                {title || "ReceituÃ¡rio mÃ©dico"}
+                {title || "Receituário médico"}
               </h4>
 
               <div className="mt-2 space-y-1 text-sm text-slate-600">
                 <p>
-                  <strong>ClÃ­nica:</strong> {clinicName}
+                  <strong>Clínica:</strong> {clinicName}
                   {clinicCity ? ` â€¢ ${clinicCity}` : ""}
                   {clinicState ? `/${clinicState}` : ""}
                 </p>
@@ -205,17 +205,17 @@ export default function PrescriptionEditor({
 
             <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <h5 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                PrescriÃ§Ã£o / orientaÃ§Ãµes
+                Prescrição / orientações
               </h5>
               <div className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                {content || "O conteÃºdo do receituÃ¡rio aparecerÃ¡ aqui."}
+                {content || "O conteúdo do receituário aparecerá aqui."}
               </div>
             </div>
 
             {notes.trim() && (
               <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
                 <h5 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  ObservaÃ§Ãµes
+                  Observações
                 </h5>
                 <div className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
                   {notes}

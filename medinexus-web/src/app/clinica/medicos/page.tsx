@@ -34,7 +34,7 @@ function normalize(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -43,7 +43,7 @@ function formatDate(value?: string | null) {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica";
+  return clinic?.trade_name || clinic?.legal_name || "Clínica";
 }
 
 function getDoctorStatusLabel(item: DoctorRow) {
@@ -83,7 +83,7 @@ export default function ClinicaMedicosPage() {
     if (!user) {
       return {
         clinicId: null,
-        errorMessage: "VocÃª precisa estar logado como clÃ­nica.",
+        errorMessage: "Você precisa estar logado como clínica.",
       };
     }
 
@@ -97,14 +97,14 @@ export default function ClinicaMedicosPage() {
     if (memberError) {
       return {
         clinicId: null,
-        errorMessage: `Erro ao carregar vÃ­nculo da clÃ­nica: ${memberError.message}`,
+        errorMessage: `Erro ao carregar vínculo da clínica: ${memberError.message}`,
       };
     }
 
     if (!memberData?.clinic_id) {
       return {
         clinicId: null,
-        errorMessage: "Nenhuma clÃ­nica vinculada a este usuÃ¡rio.",
+        errorMessage: "Nenhuma clínica vinculada a este usuário.",
       };
     }
 
@@ -141,7 +141,7 @@ export default function ClinicaMedicosPage() {
       .order("created_at", { ascending: false });
 
     if (doctorsError) {
-      setMessage(`Erro ao carregar mÃ©dicos: ${doctorsError.message}`);
+      setMessage(`Erro ao carregar médicos: ${doctorsError.message}`);
       setMessageType("error");
       setDoctors([]);
       setLoading(false);
@@ -165,7 +165,7 @@ export default function ClinicaMedicosPage() {
       .eq("id", item.id);
 
     if (error) {
-      setMessage(`Erro ao atualizar mÃ©dico: ${error.message}`);
+      setMessage(`Erro ao atualizar médico: ${error.message}`);
       setMessageType("error");
       setActionLoadingId(null);
       return;
@@ -173,8 +173,8 @@ export default function ClinicaMedicosPage() {
 
     setMessage(
       item.is_active === false
-        ? "MÃ©dico ativado com sucesso."
-        : "MÃ©dico desativado com sucesso."
+        ? "Médico ativado com sucesso."
+        : "Médico desativado com sucesso."
     );
     setMessageType("success");
     await loadPage();
@@ -212,16 +212,16 @@ export default function ClinicaMedicosPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              Equipe mÃ©dica
+              Equipe médica
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              MÃ©dicos da clÃ­nica
+              Médicos da clínica
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Acompanhe os profissionais vinculados Ã  clÃ­nica, status de
-              exibiÃ§Ã£o e dados profissionais principais.
+              Acompanhe os profissionais vinculados Ã  clínica, status de
+              exibição e dados profissionais principais.
             </p>
 
             {clinic && (
@@ -243,7 +243,7 @@ export default function ClinicaMedicosPage() {
               href="/clinica/solicitacoes"
               className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              SolicitaÃ§Ãµes
+              Solicitações
             </Link>
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function ClinicaMedicosPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="w-full xl:max-w-xl">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Buscar mÃ©dico
+                Buscar médico
               </label>
               <input
                 value={search}
@@ -316,16 +316,16 @@ export default function ClinicaMedicosPage() {
         <div className="mt-6 grid gap-4">
           {loading ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando mÃ©dicos...
+              Carregando médicos...
             </div>
           ) : filteredDoctors.length === 0 ? (
             <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Nenhum mÃ©dico encontrado
+                Nenhum médico encontrado
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Quando houver profissionais vinculados Ã  clÃ­nica, eles
-                aparecerÃ£o aqui.
+                Quando houver profissionais vinculados Ã  clínica, eles
+                aparecerão aqui.
               </p>
             </div>
           ) : (
@@ -346,12 +346,12 @@ export default function ClinicaMedicosPage() {
                       </span>
 
                       <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#164957]">
-                        MÃ©dico
+                        Médico
                       </span>
                     </div>
 
                     <h3 className="text-xl font-bold text-slate-950">
-                      {item.name || "MÃ©dico sem nome"}
+                      {item.name || "Médico sem nome"}
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
@@ -384,8 +384,8 @@ export default function ClinicaMedicosPage() {
                       {actionLoadingId === item.id
                         ? "Atualizando..."
                         : item.is_active === false
-                        ? "Ativar mÃ©dico"
-                        : "Desativar mÃ©dico"}
+                        ? "Ativar médico"
+                        : "Desativar médico"}
                     </button>
                   </div>
                 </div>

@@ -26,7 +26,7 @@ type ClinicRow = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -35,7 +35,7 @@ function formatDate(value?: string | null) {
 }
 
 function getClinicName(clinic: ClinicRow | null) {
-  return clinic?.trade_name || clinic?.legal_name || "ClÃ­nica";
+  return clinic?.trade_name || clinic?.legal_name || "Clínica";
 }
 
 function getClinicLocation(clinic: ClinicRow | null) {
@@ -45,7 +45,7 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "LocalizaÃ§Ã£o nÃ£o informada";
+  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
 }
 
 export default function ClinicaConfiguracoesPage() {
@@ -84,7 +84,7 @@ export default function ClinicaConfiguracoesPage() {
     if (!user) {
       return {
         clinicId: null,
-        errorMessage: "VocÃª precisa estar logado como clÃ­nica.",
+        errorMessage: "Você precisa estar logado como clínica.",
       };
     }
 
@@ -98,14 +98,14 @@ export default function ClinicaConfiguracoesPage() {
     if (memberError) {
       return {
         clinicId: null,
-        errorMessage: `Erro ao carregar vÃ­nculo da clÃ­nica: ${memberError.message}`,
+        errorMessage: `Erro ao carregar vínculo da clínica: ${memberError.message}`,
       };
     }
 
     if (!memberData?.clinic_id) {
       return {
         clinicId: null,
-        errorMessage: "Nenhuma clÃ­nica vinculada a este usuÃ¡rio.",
+        errorMessage: "Nenhuma clínica vinculada a este usuário.",
       };
     }
 
@@ -135,7 +135,7 @@ export default function ClinicaConfiguracoesPage() {
       .maybeSingle();
 
     if (error) {
-      setMessage(`Erro ao carregar clÃ­nica: ${error.message}`);
+      setMessage(`Erro ao carregar clínica: ${error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -164,13 +164,13 @@ export default function ClinicaConfiguracoesPage() {
     event.preventDefault();
 
     if (!clinic?.id) {
-      setMessage("ClÃ­nica nÃ£o encontrada.");
+      setMessage("Clínica não encontrada.");
       setMessageType("error");
       return;
     }
 
     if (!tradeName.trim() && !legalName.trim()) {
-      setMessage("Informe ao menos o nome fantasia ou a razÃ£o social.");
+      setMessage("Informe ao menos o nome fantasia ou a razão social.");
       setMessageType("error");
       return;
     }
@@ -201,13 +201,13 @@ export default function ClinicaConfiguracoesPage() {
       .eq("id", clinic.id);
 
     if (error) {
-      setMessage(`Erro ao salvar configuraÃ§Ãµes: ${error.message}`);
+      setMessage(`Erro ao salvar configurações: ${error.message}`);
       setMessageType("error");
       setSaving(false);
       return;
     }
 
-    setMessage("ConfiguraÃ§Ãµes da clÃ­nica atualizadas com sucesso.");
+    setMessage("Configurações da clínica atualizadas com sucesso.");
     setMessageType("success");
     await loadPage();
     setSaving(false);
@@ -234,16 +234,16 @@ export default function ClinicaConfiguracoesPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              ConfiguraÃ§Ãµes
+              Configurações
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Dados da clÃ­nica
+              Dados da clínica
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Atualize informaÃ§Ãµes institucionais, contato, endereÃ§o e status de
-              exibiÃ§Ã£o da clÃ­nica na plataforma.
+              Atualize informações institucionais, contato, endereço e status de
+              exibição da clínica na plataforma.
             </p>
           </div>
 
@@ -259,7 +259,7 @@ export default function ClinicaConfiguracoesPage() {
               href="/clinica/medicos"
               className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              MÃ©dicos
+              Médicos
             </Link>
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function ClinicaConfiguracoesPage() {
 
         {loading ? (
           <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando configuraÃ§Ãµes da clÃ­nica...
+            Carregando configurações da clínica...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.2fr]">
@@ -301,7 +301,7 @@ export default function ClinicaConfiguracoesPage() {
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {isActive ? "ClÃ­nica ativa" : "ClÃ­nica inativa"}
+                      {isActive ? "Clínica ativa" : "Clínica inativa"}
                     </span>
                   </div>
                 </div>
@@ -327,10 +327,10 @@ export default function ClinicaConfiguracoesPage() {
                 <div className="mt-6 grid gap-3">
                   <div className="rounded-2xl border border-[#E7DDD7] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      RazÃ£o social
+                      Razão social
                     </p>
                     <p className="mt-1 text-sm font-bold text-slate-950">
-                      {clinic?.legal_name || "NÃ£o informada"}
+                      {clinic?.legal_name || "Não informada"}
                     </p>
                   </div>
 
@@ -360,14 +360,14 @@ export default function ClinicaConfiguracoesPage() {
                     href="/clinica/solicitacoes"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Ver solicitaÃ§Ãµes
+                    Ver solicitações
                   </Link>
 
                   <Link
                     href="/clinica/medicos"
                     className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
                   >
-                    Gerenciar mÃ©dicos
+                    Gerenciar médicos
                   </Link>
                 </div>
               </section>
@@ -375,12 +375,12 @@ export default function ClinicaConfiguracoesPage() {
 
             <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
-                Editar informaÃ§Ãµes
+                Editar informações
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Esses dados ajudam pacientes e mÃ©dicos a reconhecerem sua
-                clÃ­nica dentro da plataforma.
+                Esses dados ajudam pacientes e médicos a reconhecerem sua
+                clínica dentro da plataforma.
               </p>
 
               <form onSubmit={handleSave} className="mt-6 grid gap-5">
@@ -392,19 +392,19 @@ export default function ClinicaConfiguracoesPage() {
                     <input
                       value={tradeName}
                       onChange={(event) => setTradeName(event.target.value)}
-                      placeholder="Ex.: ClÃ­nica Vida"
+                      placeholder="Ex.: Clínica Vida"
                       className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      RazÃ£o social
+                      Razão social
                     </label>
                     <input
                       value={legalName}
                       onChange={(event) => setLegalName(event.target.value)}
-                      placeholder="Ex.: ClÃ­nica Vida LTDA"
+                      placeholder="Ex.: Clínica Vida LTDA"
                       className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                     />
                   </div>
@@ -451,7 +451,7 @@ export default function ClinicaConfiguracoesPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      NÃºmero
+                      Número
                     </label>
                     <input
                       value={addressNumber}
@@ -519,12 +519,12 @@ export default function ClinicaConfiguracoesPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    DescriÃ§Ã£o da clÃ­nica
+                    Descrição da clínica
                   </label>
                   <textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Descreva a clÃ­nica, estrutura, especialidades atendidas e diferenciais."
+                    placeholder="Descreva a clínica, estrutura, especialidades atendidas e diferenciais."
                     rows={7}
                     className="w-full resize-none rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
                   />
@@ -534,10 +534,10 @@ export default function ClinicaConfiguracoesPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-bold text-slate-950">
-                        Exibir clÃ­nica na plataforma
+                        Exibir clínica na plataforma
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Quando ativa, a clÃ­nica pode aparecer para pacientes.
+                        Quando ativa, a clínica pode aparecer para pacientes.
                       </p>
                     </div>
 
@@ -561,7 +561,7 @@ export default function ClinicaConfiguracoesPage() {
                     disabled={saving}
                     className="rounded-2xl bg-[#164957] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
                   >
-                    {saving ? "Salvando..." : "Salvar configuraÃ§Ãµes"}
+                    {saving ? "Salvando..." : "Salvar configurações"}
                   </button>
 
                   <Link

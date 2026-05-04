@@ -68,7 +68,7 @@ type ClinicRow = {
 };
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -87,12 +87,12 @@ function formatLongDate(value?: string | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
 function getAge(birthDate?: string | null) {
-  if (!birthDate) return "NÃ£o informado";
+  if (!birthDate) return "Não informado";
 
   const birth = new Date(`${birthDate}T00:00:00`);
   const today = new Date();
@@ -112,26 +112,26 @@ function getAge(birthDate?: string | null) {
 
 function getDocumentLabel(type: DocumentType) {
   const labels: Record<DocumentType, string> = {
-    prescription: "Receita mÃ©dica",
-    exam_request: "SolicitaÃ§Ã£o de exame",
-    medical_certificate: "Atestado mÃ©dico",
-    attendance_declaration: "DeclaraÃ§Ã£o de comparecimento",
-    clinical_summary: "Resumo clÃ­nico",
+    prescription: "Receita médica",
+    exam_request: "Solicitação de exame",
+    medical_certificate: "Atestado médico",
+    attendance_declaration: "Declaração de comparecimento",
+    clinical_summary: "Resumo clínico",
   };
 
-  return labels[type] || "Documento mÃ©dico";
+  return labels[type] || "Documento médico";
 }
 
 function getOfficialTitle(type: DocumentType) {
   const labels: Record<DocumentType, string> = {
-    prescription: "RECEITA MÃ‰DICA",
-    exam_request: "SOLICITAÃ‡ÃƒO DE EXAME",
-    medical_certificate: "ATESTADO MÃ‰DICO",
-    attendance_declaration: "DECLARAÃ‡ÃƒO DE COMPARECIMENTO",
-    clinical_summary: "RESUMO CLÃNICO",
+    prescription: "RECEITA MÉDICA",
+    exam_request: "SOLICITAÇÃƒO DE EXAME",
+    medical_certificate: "ATESTADO MÉDICO",
+    attendance_declaration: "DECLARAÇÃƒO DE COMPARECIMENTO",
+    clinical_summary: "RESUMO CLÍNICO",
   };
 
-  return labels[type] || "DOCUMENTO MÃ‰DICO";
+  return labels[type] || "DOCUMENTO MÉDICO";
 }
 
 function getContentText(content: Record<string, unknown> | null, key: string) {
@@ -144,7 +144,7 @@ function getContentText(content: Record<string, unknown> | null, key: string) {
 }
 
 function buildClinicAddress(clinic: ClinicRow | null) {
-  if (!clinic) return "EndereÃ§o nÃ£o informado";
+  if (!clinic) return "Endereço não informado";
 
   const line1 = [clinic.address_street, clinic.address_number]
     .filter(Boolean)
@@ -162,7 +162,7 @@ function buildClinicAddress(clinic: ClinicRow | null) {
   if (line1) return line1;
   if (line2) return line2;
 
-  return "EndereÃ§o nÃ£o informado";
+  return "Endereço não informado";
 }
 
 function normalizeFileName(value: string) {
@@ -188,7 +188,7 @@ function getPatientPlan(patient: PatientRow | null) {
   const operator = patient?.health_plan_operator?.trim();
   const product = patient?.health_plan_product_name?.trim();
 
-  if (!operator && !product) return "Particular / nÃ£o informado";
+  if (!operator && !product) return "Particular / não informado";
 
   return [operator, product].filter(Boolean).join(" â€” ");
 }
@@ -253,7 +253,7 @@ export default function DocumentoMedicoPage() {
     if (documentError || !documentData) {
       setMessage(
         `Erro ao carregar documento: ${
-          documentError?.message || "documento nÃ£o encontrado"
+          documentError?.message || "documento não encontrado"
         }`
       );
       setMessageType("error");
@@ -310,7 +310,7 @@ export default function DocumentoMedicoPage() {
     }
 
     if (clinicResponse.error) {
-      setMessage(`Erro ao carregar clÃ­nica: ${clinicResponse.error.message}`);
+      setMessage(`Erro ao carregar clínica: ${clinicResponse.error.message}`);
       setMessageType("error");
       setLoading(false);
       return;
@@ -322,20 +322,20 @@ export default function DocumentoMedicoPage() {
     setLoading(false);
   }
 
-  const patientName = patient?.full_name || "Paciente nÃ£o informado";
+  const patientName = patient?.full_name || "Paciente não informado";
   const clinicName =
     document?.clinic_name ||
     clinic?.trade_name ||
     clinic?.legal_name ||
-    "ClÃ­nica nÃ£o informada";
+    "Clínica não informada";
 
   const officialTitle = document
     ? getOfficialTitle(document.document_type)
-    : "DOCUMENTO MÃ‰DICO";
+    : "DOCUMENTO MÉDICO";
 
   const screenTitle = document
     ? document.title || getDocumentLabel(document.document_type)
-    : "Documento mÃ©dico";
+    : "Documento médico";
 
   const issuedAt = document?.issued_at || document?.created_at;
 
@@ -351,7 +351,7 @@ export default function DocumentoMedicoPage() {
     return (
       <main className="min-h-screen bg-[#F3F5FB]">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-slate-600">Carregando documento mÃ©dico...</p>
+          <p className="text-slate-600">Carregando documento médico...</p>
         </section>
       </main>
     );
@@ -432,14 +432,14 @@ export default function DocumentoMedicoPage() {
         <div className="flex flex-col gap-3 rounded-[28px] border border-[#D9D6F4] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#164957]">
-              VisualizaÃ§Ã£o do documento
+              Visualização do documento
             </p>
             <h1 className="mt-1 text-2xl font-bold text-slate-950">
               {screenTitle}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Para o PDF ficar limpo, desative â€œCabeÃ§alhos e rodapÃ©sâ€ na tela de
-              impressÃ£o.
+              Para o PDF ficar limpo, desative â€œCabeçalhos e rodapésâ€ na tela de
+              impressão.
             </p>
           </div>
 
@@ -449,7 +449,7 @@ export default function DocumentoMedicoPage() {
                 href={`/medico/consultas/${document.appointment_id}`}
                 className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-bold text-[#5A4C86] transition hover:bg-[#F6F3FF]"
               >
-                Voltar ao prontuÃ¡rio
+                Voltar ao prontuário
               </Link>
             )}
 
@@ -499,13 +499,13 @@ export default function DocumentoMedicoPage() {
           <section className="mt-9 border border-slate-300">
             <div className="border-b border-slate-300 bg-slate-50 px-4 py-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                IdentificaÃ§Ã£o do paciente
+                Identificação do paciente
               </p>
             </div>
 
             <div className="grid text-[13px] leading-6">
               <PatientCell label="Paciente" value={patientName} />
-              <PatientCell label="CPF" value={patient?.cpf || "NÃ£o informado"} />
+              <PatientCell label="CPF" value={patient?.cpf || "Não informado"} />
               <PatientCell
                 label="Nascimento"
                 value={`${formatDate(patient?.birth_date)} â€¢ ${getAge(
@@ -514,12 +514,12 @@ export default function DocumentoMedicoPage() {
               />
               <PatientCell
                 label="Telefone"
-                value={patient?.phone || "NÃ£o informado"}
+                value={patient?.phone || "Não informado"}
               />
-              <PatientCell label="ConvÃªnio" value={getPatientPlan(patient)} />
+              <PatientCell label="Convênio" value={getPatientPlan(patient)} />
               <PatientCell
                 label="Carteirinha"
-                value={patient?.health_plan_card_number || "NÃ£o informado"}
+                value={patient?.health_plan_card_number || "Não informado"}
               />
             </div>
           </section>
@@ -527,20 +527,20 @@ export default function DocumentoMedicoPage() {
           <section className="mt-11 flex-1">
             {document.document_type === "prescription" && (
               <div>
-                <PaperSectionTitle>PrescriÃ§Ã£o</PaperSectionTitle>
+                <PaperSectionTitle>Prescrição</PaperSectionTitle>
 
                 <div className="mt-6 space-y-7">
                   <PaperItem
                     title="Medicamento"
-                    content={medicationName || "Medicamento nÃ£o informado."}
+                    content={medicationName || "Medicamento não informado."}
                   />
 
                   <PaperItem
                     title="Modo de uso"
-                    content={medicationUse || "Modo de uso nÃ£o informado."}
+                    content={medicationUse || "Modo de uso não informado."}
                   />
 
-                  {notes && <PaperItem title="OrientaÃ§Ãµes" content={notes} />}
+                  {notes && <PaperItem title="Orientações" content={notes} />}
                 </div>
               </div>
             )}
@@ -552,19 +552,19 @@ export default function DocumentoMedicoPage() {
                 <div className="mt-6 space-y-7">
                   <PaperItem
                     title="Exame"
-                    content={examName || "Exame nÃ£o informado."}
+                    content={examName || "Exame não informado."}
                   />
 
                   <PaperItem
-                    title="IndicaÃ§Ã£o clÃ­nica"
+                    title="Indicação clínica"
                     content={
                       document.clinical_indication ||
-                      "IndicaÃ§Ã£o clÃ­nica nÃ£o informada."
+                      "Indicação clínica não informada."
                     }
                   />
 
                   {examObservation && (
-                    <PaperItem title="ObservaÃ§Ãµes" content={examObservation} />
+                    <PaperItem title="Observações" content={examObservation} />
                   )}
 
                   {document.cid_code && (
@@ -586,7 +586,7 @@ export default function DocumentoMedicoPage() {
                 <p className="text-[15.5px] leading-9 text-slate-900">
                   Atesto, para os devidos fins, que{" "}
                   <strong>{patientName}</strong>, portador(a) do CPF{" "}
-                  <strong>{patient?.cpf || "nÃ£o informado"}</strong>, foi
+                  <strong>{patient?.cpf || "não informado"}</strong>, foi
                   atendido(a) nesta unidade e necessita de afastamento de suas
                   atividades por{" "}
                   <strong>{getDaysText(document.days_off)}</strong>.
@@ -608,7 +608,7 @@ export default function DocumentoMedicoPage() {
                     <PaperItem title="Finalidade" content={document.purpose} />
                   )}
 
-                  {notes && <PaperItem title="ObservaÃ§Ãµes" content={notes} />}
+                  {notes && <PaperItem title="Observações" content={notes} />}
                 </div>
               </div>
             )}
@@ -618,8 +618,8 @@ export default function DocumentoMedicoPage() {
                 <p className="text-[15.5px] leading-9 text-slate-900">
                   Declaro, para os devidos fins, que{" "}
                   <strong>{patientName}</strong>, portador(a) do CPF{" "}
-                  <strong>{patient?.cpf || "nÃ£o informado"}</strong>,
-                  compareceu ao atendimento mÃ©dico nesta unidade na data de{" "}
+                  <strong>{patient?.cpf || "não informado"}</strong>,
+                  compareceu ao atendimento médico nesta unidade na data de{" "}
                   <strong>{formatDateTime(issuedAt)}</strong>.
                 </p>
 
@@ -628,21 +628,21 @@ export default function DocumentoMedicoPage() {
                     <PaperItem title="Finalidade" content={document.purpose} />
                   )}
 
-                  {notes && <PaperItem title="ObservaÃ§Ãµes" content={notes} />}
+                  {notes && <PaperItem title="Observações" content={notes} />}
                 </div>
               </div>
             )}
 
             {document.document_type === "clinical_summary" && (
               <div>
-                <PaperSectionTitle>Resumo clÃ­nico</PaperSectionTitle>
+                <PaperSectionTitle>Resumo clínico</PaperSectionTitle>
 
                 <div className="mt-6 space-y-7">
                   <PaperItem
                     title="Resumo"
                     content={
                       document.clinical_indication ||
-                      "Resumo clÃ­nico nÃ£o informado."
+                      "Resumo clínico não informado."
                     }
                   />
 
@@ -663,11 +663,11 @@ export default function DocumentoMedicoPage() {
                 <div className="border-t border-slate-500 pt-3" />
 
                 <p className="text-[14px] font-bold leading-5 text-slate-950">
-                  {document.doctor_name || "MÃ©dico responsÃ¡vel"}
+                  {document.doctor_name || "Médico responsável"}
                 </p>
 
                 <p className="mt-1 text-[12px] text-slate-600">
-                  CRM {document.doctor_crm || "nÃ£o informado"}
+                  CRM {document.doctor_crm || "não informado"}
                   {document.doctor_crm_state
                     ? ` / ${document.doctor_crm_state}`
                     : ""}
@@ -680,7 +680,7 @@ export default function DocumentoMedicoPage() {
             <div className="grid gap-1 text-[9.5px] leading-4 text-slate-500 sm:grid-cols-[1fr_auto] sm:items-center">
               <p>
                 Documento emitido eletronicamente pela MediNexus. Validade
-                condicionada Ã s informaÃ§Ãµes registradas pelo profissional.
+                condicionada Ã s informações registradas pelo profissional.
               </p>
               <p>NÂº {getDocumentNumber(document.id)}</p>
             </div>

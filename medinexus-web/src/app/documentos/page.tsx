@@ -33,7 +33,7 @@ function normalize(value: string) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "NÃ£o informado";
+  if (!value) return "Não informado";
 
   return new Date(value).toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -50,13 +50,13 @@ function getDocumentTypeLabel(item: MedicalDocumentRow) {
 
   if (type.includes("receita")) return "Receita";
   if (type.includes("prescription")) return "Receita";
-  if (type.includes("exame")) return "SolicitaÃ§Ã£o de exame";
-  if (type.includes("exam")) return "SolicitaÃ§Ã£o de exame";
+  if (type.includes("exame")) return "Solicitação de exame";
+  if (type.includes("exam")) return "Solicitação de exame";
   if (type.includes("atestado")) return "Atestado";
-  if (type.includes("declaracao")) return "DeclaraÃ§Ã£o";
-  if (type.includes("declaraÃ§Ã£o")) return "DeclaraÃ§Ã£o";
+  if (type.includes("declaracao")) return "Declaração";
+  if (type.includes("declaração")) return "Declaração";
 
-  return "Documento mÃ©dico";
+  return "Documento médico";
 }
 
 function matchesType(item: MedicalDocumentRow, filter: FilterType) {
@@ -77,7 +77,7 @@ function matchesType(item: MedicalDocumentRow, filter: FilterType) {
   }
 
   if (filter === "declaracao") {
-    return type.includes("declaracao") || type.includes("declaraÃ§Ã£o");
+    return type.includes("declaracao") || type.includes("declaração");
   }
 
   return true;
@@ -91,7 +91,7 @@ function getDocumentDescription(item: MedicalDocumentRow) {
   return (
     item.description ||
     (typeof item.content === "string" ? item.content.slice(0, 140) : "") ||
-    "Documento mÃ©dico liberado para visualizaÃ§Ã£o."
+    "Documento médico liberado para visualização."
   );
 }
 
@@ -115,7 +115,7 @@ export default function DocumentosPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("VocÃª precisa estar logado para visualizar documentos.");
+      setMessage("Você precisa estar logado para visualizar documentos.");
       setDocuments([]);
       setLoading(false);
       return;
@@ -179,7 +179,7 @@ export default function DocumentosPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              Documentos mÃ©dicos
+              Documentos médicos
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -187,7 +187,7 @@ export default function DocumentosPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Consulte receitas, solicitaÃ§Ãµes de exame, atestados e declaraÃ§Ãµes
+              Consulte receitas, solicitações de exame, atestados e declarações
               emitidas pelos profissionais.
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function DocumentosPage() {
             { label: "Receitas", value: summary.receitas, tone: "text-[#164957]" },
             { label: "Exames", value: summary.exames, tone: "text-[#7A9D8C]" },
             { label: "Atestados", value: summary.atestados, tone: "text-[#B26B00]" },
-            { label: "DeclaraÃ§Ãµes", value: summary.declaracoes, tone: "text-[#5A4C86]" },
+            { label: "Declarações", value: summary.declaracoes, tone: "text-[#5A4C86]" },
           ].map((item) => (
             <div
               key={item.label}
@@ -248,7 +248,7 @@ export default function DocumentosPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Busque por receita, exame, atestado ou declaraÃ§Ã£o"
+                placeholder="Busque por receita, exame, atestado ou declaração"
                 className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
               />
             </div>
@@ -259,7 +259,7 @@ export default function DocumentosPage() {
                 { key: "receita", label: "Receitas" },
                 { key: "exame", label: "Exames" },
                 { key: "atestado", label: "Atestados" },
-                { key: "declaracao", label: "DeclaraÃ§Ãµes" },
+                { key: "declaracao", label: "Declarações" },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -289,7 +289,7 @@ export default function DocumentosPage() {
                 Nenhum documento encontrado
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Quando um documento for liberado para vocÃª, ele aparecerÃ¡ aqui.
+                Quando um documento for liberado para você, ele aparecerá aqui.
               </p>
             </div>
           ) : (

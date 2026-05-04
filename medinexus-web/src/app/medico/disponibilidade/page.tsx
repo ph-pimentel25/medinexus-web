@@ -34,11 +34,11 @@ type WeekdayOption = {
 const WEEKDAYS: WeekdayOption[] = [
   { value: 0, label: "Domingo", short: "Dom" },
   { value: 1, label: "Segunda-feira", short: "Seg" },
-  { value: 2, label: "TerÃ§a-feira", short: "Ter" },
+  { value: 2, label: "Terça-feira", short: "Ter" },
   { value: 3, label: "Quarta-feira", short: "Qua" },
   { value: 4, label: "Quinta-feira", short: "Qui" },
   { value: 5, label: "Sexta-feira", short: "Sex" },
-  { value: 6, label: "SÃ¡bado", short: "SÃ¡b" },
+  { value: 6, label: "Sábado", short: "Sáb" },
 ];
 
 function getAvailabilityWeekday(item: AvailabilityRow) {
@@ -90,7 +90,7 @@ export default function MedicoDisponibilidadePage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("VocÃª precisa estar logado como mÃ©dico.");
+      setMessage("Você precisa estar logado como médico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -103,14 +103,14 @@ export default function MedicoDisponibilidadePage() {
       .maybeSingle();
 
     if (doctorError) {
-      setMessage(`Erro ao carregar mÃ©dico: ${doctorError.message}`);
+      setMessage(`Erro ao carregar médico: ${doctorError.message}`);
       setMessageType("error");
       setLoading(false);
       return;
     }
 
     if (!doctorData?.id) {
-      setMessage("Nenhum cadastro mÃ©dico encontrado para este usuÃ¡rio.");
+      setMessage("Nenhum cadastro médico encontrado para este usuário.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -143,19 +143,19 @@ export default function MedicoDisponibilidadePage() {
     event.preventDefault();
 
     if (!doctor?.id) {
-      setMessage("Cadastro mÃ©dico nÃ£o encontrado.");
+      setMessage("Cadastro médico não encontrado.");
       setMessageType("error");
       return;
     }
 
     if (!startTime || !endTime) {
-      setMessage("Informe o horÃ¡rio inicial e final.");
+      setMessage("Informe o horário inicial e final.");
       setMessageType("error");
       return;
     }
 
     if (startTime >= endTime) {
-      setMessage("O horÃ¡rio final precisa ser maior que o horÃ¡rio inicial.");
+      setMessage("O horário final precisa ser maior que o horário inicial.");
       setMessageType("error");
       return;
     }
@@ -216,7 +216,7 @@ export default function MedicoDisponibilidadePage() {
 
   async function handleDeleteAvailability(item: AvailabilityRow) {
     const confirmed = window.confirm(
-      "Tem certeza que deseja remover este horÃ¡rio de disponibilidade?"
+      "Tem certeza que deseja remover este horário de disponibilidade?"
     );
 
     if (!confirmed) return;
@@ -236,7 +236,7 @@ export default function MedicoDisponibilidadePage() {
       return;
     }
 
-    setMessage("HorÃ¡rio removido com sucesso.");
+    setMessage("Horário removido com sucesso.");
     setMessageType("success");
     await loadPage();
     setActionLoadingId(null);
@@ -272,7 +272,7 @@ export default function MedicoDisponibilidadePage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
             <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
-              Agenda mÃ©dica
+              Agenda médica
             </span>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -280,13 +280,13 @@ export default function MedicoDisponibilidadePage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Defina os dias, horÃ¡rios e duraÃ§Ã£o dos atendimentos para organizar
-              sua agenda mÃ©dica.
+              Defina os dias, horários e duração dos atendimentos para organizar
+              sua agenda médica.
             </p>
 
             {doctor && (
               <p className="mt-3 text-sm font-semibold text-slate-500">
-                {doctor.name || "MÃ©dico"} â€¢ CRM {doctor.crm || "N/I"}
+                {doctor.name || "Médico"} â€¢ CRM {doctor.crm || "N/I"}
                 {doctor.crm_state ? ` / ${doctor.crm_state}` : ""}
               </p>
             )}
@@ -304,7 +304,7 @@ export default function MedicoDisponibilidadePage() {
               href="/medico/solicitacoes"
               className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              SolicitaÃ§Ãµes
+              Solicitações
             </Link>
           </div>
         </div>
@@ -345,7 +345,7 @@ export default function MedicoDisponibilidadePage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.2fr]">
           <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
             <h2 className="text-xl font-bold text-slate-950">
-              Adicionar horÃ¡rio
+              Adicionar horário
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
@@ -373,7 +373,7 @@ export default function MedicoDisponibilidadePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    InÃ­cio
+                    Início
                   </label>
                   <input
                     type="time"
@@ -398,7 +398,7 @@ export default function MedicoDisponibilidadePage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  DuraÃ§Ã£o por atendimento
+                  Duração por atendimento
                 </label>
                 <select
                   value={slotMinutes}
@@ -430,7 +430,7 @@ export default function MedicoDisponibilidadePage() {
                   Agenda semanal
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  HorÃ¡rios cadastrados por dia da semana.
+                  Horários cadastrados por dia da semana.
                 </p>
               </div>
             </div>
@@ -442,7 +442,7 @@ export default function MedicoDisponibilidadePage() {
             ) : availability.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-8 text-center">
                 <h3 className="text-lg font-bold text-slate-950">
-                  Nenhum horÃ¡rio cadastrado
+                  Nenhum horário cadastrado
                 </h3>
                 <p className="mt-2 text-sm text-slate-500">
                   Adicione seu primeiro bloco de disponibilidade ao lado.
@@ -474,7 +474,7 @@ export default function MedicoDisponibilidadePage() {
 
                     {day.items.length === 0 ? (
                       <p className="rounded-xl bg-white px-4 py-3 text-sm text-slate-400">
-                        Sem horÃ¡rios neste dia.
+                        Sem horários neste dia.
                       </p>
                     ) : (
                       <div className="grid gap-3">

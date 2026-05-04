@@ -82,7 +82,7 @@ export default function ClinicaEditarMedicoPage() {
       .single();
 
     if (memberError || !member) {
-      setMessage("VocÃª nÃ£o possui acesso Ã  Ã¡rea da clÃ­nica.");
+      setMessage("Você não possui acesso Ã  área da clínica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -113,7 +113,7 @@ export default function ClinicaEditarMedicoPage() {
       .single();
 
     if (doctorError || !doctorData) {
-      setMessage("MÃ©dico nÃ£o encontrado para esta clÃ­nica.");
+      setMessage("Médico não encontrado para esta clínica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -125,7 +125,7 @@ export default function ClinicaEditarMedicoPage() {
       .eq("doctor_id", doctorId);
 
     if (dsError) {
-      setMessage("Erro ao carregar especialidades do mÃ©dico.");
+      setMessage("Erro ao carregar especialidades do médico.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -170,13 +170,13 @@ export default function ClinicaEditarMedicoPage() {
     setMessage("");
 
     if (!canManage) {
-      setMessage("Apenas owner/admin pode editar mÃ©dicos.");
+      setMessage("Apenas owner/admin pode editar médicos.");
       setMessageType("error");
       return;
     }
 
     if (!clinicId || !doctorId) {
-      setMessage("Dados do mÃ©dico nÃ£o encontrados.");
+      setMessage("Dados do médico não encontrados.");
       setMessageType("error");
       return;
     }
@@ -198,7 +198,7 @@ export default function ClinicaEditarMedicoPage() {
 
     if (updateDoctorError) {
       console.error("updateDoctorError:", updateDoctorError);
-      setMessage(`Erro ao atualizar mÃ©dico: ${updateDoctorError.message}`);
+      setMessage(`Erro ao atualizar médico: ${updateDoctorError.message}`);
       setMessageType("error");
       setSaving(false);
       return;
@@ -212,7 +212,7 @@ export default function ClinicaEditarMedicoPage() {
     if (deleteSpecialtiesError) {
       console.error("deleteSpecialtiesError:", deleteSpecialtiesError);
       setMessage(
-        `MÃ©dico atualizado, mas houve erro ao limpar especialidades antigas: ${deleteSpecialtiesError.message}`
+        `Médico atualizado, mas houve erro ao limpar especialidades antigas: ${deleteSpecialtiesError.message}`
       );
       setMessageType("error");
       setSaving(false);
@@ -232,7 +232,7 @@ export default function ClinicaEditarMedicoPage() {
       if (insertSpecialtiesError) {
         console.error("insertSpecialtiesError:", insertSpecialtiesError);
         setMessage(
-          `MÃ©dico atualizado, mas houve erro ao salvar especialidades: ${insertSpecialtiesError.message}`
+          `Médico atualizado, mas houve erro ao salvar especialidades: ${insertSpecialtiesError.message}`
         );
         setMessageType("error");
         setSaving(false);
@@ -240,7 +240,7 @@ export default function ClinicaEditarMedicoPage() {
       }
     }
 
-    setMessage("MÃ©dico atualizado com sucesso.");
+    setMessage("Médico atualizado com sucesso.");
     setMessageType("success");
     setSaving(false);
   }
@@ -248,7 +248,7 @@ export default function ClinicaEditarMedicoPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Carregando mÃ©dico...</p>
+        <p className="text-slate-600">Carregando médico...</p>
       </main>
     );
   }
@@ -261,15 +261,15 @@ export default function ClinicaEditarMedicoPage() {
             href="/clinica/medicos"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para mÃ©dicos
+            â† Voltar para médicos
           </Link>
         </div>
 
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-sky-700">
-            Editar mÃ©dico
+            Editar médico
           </p>
-          <h1 className="mt-3 app-section-title">{form.name || "MÃ©dico"}</h1>
+          <h1 className="mt-3 app-section-title">{form.name || "Médico"}</h1>
           <p className="app-section-subtitle">
             Atualize os dados do profissional e revise suas especialidades.
           </p>
@@ -297,7 +297,7 @@ export default function ClinicaEditarMedicoPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Nome do mÃ©dico
+                  Nome do médico
                 </label>
                 <input
                   name="name"
@@ -363,7 +363,7 @@ export default function ClinicaEditarMedicoPage() {
                   disabled={!canManage}
                 />
                 <span className="text-sm font-medium text-slate-700">
-                  MÃ©dico ativo
+                  Médico ativo
                 </span>
               </label>
             </div>
@@ -416,7 +416,7 @@ export default function ClinicaEditarMedicoPage() {
                 disabled={saving || !canManage}
                 className="app-button-primary"
               >
-                {saving ? "Salvando..." : "Salvar alteraÃ§Ãµes"}
+                {saving ? "Salvando..." : "Salvar alterações"}
               </button>
 
               <Link href="/clinica/medicos" className="app-button-secondary text-center">

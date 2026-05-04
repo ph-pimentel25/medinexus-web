@@ -19,7 +19,7 @@ type NotificationRow = {
 };
 
 function formatRelativeDate(dateString?: string | null) {
-  if (!dateString) return "Agora hÃ¡ pouco";
+  if (!dateString) return "Agora há pouco";
 
   const date = new Date(dateString);
   const diffMs = Date.now() - date.getTime();
@@ -28,20 +28,20 @@ function formatRelativeDate(dateString?: string | null) {
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
 
-  if (minutes < 1) return "Agora hÃ¡ pouco";
-  if (minutes < 60) return `${minutes} min atrÃ¡s`;
-  if (hours < 24) return `${hours} h atrÃ¡s`;
-  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrÃ¡s`;
+  if (minutes < 1) return "Agora há pouco";
+  if (minutes < 60) return `${minutes} min atrás`;
+  if (hours < 24) return `${hours} h atrás`;
+  if (days < 30) return `${days} dia${days > 1 ? "s" : ""} atrás`;
 
   return date.toLocaleDateString("pt-BR");
 }
 
 function getNotificationTitle(item: NotificationRow) {
-  return item.title || "Nova notificaÃ§Ã£o";
+  return item.title || "Nova notificação";
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.message || "VocÃª recebeu uma nova atualizaÃ§Ã£o.";
+  return item.message || "Você recebeu uma nova atualização.";
 }
 
 function getTypeLabel(item: NotificationRow) {
@@ -50,7 +50,7 @@ function getTypeLabel(item: NotificationRow) {
   if (raw.includes("document")) return "Documento";
   if (raw.includes("consulta")) return "Consulta";
   if (raw.includes("appointment")) return "Consulta";
-  if (raw.includes("confirm")) return "ConfirmaÃ§Ã£o";
+  if (raw.includes("confirm")) return "Confirmação";
   if (raw.includes("cancel")) return "Cancelamento";
   return "Aviso";
 }
@@ -137,9 +137,9 @@ export default function NotificationBell() {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[#D8CCC5] bg-white text-lg shadow-sm transition hover:bg-[#FAF6F3]"
-        aria-label="Abrir notificaÃ§Ãµes"
+        aria-label="Abrir notificações"
       >
-        <span>ðŸ””</span>
+        <span>🔔</span>
 
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 flex min-h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#E03131] px-1.5 text-[11px] font-bold text-white shadow">
@@ -154,13 +154,13 @@ export default function NotificationBell() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
-                  NotificaÃ§Ãµes
+                  Notificações
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-950">
-                  Resumo rÃ¡pido
+                  Resumo rápido
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Veja as atualizaÃ§Ãµes mais recentes da sua conta.
+                  Veja as atualizações mais recentes da sua conta.
                 </p>
               </div>
 
@@ -168,7 +168,7 @@ export default function NotificationBell() {
                 <p className="text-right text-xl font-bold text-[#164957]">
                   {unreadCount}
                 </p>
-                <p className="text-[11px] text-slate-500">nÃ£o lidas</p>
+                <p className="text-[11px] text-slate-500">não lidas</p>
               </div>
             </div>
           </div>
@@ -176,15 +176,15 @@ export default function NotificationBell() {
           <div className="max-h-[380px] overflow-y-auto p-3">
             {loading ? (
               <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 text-sm text-slate-500">
-                Carregando notificaÃ§Ãµes...
+                Carregando notificações...
               </div>
             ) : previewItems.length === 0 ? (
               <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Nenhuma notificaÃ§Ã£o no momento.
+                  Nenhuma notificação no momento.
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Quando houver novidades, elas aparecerÃ£o aqui.
+                  Quando houver novidades, elas aparecerão aqui.
                 </p>
               </div>
             ) : (
@@ -223,7 +223,7 @@ export default function NotificationBell() {
               href="/notificacoes"
               className="flex w-full items-center justify-center rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
-              Ver notificaÃ§Ãµes completas
+              Ver notificações completas
             </Link>
           </div>
         </div>
