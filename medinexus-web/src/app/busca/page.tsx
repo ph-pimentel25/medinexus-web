@@ -453,7 +453,7 @@ function BuscaPageContent() {
                   {selectedClinic.city || "Cidade não informada"} /{" "}
                   {selectedClinic.state || "Estado não informado"}
                   {selectedClinic.neighborhood
-                    ? ` â€¢ ${selectedClinic.neighborhood}`
+                    ? ` • ${selectedClinic.neighborhood}`
                     : ""}
                 </p>
               </div>

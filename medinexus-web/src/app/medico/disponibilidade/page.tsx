@@ -286,7 +286,7 @@ export default function MedicoDisponibilidadePage() {
 
             {doctor && (
               <p className="mt-3 text-sm font-semibold text-slate-500">
-                {doctor.name || "Médico"} â€¢ CRM {doctor.crm || "N/I"}
+                {doctor.name || "Médico"} • CRM {doctor.crm || "N/I"}
                 {doctor.crm_state ? ` / ${doctor.crm_state}` : ""}
               </p>
             )}
@@ -486,7 +486,7 @@ export default function MedicoDisponibilidadePage() {
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-base font-bold text-slate-950">
-                                  {formatTime(item.start_time)} â€”{" "}
+                                  {formatTime(item.start_time)} —{" "}
                                   {formatTime(item.end_time)}
                                 </span>
 

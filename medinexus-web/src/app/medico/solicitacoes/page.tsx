@@ -166,7 +166,7 @@ function getClinicLocation(item: AppointmentRow) {
     item.clinic_state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
+  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 export default function MedicoSolicitacoesPage() {
@@ -486,7 +486,7 @@ export default function MedicoSolicitacoesPage() {
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {getClinicName(item)} â€¢ {getClinicLocation(item)}
+                      {getClinicName(item)} • {getClinicLocation(item)}
                     </p>
 
                     <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">

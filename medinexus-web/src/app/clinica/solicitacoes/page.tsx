@@ -564,7 +564,7 @@ export default function ClinicaSolicitacoesPage() {
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {getDoctorName(item)} â€¢ {getDoctorCrm(item)}
+                      {getDoctorName(item)} • {getDoctorCrm(item)}
                     </p>
 
                     <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">

@@ -938,7 +938,7 @@ export default function MedicoConsultaPage() {
             </p>
             <p className="mt-2 font-bold text-slate-950">{patientName}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {getAge(patient?.birth_date)} â€¢ CPF {patient?.cpf || "N/I"}
+              {getAge(patient?.birth_date)} • CPF {patient?.cpf || "N/I"}
             </p>
           </div>
 
@@ -1021,7 +1021,7 @@ export default function MedicoConsultaPage() {
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   CRM {doctor?.crm || "N/I"}
-                  {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""} â€¢{" "}
+                  {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""} •{" "}
                   {clinicName}
                 </p>
               </div>

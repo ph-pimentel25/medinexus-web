@@ -45,7 +45,7 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
+  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 export default function ClinicaConfiguracoesPage() {

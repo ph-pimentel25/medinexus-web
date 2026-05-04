@@ -37,7 +37,7 @@ const IMAGE_RULES = {
     idealText: "Ideal: 800 x 800 px",
     ratioText: "Proporção recomendada: 1:1",
     helpText:
-      "PNG, JPG ou WEBP â€¢ máximo 2 MB â€¢ mínimo recomendado 300 x 300 px",
+      "PNG, JPG ou WEBP • máximo 2 MB • mínimo recomendado 300 x 300 px",
   },
   cover: {
     label: "Imagem de capa",
@@ -47,7 +47,7 @@ const IMAGE_RULES = {
     idealText: "Ideal: 1600 x 900 px",
     ratioText: "Proporção recomendada: 16:9",
     helpText:
-      "PNG, JPG ou WEBP â€¢ máximo 4 MB â€¢ mínimo recomendado 1200 x 600 px",
+      "PNG, JPG ou WEBP • máximo 4 MB • mínimo recomendado 1200 x 600 px",
   },
 } as const;
 
@@ -645,7 +645,7 @@ export default function ClinicaPublicoPage() {
                   {IMAGE_RULES.logo.helpText}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {IMAGE_RULES.logo.idealText} â€¢ {IMAGE_RULES.logo.ratioText}
+                  {IMAGE_RULES.logo.idealText} • {IMAGE_RULES.logo.ratioText}
                 </p>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-4">
@@ -699,7 +699,7 @@ export default function ClinicaPublicoPage() {
                   {IMAGE_RULES.cover.helpText}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {IMAGE_RULES.cover.idealText} â€¢ {IMAGE_RULES.cover.ratioText}
+                  {IMAGE_RULES.cover.idealText} • {IMAGE_RULES.cover.ratioText}
                 </p>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-dashed border-slate-300 bg-white p-2">

@@ -91,7 +91,7 @@ function getClinicLocation(clinic: ClinicRow | null) {
     clinic?.address_state || clinic?.state,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
+  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 function getFirstName(value?: string | null) {
@@ -355,7 +355,7 @@ export default function ClinicaDashboardPage() {
             </p>
 
             <p className="mt-3 text-sm font-semibold text-slate-500">
-              {getClinicName(clinic)} â€¢ {getClinicLocation(clinic)}
+              {getClinicName(clinic)} • {getClinicLocation(clinic)}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">

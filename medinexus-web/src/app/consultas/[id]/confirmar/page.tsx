@@ -221,7 +221,7 @@ export default function ConfirmarConsultaPage() {
       clinic?.address_state || clinic?.state,
     ].filter(Boolean);
 
-    return parts.length > 0 ? parts.join(" â€¢ ") : "Localização não informada";
+    return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
   }, [clinic]);
 
   const isFinalStatus =

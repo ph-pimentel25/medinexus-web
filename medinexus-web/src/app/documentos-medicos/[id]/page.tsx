@@ -1,723 +1,872 @@
 ﻿"use client";
 
-import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo, useState } from "react";
-import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
+import {
+  GenericRow,
+  formatDate,
+  formatDateTime,
+  getClinicLocation,
+  getClinicName,
+  getDetailSections,
+  getDoctorCrm,
+  getDoctorName,
+  getDocumentSubtitle,
+  getDocumentType,
+  getIssuedAt,
+  getMainText,
+  getPatientBirthDate,
+  getPatientDocument,
+  getPatientName,
+  getPatientPhone,
+  getSignatureStatusLabel,
+  getStatus,
+  valueOf,
+} from "../../lib/medical-document-utils";
 
-type DocumentType =
-  | "prescription"
-  | "exam_request"
-  | "medical_certificate"
-  | "attendance_declaration"
-  | "clinical_summary";
-
-type MedicalDocumentRow = {
-  id: string;
-  document_type: DocumentType;
-  status: "draft" | "issued" | "cancelled";
-  patient_id: string;
-  doctor_id: string | null;
-  clinic_id: string | null;
-  appointment_id: string | null;
-  title: string | null;
-  clinical_indication: string | null;
-  cid_code: string | null;
-  cid_description: string | null;
-  content: Record<string, unknown> | null;
-  plain_text: string | null;
-  released_to_patient: boolean;
-  released_at: string | null;
-  days_off: number | null;
-  purpose: string | null;
-  starts_at: string | null;
-  ends_at: string | null;
-  doctor_name: string | null;
-  doctor_crm: string | null;
-  doctor_crm_state: string | null;
-  clinic_name: string | null;
-  created_at: string;
-  issued_at: string | null;
+type DetailItem = {
+  title: string;
+  value: string;
+  priority?: number;
 };
 
-type PatientRow = {
-  full_name: string | null;
-  cpf: string | null;
-  birth_date: string | null;
-  phone: string | null;
-  email: string | null;
-  health_plan_operator: string | null;
-  health_plan_product_name: string | null;
-  health_plan_card_number: string | null;
-};
-
-type ClinicRow = {
-  trade_name: string | null;
-  legal_name: string | null;
-  city: string | null;
-  state: string | null;
-  address_street: string | null;
-  address_number: string | null;
-  address_neighborhood: string | null;
-  address_city: string | null;
-  address_state: string | null;
-  phone: string | null;
-  email: string | null;
-};
-
-function formatDateTime(value?: string | null) {
-  if (!value) return "Não informado";
-
-  return new Date(value).toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
+function normalizeTitle(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
 }
 
-function formatLongDate(value?: string | null) {
-  const date = value ? new Date(value) : new Date();
-
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "Não informado";
-  return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
-}
-
-function getAge(birthDate?: string | null) {
-  if (!birthDate) return "Não informado";
-
-  const birth = new Date(`${birthDate}T00:00:00`);
-  const today = new Date();
-
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birth.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return `${age} anos`;
-}
-
-function getDocumentLabel(type: DocumentType) {
-  const labels: Record<DocumentType, string> = {
-    prescription: "Receita médica",
-    exam_request: "Solicitação de exame",
-    medical_certificate: "Atestado médico",
-    attendance_declaration: "Declaração de comparecimento",
-    clinical_summary: "Resumo clínico",
-  };
-
-  return labels[type] || "Documento médico";
-}
-
-function getOfficialTitle(type: DocumentType) {
-  const labels: Record<DocumentType, string> = {
-    prescription: "RECEITA MÉDICA",
-    exam_request: "SOLICITAÇÃƒO DE EXAME",
-    medical_certificate: "ATESTADO MÉDICO",
-    attendance_declaration: "DECLARAÇÃƒO DE COMPARECIMENTO",
-    clinical_summary: "RESUMO CLÍNICO",
-  };
-
-  return labels[type] || "DOCUMENTO MÉDICO";
-}
-
-function getContentText(content: Record<string, unknown> | null, key: string) {
-  const value = content?.[key];
-
-  if (typeof value === "string") return value.trim();
-  if (typeof value === "number") return String(value);
-
-  return "";
-}
-
-function buildClinicAddress(clinic: ClinicRow | null) {
-  if (!clinic) return "Endereço não informado";
-
-  const line1 = [clinic.address_street, clinic.address_number]
-    .filter(Boolean)
-    .join(", ");
-
-  const line2 = [
-    clinic.address_neighborhood,
-    clinic.address_city || clinic.city,
-    clinic.address_state || clinic.state,
-  ]
-    .filter(Boolean)
-    .join(" â€¢ ");
-
-  if (line1 && line2) return `${line1} â€” ${line2}`;
-  if (line1) return line1;
-  if (line2) return line2;
-
-  return "Endereço não informado";
-}
-
-function normalizeFileName(value: string) {
+function normalizeContent(value: string) {
   return value
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function getDocumentNumber(id: string) {
-  return id.slice(0, 8).toUpperCase();
+function upsertDetail(
+  sections: DetailItem[],
+  title: string,
+  value: string,
+  priority: number
+) {
+  const exists = sections.some(
+    (item) => normalizeTitle(item.title) === normalizeTitle(title)
+  );
+
+  if (!exists) {
+    sections.push({
+      title,
+      value,
+      priority,
+    });
+  }
 }
 
-function getDaysText(days?: number | null) {
-  if (!days || days <= 0) return "0 dia";
-  if (days === 1) return "1 dia";
-  return `${days} dias`;
+function buildRequiredDetails(
+  rawSections: DetailItem[],
+  documentType: string
+): DetailItem[] {
+  const sections = [...rawSections];
+  const isCertificate = documentType.toLowerCase().includes("atestado");
+
+  if (isCertificate) {
+    upsertDetail(sections, "CID / Classificação", "Não informado", 1);
+    upsertDetail(sections, "Dias de afastamento", "Não informado", 3);
+    upsertDetail(sections, "Finalidade", "Não informada", 5);
+  }
+
+  return sections.sort((a, b) => (a.priority || 99) - (b.priority || 99));
 }
 
-function getPatientPlan(patient: PatientRow | null) {
-  const operator = patient?.health_plan_operator?.trim();
-  const product = patient?.health_plan_product_name?.trim();
+function removeDuplicatedDetails(
+  sections: DetailItem[],
+  mainText: string
+): DetailItem[] {
+  const normalizedMainText = normalizeContent(mainText);
 
-  if (!operator && !product) return "Particular / não informado";
+  return sections.filter((section) => {
+    const title = normalizeTitle(section.title);
+    const value = normalizeContent(section.value);
 
-  return [operator, product].filter(Boolean).join(" â€” ");
+    if (!value) return false;
+
+    if (title.includes("observacoes") || title.includes("observacao")) {
+      if (value === "nao informado" || value === "não informado") return false;
+      if (normalizedMainText && value === normalizedMainText) return false;
+    }
+
+    return true;
+  });
 }
 
 export default function DocumentoMedicoPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams();
+  const router = useRouter();
+
   const documentId = String(params?.id || "");
 
+  const [origin, setOrigin] = useState("");
   const [loading, setLoading] = useState(true);
-  const [document, setDocument] = useState<MedicalDocumentRow | null>(null);
-  const [patient, setPatient] = useState<PatientRow | null>(null);
-  const [clinic, setClinic] = useState<ClinicRow | null>(null);
-
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
+
+  const [medicalDocument, setMedicalDocument] = useState<GenericRow | null>(
+    null
   );
+  const [patient, setPatient] = useState<GenericRow | null>(null);
+  const [doctor, setDoctor] = useState<GenericRow | null>(null);
+  const [clinic, setClinic] = useState<GenericRow | null>(null);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     loadDocument();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
 
   async function loadDocument() {
     setLoading(true);
     setMessage("");
 
-    const { data: documentData, error: documentError } = await supabase
+    if (!documentId) {
+      setMessage("Documento não informado.");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
       .from("medical_documents")
-      .select(
-        `
-        id,
-        document_type,
-        status,
-        patient_id,
-        doctor_id,
-        clinic_id,
-        appointment_id,
-        title,
-        clinical_indication,
-        cid_code,
-        cid_description,
-        content,
-        plain_text,
-        released_to_patient,
-        released_at,
-        days_off,
-        purpose,
-        starts_at,
-        ends_at,
-        doctor_name,
-        doctor_crm,
-        doctor_crm_state,
-        clinic_name,
-        created_at,
-        issued_at
-      `
-      )
+      .select("*")
       .eq("id", documentId)
-      .maybeSingle<MedicalDocumentRow>();
+      .maybeSingle();
 
-    if (documentError || !documentData) {
-      setMessage(
-        `Erro ao carregar documento: ${
-          documentError?.message || "documento não encontrado"
-        }`
-      );
-      setMessageType("error");
+    if (error) {
+      setMessage(`Erro ao carregar documento: ${error.message}`);
       setLoading(false);
       return;
     }
 
-    const [patientResponse, clinicResponse] = await Promise.all([
-      supabase
+    if (!data) {
+      setMessage("Documento não encontrado.");
+      setLoading(false);
+      return;
+    }
+
+    const doc = data as GenericRow;
+    setMedicalDocument(doc);
+
+    const patientId = valueOf(doc, ["patient_id"]);
+    const doctorId = valueOf(doc, ["doctor_id"]);
+    const clinicId = valueOf(doc, ["clinic_id"]);
+
+    if (patientId) {
+      const { data: patientData } = await supabase
         .from("patients")
-        .select(
-          `
-          full_name,
-          cpf,
-          birth_date,
-          phone,
-          email,
-          health_plan_operator,
-          health_plan_product_name,
-          health_plan_card_number
-        `
-        )
-        .eq("id", documentData.patient_id)
-        .maybeSingle<PatientRow>(),
+        .select("*")
+        .eq("id", patientId)
+        .maybeSingle();
 
-      documentData.clinic_id
-        ? supabase
-            .from("clinics")
-            .select(
-              `
-              trade_name,
-              legal_name,
-              city,
-              state,
-              address_street,
-              address_number,
-              address_neighborhood,
-              address_city,
-              address_state,
-              phone,
-              email
-            `
-            )
-            .eq("id", documentData.clinic_id)
-            .maybeSingle<ClinicRow>()
-        : Promise.resolve({ data: null, error: null }),
-    ]);
-
-    if (patientResponse.error) {
-      setMessage(`Erro ao carregar paciente: ${patientResponse.error.message}`);
-      setMessageType("error");
-      setLoading(false);
-      return;
+      setPatient((patientData as GenericRow) || null);
     }
 
-    if (clinicResponse.error) {
-      setMessage(`Erro ao carregar clínica: ${clinicResponse.error.message}`);
-      setMessageType("error");
-      setLoading(false);
-      return;
+    if (doctorId) {
+      const { data: doctorData } = await supabase
+        .from("doctors")
+        .select("*")
+        .eq("id", doctorId)
+        .maybeSingle();
+
+      setDoctor((doctorData as GenericRow) || null);
     }
 
-    setDocument(documentData);
-    setPatient(patientResponse.data || null);
-    setClinic((clinicResponse.data || null) as ClinicRow | null);
+    if (clinicId) {
+      const { data: clinicData } = await supabase
+        .from("clinics")
+        .select("*")
+        .eq("id", clinicId)
+        .maybeSingle();
+
+      setClinic((clinicData as GenericRow) || null);
+    }
+
     setLoading(false);
   }
 
-  const patientName = patient?.full_name || "Paciente não informado";
-  const clinicName =
-    document?.clinic_name ||
-    clinic?.trade_name ||
-    clinic?.legal_name ||
-    "Clínica não informada";
+  const documentType = useMemo(
+    () => getDocumentType(medicalDocument),
+    [medicalDocument]
+  );
 
-  const officialTitle = document
-    ? getOfficialTitle(document.document_type)
-    : "DOCUMENTO MÉDICO";
+  const mainText = useMemo(
+    () => getMainText(medicalDocument),
+    [medicalDocument]
+  );
 
-  const screenTitle = document
-    ? document.title || getDocumentLabel(document.document_type)
-    : "Documento médico";
+  const rawDetailSections = useMemo(
+    () => getDetailSections(medicalDocument),
+    [medicalDocument]
+  );
 
-  const issuedAt = document?.issued_at || document?.created_at;
+  const detailSections = useMemo(() => {
+    const required = buildRequiredDetails(rawDetailSections, documentType);
+    return removeDuplicatedDetails(required, mainText);
+  }, [rawDetailSections, documentType, mainText]);
 
-  const fileName = useMemo(() => {
-    return normalizeFileName(`${officialTitle}-${patientName || "paciente"}`);
-  }, [officialTitle, patientName]);
+  const issuedAt = getIssuedAt(medicalDocument);
+  const validationToken = valueOf(medicalDocument, ["validation_token"]);
 
-  function handlePrint() {
-    window.print();
-  }
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F3F5FB]">
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-slate-600">Carregando documento médico...</p>
-        </section>
-      </main>
-    );
-  }
+  const validationUrl =
+    appUrl && documentId && validationToken
+      ? `${appUrl}/validar-documento/${documentId}?token=${validationToken}`
+      : "";
 
-  if (!document) {
-    return (
-      <main className="min-h-screen bg-[#F3F5FB]">
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          {message && <Alert variant={messageType}>{message}</Alert>}
+  const signatureValidationUrl = valueOf(medicalDocument, [
+    "signature_validation_url",
+  ]);
 
-          <Link
-            href="/dashboard"
-            className="mt-6 inline-flex rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white"
-          >
-            Voltar
-          </Link>
-        </section>
-      </main>
-    );
-  }
+  const finalValidationUrl = signatureValidationUrl || validationUrl;
 
-  const medicationName = getContentText(document.content, "medication_name");
-  const medicationUse = getContentText(document.content, "medication_use");
-  const examName = getContentText(document.content, "exam_name");
-  const examObservation = getContentText(document.content, "exam_observation");
-  const notes = getContentText(document.content, "notes");
+  const patientBirthDate = getPatientBirthDate(patient, medicalDocument);
+  const patientPhone = getPatientPhone(patient, medicalDocument);
 
   return (
-    <main className="min-h-screen bg-[#F3F5FB]">
-      <style jsx global>{`
-        @page {
-          size: A4;
-          margin: 0;
-        }
-
-        @media print {
-          html,
-          body {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #ffffff !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          body > header,
-          .document-actions,
-          .no-print {
-            display: none !important;
-          }
-
-          .document-stage {
-            padding: 0 !important;
-            margin: 0 !important;
-            background: #ffffff !important;
-          }
-
-          .medical-paper {
-            width: 210mm !important;
-            min-height: 297mm !important;
-            margin: 0 !important;
-            padding: 18mm 20mm 15mm 20mm !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-          }
-
-          .screen-only-shadow {
-            box-shadow: none !important;
-          }
-        }
-      `}</style>
-
-      <section className="document-actions mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-3 rounded-[28px] border border-[#D9D6F4] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#164957]">
-              Visualização do documento
-            </p>
-            <h1 className="mt-1 text-2xl font-bold text-slate-950">
-              {screenTitle}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Para o PDF ficar limpo, desative â€œCabeçalhos e rodapésâ€ na tela de
-              impressão.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {document.appointment_id && (
-              <Link
-                href={`/medico/consultas/${document.appointment_id}`}
-                className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-3 text-sm font-bold text-[#5A4C86] transition hover:bg-[#F6F3FF]"
-              >
-                Voltar ao prontuário
-              </Link>
-            )}
-
+    <main className="min-h-screen bg-[#FAF6F3] text-[#2E393F]">
+      <section className="screen-actions border-b border-[#E7DDD7] bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1120px] flex-col gap-4 px-5 py-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handlePrint}
-              className="inline-flex justify-center rounded-2xl bg-[#164957] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#164957]"
+              onClick={() => router.back()}
+              className="rounded-full border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#2E393F] transition hover:bg-[#FAF6F3]"
             >
-              Imprimir / salvar PDF
+              Voltar
             </button>
+
+            <Link
+              href="/documentos"
+              className="rounded-full border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#2E393F] transition hover:bg-[#FAF6F3]"
+            >
+              Meus documentos
+            </Link>
           </div>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-full bg-[#164957] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+          >
+            Imprimir / salvar PDF
+          </button>
         </div>
       </section>
 
-      <section className="document-stage flex justify-center px-4 pb-12 sm:px-6 lg:px-8">
-        <article className="medical-paper screen-only-shadow relative flex min-h-[1122px] w-full max-w-[794px] flex-col bg-white px-16 py-14 text-slate-950 shadow-[0_30px_100px_-70px_rgba(15,23,42,0.65)]">
-          <div className="border-b border-slate-300 pb-5">
-            <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
-              <div>
-                <p className="text-[22px] font-bold leading-tight text-[#164957]">
-                  {clinicName}
-                </p>
-
-                <div className="mt-2 max-w-[480px] space-y-1 text-[11px] leading-5 text-slate-600">
-                  <p>{buildClinicAddress(clinic)}</p>
-                  {clinic?.phone && <p>Telefone: {clinic.phone}</p>}
-                  {clinic?.email && <p>E-mail: {clinic.email}</p>}
-                </div>
-              </div>
-
-              <div className="text-right text-[11px] leading-5 text-slate-500">
-                <p className="font-bold uppercase tracking-[0.14em] text-slate-500">
-                  MediNexus
-                </p>
-                <p>Documento NÂº {getDocumentNumber(document.id)}</p>
-                <p>Emitido em {formatDateTime(issuedAt)}</p>
-              </div>
-            </div>
+      {loading ? (
+        <section className="mx-auto max-w-[920px] px-5 py-12 sm:px-8">
+          <div className="rounded-[2rem] border border-[#E7DDD7] bg-white/75 p-8 text-sm text-[#2E393F]/60 shadow-sm">
+            Carregando documento médico...
           </div>
-
-          <section className="mt-10 text-center">
-            <h2 className="text-[20px] font-bold uppercase tracking-[0.04em] text-slate-950">
-              {officialTitle}
-            </h2>
-          </section>
-
-          <section className="mt-9 border border-slate-300">
-            <div className="border-b border-slate-300 bg-slate-50 px-4 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                Identificação do paciente
-              </p>
-            </div>
-
-            <div className="grid text-[13px] leading-6">
-              <PatientCell label="Paciente" value={patientName} />
-              <PatientCell label="CPF" value={patient?.cpf || "Não informado"} />
-              <PatientCell
-                label="Nascimento"
-                value={`${formatDate(patient?.birth_date)} â€¢ ${getAge(
-                  patient?.birth_date
-                )}`}
-              />
-              <PatientCell
-                label="Telefone"
-                value={patient?.phone || "Não informado"}
-              />
-              <PatientCell label="Convênio" value={getPatientPlan(patient)} />
-              <PatientCell
-                label="Carteirinha"
-                value={patient?.health_plan_card_number || "Não informado"}
-              />
-            </div>
-          </section>
-
-          <section className="mt-11 flex-1">
-            {document.document_type === "prescription" && (
-              <div>
-                <PaperSectionTitle>Prescrição</PaperSectionTitle>
-
-                <div className="mt-6 space-y-7">
-                  <PaperItem
-                    title="Medicamento"
-                    content={medicationName || "Medicamento não informado."}
+        </section>
+      ) : message ? (
+        <section className="mx-auto max-w-[920px] px-5 py-12 sm:px-8">
+          <div className="rounded-[2rem] border border-red-200 bg-red-50 p-8 text-sm text-red-700 shadow-sm">
+            {message}
+          </div>
+        </section>
+      ) : (
+        <section className="document-preview mx-auto max-w-[900px] px-5 py-10 sm:px-8">
+          <article className="medical-document">
+            <header className="doc-header">
+              <div className="doc-brand">
+                <div className="doc-logo">
+                  <Image
+                    src="/brand/medinexus-logo.png"
+                    alt="MediNexus"
+                    fill
+                    priority
+                    className="object-contain object-left"
                   />
+                </div>
 
-                  <PaperItem
-                    title="Modo de uso"
-                    content={medicationUse || "Modo de uso não informado."}
-                  />
-
-                  {notes && <PaperItem title="Orientações" content={notes} />}
+                <div>
+                  <p className="doc-kicker">Documento médico</p>
+                  <h1 className="doc-heading">{documentType}</h1>
+                  <p className="doc-description">
+                    {getDocumentSubtitle(medicalDocument)}
+                  </p>
                 </div>
               </div>
-            )}
 
-            {document.document_type === "exam_request" && (
-              <div>
-                <PaperSectionTitle>Exame solicitado</PaperSectionTitle>
-
-                <div className="mt-6 space-y-7">
-                  <PaperItem
-                    title="Exame"
-                    content={examName || "Exame não informado."}
-                  />
-
-                  <PaperItem
-                    title="Indicação clínica"
-                    content={
-                      document.clinical_indication ||
-                      "Indicação clínica não informada."
-                    }
-                  />
-
-                  {examObservation && (
-                    <PaperItem title="Observações" content={examObservation} />
-                  )}
-
-                  {document.cid_code && (
-                    <PaperItem
-                      title="CID"
-                      content={`${document.cid_code}${
-                        document.cid_description
-                          ? ` â€” ${document.cid_description}`
-                          : ""
-                      }`}
-                    />
-                  )}
-                </div>
+              <div className="doc-status">
+                <p className="mini-label">Status</p>
+                <p className="status-main">{getStatus(medicalDocument)}</p>
+                <p className="status-date">{formatDateTime(issuedAt)}</p>
               </div>
-            )}
+            </header>
 
-            {document.document_type === "medical_certificate" && (
-              <div>
-                <p className="text-[15.5px] leading-9 text-slate-900">
-                  Atesto, para os devidos fins, que{" "}
-                  <strong>{patientName}</strong>, portador(a) do CPF{" "}
-                  <strong>{patient?.cpf || "não informado"}</strong>, foi
-                  atendido(a) nesta unidade e necessita de afastamento de suas
-                  atividades por{" "}
-                  <strong>{getDaysText(document.days_off)}</strong>.
+            <section className="identity-grid">
+              <div className="identity-card">
+                <p className="mini-label">Paciente</p>
+                <h2>{getPatientName(patient, medicalDocument)}</h2>
+                <p>CPF/documento: {getPatientDocument(patient, medicalDocument)}</p>
+                <p>
+                  Nascimento:{" "}
+                  {patientBirthDate
+                    ? formatDate(patientBirthDate)
+                    : "Não informado"}
                 </p>
-
-                <div className="mt-9 space-y-7">
-                  {document.cid_code && (
-                    <PaperItem
-                      title="CID"
-                      content={`${document.cid_code}${
-                        document.cid_description
-                          ? ` â€” ${document.cid_description}`
-                          : ""
-                      }`}
-                    />
-                  )}
-
-                  {document.purpose && (
-                    <PaperItem title="Finalidade" content={document.purpose} />
-                  )}
-
-                  {notes && <PaperItem title="Observações" content={notes} />}
-                </div>
+                <p>Telefone: {patientPhone || "Não informado"}</p>
               </div>
-            )}
 
-            {document.document_type === "attendance_declaration" && (
-              <div>
-                <p className="text-[15.5px] leading-9 text-slate-900">
-                  Declaro, para os devidos fins, que{" "}
-                  <strong>{patientName}</strong>, portador(a) do CPF{" "}
-                  <strong>{patient?.cpf || "não informado"}</strong>,
-                  compareceu ao atendimento médico nesta unidade na data de{" "}
-                  <strong>{formatDateTime(issuedAt)}</strong>.
+              <div className="identity-card">
+                <p className="mini-label">Profissional</p>
+                <h2>{getDoctorName(doctor, medicalDocument)}</h2>
+                <p>{getDoctorCrm(doctor, medicalDocument)}</p>
+                <p>Responsável pela emissão</p>
+              </div>
+
+              <div className="identity-card">
+                <p className="mini-label">Unidade</p>
+                <h2>{getClinicName(clinic, medicalDocument)}</h2>
+                <p>{getClinicLocation(clinic, medicalDocument)}</p>
+                <p>Atendimento registrado na MediNexus</p>
+              </div>
+            </section>
+
+            <section className="doc-content-area">
+              {mainText && (
+                <div className="clinical-block">
+                  <p className="mini-label">Conteúdo principal</p>
+                  <div className="clinical-text">{mainText}</div>
+                </div>
+              )}
+
+              {detailSections.length > 0 && (
+                <div className="detail-grid">
+                  {detailSections.map((section) => (
+                    <div
+                      key={`${section.title}-${section.value}`}
+                      className="detail-block"
+                    >
+                      <p className="mini-label">{section.title}</p>
+                      <p>{section.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="doc-lower">
+              <div className="signature-block">
+                <div className="signature-line" />
+                <p className="signature-name">
+                  {getDoctorName(doctor, medicalDocument)}
                 </p>
-
-                <div className="mt-9 space-y-7">
-                  {document.purpose && (
-                    <PaperItem title="Finalidade" content={document.purpose} />
-                  )}
-
-                  {notes && <PaperItem title="Observações" content={notes} />}
-                </div>
-              </div>
-            )}
-
-            {document.document_type === "clinical_summary" && (
-              <div>
-                <PaperSectionTitle>Resumo clínico</PaperSectionTitle>
-
-                <div className="mt-6 space-y-7">
-                  <PaperItem
-                    title="Resumo"
-                    content={
-                      document.clinical_indication ||
-                      "Resumo clínico não informado."
-                    }
-                  />
-
-                  {notes && <PaperItem title="Conduta" content={notes} />}
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section className="mt-14">
-            <p className="text-center text-[13px] text-slate-700">
-              {clinic?.address_city || clinic?.city || "Cidade"},{" "}
-              {formatLongDate(issuedAt)}.
-            </p>
-
-            <div className="mt-20 flex justify-center">
-              <div className="w-[350px] text-center">
-                <div className="border-t border-slate-500 pt-3" />
-
-                <p className="text-[14px] font-bold leading-5 text-slate-950">
-                  {document.doctor_name || "Médico responsável"}
-                </p>
-
-                <p className="mt-1 text-[12px] text-slate-600">
-                  CRM {document.doctor_crm || "não informado"}
-                  {document.doctor_crm_state
-                    ? ` / ${document.doctor_crm_state}`
-                    : ""}
+                <p className="signature-crm">
+                  {getDoctorCrm(doctor, medicalDocument)}
                 </p>
               </div>
-            </div>
-          </section>
 
-          <footer className="mt-auto border-t border-slate-200 pt-3">
-            <div className="grid gap-1 text-[9.5px] leading-4 text-slate-500 sm:grid-cols-[1fr_auto] sm:items-center">
-              <p>
-                Documento emitido eletronicamente pela MediNexus. Validade
-                condicionada Ã s informações registradas pelo profissional.
-              </p>
-              <p>NÂº {getDocumentNumber(document.id)}</p>
-            </div>
-          </footer>
-        </article>
-      </section>
+              <div className="validation-row">
+                <div className="validation-copy">
+                  <p className="mini-label">Validação</p>
+                  <p>
+                    {getSignatureStatusLabel(medicalDocument)}. Escaneie o QR
+                    Code para verificar a autenticidade deste documento na
+                    plataforma MediNexus.
+                  </p>
+                </div>
+
+                {finalValidationUrl && (
+                  <div className="qr-box">
+                    <QRCodeSVG value={finalValidationUrl} size={104} />
+                    <p>Validar documento</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <footer className="doc-footer">
+              <p>MediNexus • Saúde conectada</p>
+              <p>ID do documento: {documentId}</p>
+            </footer>
+          </article>
+        </section>
+      )}
+
+      <style jsx global>{`
+        .medical-document {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          min-height: 1120px;
+          overflow: hidden;
+          border: 1px solid #e7ddd7;
+          border-radius: 22px;
+          background: #ffffff;
+          box-shadow: 0 35px 100px -80px rgba(46, 57, 63, 0.75);
+          font-family: Arial, Helvetica, sans-serif;
+          color: #2e393f;
+        }
+
+        .doc-header {
+          display: grid;
+          grid-template-columns: 1fr 160px;
+          gap: 28px;
+          align-items: center;
+          padding: 34px 42px;
+          border-bottom: 1px solid #d8ccc5;
+          background: #faf6f3;
+        }
+
+        .doc-brand {
+          display: grid;
+          gap: 20px;
+        }
+
+        .doc-logo {
+          position: relative;
+          width: 142px;
+          height: 34px;
+        }
+
+        .doc-kicker,
+        .mini-label {
+          margin: 0;
+          text-transform: uppercase;
+          letter-spacing: 0.035em;
+          font-size: 11px;
+          line-height: 1.2;
+          font-weight: 700;
+        }
+
+        .doc-kicker {
+          color: #164957;
+        }
+
+        .mini-label {
+          color: #7a9d8c;
+        }
+
+        .doc-heading {
+          margin: 8px 0 0;
+          font-size: 34px;
+          line-height: 1.02;
+          letter-spacing: -0.035em;
+          font-weight: 720;
+          color: #2e393f;
+        }
+
+        .doc-description {
+          margin: 9px 0 0;
+          max-width: 620px;
+          font-size: 13px;
+          line-height: 1.45;
+          color: rgba(46, 57, 63, 0.68);
+        }
+
+        .doc-status {
+          border: 1px solid #d8ccc5;
+          border-radius: 18px;
+          background: #ffffff;
+          padding: 18px;
+        }
+
+        .status-main {
+          margin: 8px 0 0;
+          font-size: 16px;
+          line-height: 1.2;
+          font-weight: 700;
+        }
+
+        .status-date {
+          margin: 8px 0 0;
+          font-size: 12px;
+          line-height: 1.35;
+          color: rgba(46, 57, 63, 0.62);
+        }
+
+        .identity-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          border-bottom: 1px solid #e7ddd7;
+        }
+
+        .identity-card {
+          min-height: 150px;
+          padding: 24px 22px;
+          border-right: 1px solid #e7ddd7;
+        }
+
+        .identity-card:last-child {
+          border-right: 0;
+        }
+
+        .identity-card h2 {
+          margin: 10px 0 0;
+          font-size: 17px;
+          line-height: 1.25;
+          font-weight: 700;
+          color: #2e393f;
+        }
+
+        .identity-card p:not(.mini-label) {
+          margin: 7px 0 0;
+          font-size: 12.5px;
+          line-height: 1.45;
+          color: rgba(46, 57, 63, 0.68);
+        }
+
+        .doc-content-area {
+          padding: 32px 42px 24px;
+        }
+
+        .clinical-block {
+          margin-bottom: 18px;
+        }
+
+        .clinical-text {
+          min-height: 120px;
+          margin-top: 12px;
+          padding: 24px;
+          border: 1px solid #d8ccc5;
+          border-radius: 18px;
+          background: #ffffff;
+          font-size: 16px;
+          line-height: 1.6;
+          color: #2e393f;
+          white-space: pre-wrap;
+        }
+
+        .detail-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+        }
+
+        .detail-block {
+          min-height: 92px;
+          padding: 18px;
+          border: 1px solid #d8ccc5;
+          border-radius: 16px;
+          background: #ffffff;
+        }
+
+        .detail-block p:last-child {
+          margin: 11px 0 0;
+          font-size: 16px;
+          line-height: 1.4;
+          font-weight: 500;
+          color: #2e393f;
+        }
+
+        .doc-lower {
+          margin-top: auto;
+          padding: 18px 42px 22px;
+        }
+
+        .signature-block {
+          max-width: 470px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .signature-line {
+          height: 1px;
+          width: 100%;
+          background: #2e393f;
+        }
+
+        .signature-name {
+          margin: 13px 0 0;
+          font-size: 16px;
+          line-height: 1.25;
+          font-weight: 700;
+          color: #2e393f;
+        }
+
+        .signature-crm {
+          margin: 4px 0 0;
+          font-size: 12px;
+          line-height: 1.3;
+          color: rgba(46, 57, 63, 0.62);
+        }
+
+        .validation-row {
+          display: grid;
+          grid-template-columns: 1fr 116px;
+          align-items: center;
+          gap: 28px;
+          margin-top: 34px;
+        }
+
+        .validation-copy {
+          padding: 18px;
+          border: 1px solid #d8ccc5;
+          border-radius: 16px;
+          background: #ffffff;
+        }
+
+        .validation-copy p:last-child {
+          margin: 9px 0 0;
+          font-size: 12.5px;
+          line-height: 1.45;
+          color: rgba(46, 57, 63, 0.68);
+        }
+
+        .qr-box {
+          text-align: center;
+        }
+
+        .qr-box p {
+          margin: 5px 0 0;
+          font-size: 9px;
+          color: rgba(46, 57, 63, 0.55);
+        }
+
+        .doc-footer {
+          display: flex;
+          justify-content: space-between;
+          gap: 20px;
+          margin-top: auto;
+          padding: 10px 42px;
+          border-top: 1px solid #e7ddd7;
+          background: #faf6f3;
+          font-size: 9px;
+          line-height: 1.2;
+          color: rgba(46, 57, 63, 0.58);
+        }
+
+        @media print {
+          @page {
+            size: A4;
+            margin: 0;
+          }
+
+          html,
+          body {
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: hidden !important;
+          }
+
+          body > header,
+          .screen-actions,
+          .fixed,
+          .floating,
+          .navbar,
+          nav {
+            display: none !important;
+          }
+
+          body * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
+          }
+
+          main,
+          .document-preview {
+            width: 210mm !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: hidden !important;
+          }
+
+          .medical-document {
+            width: 210mm !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            max-height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          .doc-header {
+            height: 40mm !important;
+            grid-template-columns: 1fr 40mm !important;
+            gap: 10mm !important;
+            padding: 7mm 11mm !important;
+          }
+
+          .doc-logo {
+            width: 38mm !important;
+            height: 8mm !important;
+          }
+
+          .doc-brand {
+            gap: 4mm !important;
+          }
+
+          .doc-kicker,
+          .mini-label {
+            font-size: 8.8pt !important;
+            line-height: 1.2 !important;
+            letter-spacing: 0.025em !important;
+            font-weight: 700 !important;
+          }
+
+          .doc-heading {
+            margin-top: 1.6mm !important;
+            font-size: 25pt !important;
+            line-height: 1.02 !important;
+            letter-spacing: -0.03em !important;
+            font-weight: 700 !important;
+          }
+
+          .doc-description {
+            margin-top: 2mm !important;
+            max-width: 128mm !important;
+            font-size: 9.4pt !important;
+            line-height: 1.38 !important;
+          }
+
+          .doc-status {
+            padding: 4mm !important;
+            border-radius: 4mm !important;
+          }
+
+          .status-main {
+            margin-top: 2mm !important;
+            font-size: 11pt !important;
+            font-weight: 700 !important;
+          }
+
+          .status-date {
+            margin-top: 2mm !important;
+            font-size: 8.8pt !important;
+          }
+
+          .identity-grid {
+            height: 44mm !important;
+          }
+
+          .identity-card {
+            min-height: 44mm !important;
+            padding: 5mm !important;
+          }
+
+          .identity-card h2 {
+            margin-top: 2.5mm !important;
+            font-size: 12.6pt !important;
+            line-height: 1.23 !important;
+            font-weight: 700 !important;
+          }
+
+          .identity-card p:not(.mini-label) {
+            margin-top: 1.8mm !important;
+            font-size: 9.5pt !important;
+            line-height: 1.38 !important;
+          }
+
+          .doc-content-area {
+            padding: 7mm 11mm 5mm !important;
+          }
+
+          .clinical-block {
+            margin-bottom: 4mm !important;
+          }
+
+          .clinical-text {
+            min-height: 34mm !important;
+            margin-top: 2.5mm !important;
+            padding: 5mm !important;
+            border-radius: 4mm !important;
+            font-size: 12.2pt !important;
+            line-height: 1.55 !important;
+          }
+
+          .detail-grid {
+            gap: 4mm !important;
+          }
+
+          .detail-block {
+            min-height: 23mm !important;
+            padding: 4mm !important;
+            border-radius: 4mm !important;
+          }
+
+          .detail-block p:last-child {
+            margin-top: 2.3mm !important;
+            font-size: 12pt !important;
+            line-height: 1.35 !important;
+          }
+
+          .doc-lower {
+            padding: 5mm 11mm 5mm !important;
+          }
+
+          .signature-block {
+            max-width: 105mm !important;
+          }
+
+          .signature-name {
+            margin-top: 3mm !important;
+            font-size: 12pt !important;
+            line-height: 1.25 !important;
+            font-weight: 700 !important;
+          }
+
+          .signature-crm {
+            margin-top: 1mm !important;
+            font-size: 9.2pt !important;
+          }
+
+          .validation-row {
+            grid-template-columns: 1fr 28mm !important;
+            gap: 7mm !important;
+            margin-top: 8mm !important;
+          }
+
+          .validation-copy {
+            padding: 4mm !important;
+            border-radius: 4mm !important;
+          }
+
+          .validation-copy p:last-child {
+            margin-top: 2mm !important;
+            font-size: 9pt !important;
+            line-height: 1.4 !important;
+          }
+
+          .qr-box svg {
+            width: 26mm !important;
+            height: 26mm !important;
+          }
+
+          .qr-box p {
+            margin-top: 1mm !important;
+            font-size: 7pt !important;
+          }
+
+          .doc-footer {
+            height: 8mm !important;
+            padding: 2.2mm 11mm !important;
+            font-size: 7.4pt !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
-
-function PatientCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border-b border-slate-200 px-4 py-2">
-      <span className="font-bold text-slate-950">{label}:</span>{" "}
-      <span className="text-slate-700">{value}</span>
-    </div>
-  );
-}
-
-function PaperSectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <h3 className="border-b border-slate-300 pb-2 text-[13px] font-bold uppercase tracking-[0.12em] text-[#164957]">
-      {children}
-    </h3>
-  );
-}
-
-function PaperItem({ title, content }: { title: string; content: string }) {
-  return (
-    <div>
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate-500">
-        {title}
-      </p>
-      <p className="mt-2 whitespace-pre-line text-[14.5px] leading-8 text-slate-900">
-        {content}
-      </p>
-    </div>
-  );
-}
-

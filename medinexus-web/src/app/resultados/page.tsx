@@ -798,7 +798,7 @@ setLoading(false);
 
                       <p className="mt-2 text-slate-600">
                         {candidate.clinicNeighborhood
-                          ? `${candidate.clinicNeighborhood} â€¢ `
+                          ? `${candidate.clinicNeighborhood} • `
                           : ""}
                         {candidate.clinicCity} / {candidate.clinicState}
                       </p>

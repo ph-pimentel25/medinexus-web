@@ -119,9 +119,9 @@ function buildAddress(clinic: ClinicRow) {
     getClinicState(clinic),
   ]
     .filter(Boolean)
-    .join(" â€¢ ");
+    .join(" • ");
 
-  if (line1 && line2) return `${line1} â€” ${line2}`;
+  if (line1 && line2) return `${line1} — ${line2}`;
   if (line1) return line1;
   return line2 || "Endereço não informado";
 }
@@ -452,7 +452,7 @@ export default function ClinicPublicPage() {
                         </p>
                         <p className="mt-1 text-white/80">
                           {getClinicNeighborhood(clinic)
-                            ? `${getClinicNeighborhood(clinic)} â€¢ `
+                            ? `${getClinicNeighborhood(clinic)} • `
                             : ""}
                           {getClinicCity(clinic)} / {getClinicState(clinic)}
                         </p>

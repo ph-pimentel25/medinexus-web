@@ -105,7 +105,7 @@ function buildReminderEmailHtml(params: {
 }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#303B41;">
-      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Confirmação de consulta â€” MediNexus</h1>
+      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Confirmação de consulta — MediNexus</h1>
       <p>Olá, <strong>${escapeHtml(params.patientName)}</strong>.</p>
       <p>Você tem uma consulta confirmada e precisa confirmar sua presença com antecedência.</p>
 
@@ -168,7 +168,7 @@ function buildExpiredEmailHtml(params: {
 }) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#303B41;">
-      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Consulta liberada â€” MediNexus</h1>
+      <h1 style="margin:0 0 16px;font-size:28px;color:#1B4B58;">Consulta liberada — MediNexus</h1>
       <p>Olá, <strong>${escapeHtml(params.patientName)}</strong>.</p>
       <p>Como sua presença não foi confirmada no prazo, a consulta abaixo foi liberada para outro paciente.</p>
 

@@ -733,7 +733,7 @@ export default function DocumentosMedicosPage() {
                     <span className="font-semibold">Médico:</span>{" "}
                     {item.doctor?.name || "Não informado"}
                     {item.doctor?.crm
-                      ? ` â€¢ CRM ${item.doctor.crm}${
+                      ? ` • CRM ${item.doctor.crm}${
                           item.doctor.crm_state ? ` / ${item.doctor.crm_state}` : ""
                         }`
                       : ""}

@@ -278,7 +278,7 @@ export default function HistoricoClinicoPage() {
 
                   <div className="mt-3 space-y-1 text-sm text-slate-600">
                     <p>
-                      <strong>Médico:</strong> {item.doctorName} â€¢ CRM {item.doctorCrm}
+                      <strong>Médico:</strong> {item.doctorName} • CRM {item.doctorCrm}
                     </p>
                     <p>
                       <strong>Local:</strong> {item.clinicLocation}

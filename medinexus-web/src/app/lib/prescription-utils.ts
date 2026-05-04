@@ -82,7 +82,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
   );
 
   doc.text(
-    `Clínica: ${payload.clinicName}${payload.clinicCity ? ` â€¢ ${payload.clinicCity}` : ""}${payload.clinicState ? `/${payload.clinicState}` : ""}`,
+    `Clínica: ${payload.clinicName}${payload.clinicCity ? ` • ${payload.clinicCity}` : ""}${payload.clinicState ? `/${payload.clinicState}` : ""}`,
     margin + 6,
     67
   );
@@ -272,7 +272,7 @@ export function printPrescription(payload: PrescriptionPayload) {
             <div class="sub">Data de emissão: ${escapeHtml(issueDate)}</div>
             <div class="sub">
               Clínica: ${escapeHtml(payload.clinicName)}
-              ${payload.clinicCity ? " â€¢ " + escapeHtml(payload.clinicCity) : ""}
+              ${payload.clinicCity ? " • " + escapeHtml(payload.clinicCity) : ""}
               ${payload.clinicState ? "/" + escapeHtml(payload.clinicState) : ""}
             </div>
           </div>

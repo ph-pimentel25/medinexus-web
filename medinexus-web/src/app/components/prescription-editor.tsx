@@ -149,7 +149,7 @@ export default function PrescriptionEditor({
                 onChange={(e) => setContent(e.target.value)}
                 rows={12}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--color-brand,#1B4B58)] focus:ring-2 focus:ring-[var(--color-brand,#1B4B58)]/15"
-                placeholder="Ex.:\nâ€¢ Tomar medicamento X de 8/8h por 7 dias\nâ€¢ Retornar em caso de febre\nâ€¢ Realizar exame Y"
+                placeholder="Ex.:\n• Tomar medicamento X de 8/8h por 7 dias\n• Retornar em caso de febre\n• Realizar exame Y"
               />
             </div>
 
@@ -185,7 +185,7 @@ export default function PrescriptionEditor({
               <div className="mt-2 space-y-1 text-sm text-slate-600">
                 <p>
                   <strong>Clínica:</strong> {clinicName}
-                  {clinicCity ? ` â€¢ ${clinicCity}` : ""}
+                  {clinicCity ? ` • ${clinicCity}` : ""}
                   {clinicState ? `/${clinicState}` : ""}
                 </p>
                 <p>
