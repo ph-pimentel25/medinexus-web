@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { User, Award, Building, MapPin, Calendar, Save, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Building, MapPin, Calendar, Save, ArrowLeft, Check, AlertCircle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 type DoctorRow = {
@@ -26,9 +26,6 @@ type ClinicRow = {
   legal_name: string | null;
   city: string | null;
   state: string | null;
-  address_city?: string | null;
-  address_state?: string | null;
-  address_neighborhood?: string | null;
 };
 
 function formatSafeDate(value?: string | null) {
@@ -114,8 +111,7 @@ export default function MedicoPerfilPage() {
 
         setClinic((clinicData as ClinicRow) || null);
       }
-    } catch (err: any) {
-      console.error("Falha ao carregar:", err);
+    } catch {
       setMessage("Erro inesperado ao carregar os dados.");
       setIsError(true);
     } finally {
@@ -123,7 +119,7 @@ export default function MedicoPerfilPage() {
     }
   }
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!doctor?.id) return;
 
@@ -137,7 +133,7 @@ export default function MedicoPerfilPage() {
     setMessage("");
 
     try {
-      const payload: Record<string, any> = {
+      const payload: Record<string, string | boolean | null> = {
         name: name.trim(),
         crm: crm.trim(),
         bio: bio.trim() || null,
@@ -154,8 +150,9 @@ export default function MedicoPerfilPage() {
 
       setMessage("Perfil médico atualizado com sucesso!");
       setIsError(false);
-    } catch (err: any) {
-      setMessage(`Erro ao salvar: ${err.message}`);
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : "Falha na comunicação com o banco.";
+      setMessage(`Erro ao salvar: ${errMessage}`);
       setIsError(true);
     } finally {
       setSaving(false);
@@ -220,7 +217,6 @@ export default function MedicoPerfilPage() {
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.35fr]">
-            {/* Coluna de Informações do Card */}
             <aside className="space-y-6">
               <section className="rounded-2xl border border-[#E7E2DD] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
@@ -235,6 +231,16 @@ export default function MedicoPerfilPage() {
                     }`}>
                       {isActive ? "Perfil Ativo" : "Perfil Pausado"}
                     </span>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl bg-[#FAF6F3] p-3.5 border border-[#E7E2DD]">
+                  <div className="flex justify-between text-xs font-semibold text-[#2E393F]/80">
+                    <span>Completude do Perfil</span>
+                    <span className="text-[#164957] font-bold">{completion}%</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-white overflow-hidden border border-[#E7E2DD]">
+                    <div className="h-full bg-[#164957] transition-all" style={{ width: `${completion}%` }} />
                   </div>
                 </div>
 
@@ -265,10 +271,9 @@ export default function MedicoPerfilPage() {
               </section>
             </aside>
 
-            {/* Formulário de Edição */}
             <section className="rounded-2xl border border-[#E7E2DD] bg-white p-6 sm:p-7 shadow-sm">
               <h2 className="text-lg font-bold text-[#164957]">Editar informações</h2>
-              <p className="text-xs text-[#2E393F]/70 mt-0.5">Dados utilizados na emissão de documentos e receitas com QR Code[cite: 5].</p>
+              <p className="text-xs text-[#2E393F]/70 mt-0.5">Dados utilizados na emissão de documentos e receitas com QR Code.</p>
 
               <form onSubmit={handleSave} className="mt-5 space-y-4">
                 <div>
