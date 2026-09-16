@@ -1,23 +1,38 @@
 ﻿@import "tailwindcss";
 
 /* =========================================================
+   MEDINEXUS - Tailwind v4 Tokens Oficiais
+========================================================= */
+@theme {
+  --color-mn-teal: #164957;
+  --color-mn-teal-light: #D4E8EE;
+  --color-mn-purple: #5A4C86;
+  --color-mn-purple-light: #EAE7F4;
+  --color-mn-sage: #7A9D8C;
+  --color-mn-sage-light: #D8EBE4;
+  --color-mn-graphite: #2E393F;
+  --color-mn-sand: #FAF6F3;
+  --color-mn-border: #E7E2DD;
+}
+
+/* =========================================================
    MEDINEXUS - Global Theme
 ========================================================= */
 
 :root {
-  --background: #f8fafc;
-  --foreground: #071026;
+  --background: #FAF6F3;
+  --foreground: #2E393F;
 
-  --med-blue: #283c7a;
-  --med-blue-dark: #123B46;
-  --med-blue-soft: #f1f5ff;
+  --med-blue: #164957;
+  --med-blue-dark: #0f343e;
+  --med-blue-soft: #D4E8EE;
 
-  --med-purple: #6e56cf;
-  --med-purple-dark: #5e4b9a;
-  --med-purple-soft: #f6f3ff;
+  --med-purple: #5A4C86;
+  --med-purple-dark: #453969;
+  --med-purple-soft: #EAE7F4;
 
-  --med-border: #d9d6f4;
-  --med-slate: #475569;
+  --med-border: #E7E2DD;
+  --med-slate: #2E393F;
   --med-card: #ffffff;
 }
 
@@ -36,6 +51,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -57,8 +74,24 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Scrollbar com cores institucionais */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF6F3;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4E8EE;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #164957;
+}
+
 /* =========================================================
-   MEDINEXUS - Reusable App Classes
+   MEDINEXUS - Reusable App Classes (Preservadas)
 ========================================================= */
 
 .app-shell {
@@ -81,10 +114,10 @@ button:disabled {
 }
 
 .app-card {
-  border: 1px solid rgba(217, 214, 244, 0.75);
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 2rem;
-  box-shadow: 0 24px 80px -64px rgba(40, 60, 122, 0.45);
+  border: 1px solid rgba(231, 226, 221, 0.85);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1.5rem;
+  box-shadow: 0 16px 40px -24px rgba(22, 73, 87, 0.12);
 }
 
 .app-section-title {
@@ -92,7 +125,7 @@ button:disabled {
   line-height: 1.08;
   letter-spacing: -0.035em;
   font-weight: 700;
-  color: #071026;
+  color: #164957;
 }
 
 .app-section-subtitle {
@@ -100,18 +133,19 @@ button:disabled {
   max-width: 48rem;
   font-size: 1rem;
   line-height: 1.75;
-  color: #475569;
+  color: #2E393F;
+  opacity: 0.8;
 }
 
 .app-input {
   width: 100%;
-  border-radius: 1rem;
-  border: 1px solid #d9d6f4;
+  border-radius: 0.875rem;
+  border: 1px solid #E7E2DD;
   background: #ffffff;
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 1rem;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 500;
+  color: #2E393F;
   outline: none;
   transition:
     border-color 180ms ease,
@@ -124,21 +158,21 @@ button:disabled {
 }
 
 .app-input:focus {
-  border-color: #6e56cf;
-  box-shadow: 0 0 0 4px rgba(110, 86, 207, 0.12);
+  border-color: #164957;
+  box-shadow: 0 0 0 3px rgba(22, 73, 87, 0.15);
 }
 
 .app-textarea {
   min-height: 130px;
   width: 100%;
   resize: vertical;
-  border-radius: 1rem;
-  border: 1px solid #d9d6f4;
+  border-radius: 0.875rem;
+  border: 1px solid #E7E2DD;
   background: #ffffff;
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 1rem;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 500;
+  color: #2E393F;
   outline: none;
   transition:
     border-color 180ms ease,
@@ -151,22 +185,22 @@ button:disabled {
 }
 
 .app-textarea:focus {
-  border-color: #6e56cf;
-  box-shadow: 0 0 0 4px rgba(110, 86, 207, 0.12);
+  border-color: #164957;
+  box-shadow: 0 0 0 3px rgba(22, 73, 87, 0.15);
 }
 
 .app-button-primary {
   display: inline-flex;
-  min-height: 3rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem;
-  background: #283c7a;
-  padding: 0.85rem 1.25rem;
+  border-radius: 0.875rem;
+  background: #164957;
+  padding: 0.75rem 1.25rem;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #ffffff;
-  box-shadow: 0 18px 50px -30px rgba(40, 60, 122, 0.9);
+  box-shadow: 0 8px 24px -8px rgba(22, 73, 87, 0.35);
   transition:
     transform 180ms ease,
     background-color 180ms ease,
@@ -175,7 +209,7 @@ button:disabled {
 
 .app-button-primary:hover {
   transform: translateY(-1px);
-  background: #123B46;
+  background: #0f343e;
 }
 
 .app-button-primary:disabled {
@@ -185,16 +219,16 @@ button:disabled {
 
 .app-button-secondary {
   display: inline-flex;
-  min-height: 3rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem;
-  border: 1px solid #d9d6f4;
+  border-radius: 0.875rem;
+  border: 1px solid #E7E2DD;
   background: #ffffff;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: #5e4b9a;
+  font-weight: 600;
+  color: #5A4C86;
   transition:
     transform 180ms ease,
     background-color 180ms ease,
@@ -203,21 +237,21 @@ button:disabled {
 
 .app-button-secondary:hover {
   transform: translateY(-1px);
-  background: #f6f3ff;
-  border-color: #c8c0ef;
+  background: #EAE7F4;
+  border-color: #5A4C86;
 }
 
 .app-button-danger {
   display: inline-flex;
-  min-height: 3rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem;
+  border-radius: 0.875rem;
   border: 1px solid #fecaca;
   background: #fef2f2;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #b91c1c;
   transition:
     transform 180ms ease,
@@ -236,14 +270,10 @@ button:disabled {
 }
 
 /* =========================================================
-   MEDINEXUS - Premium Typography Tuning
-   Visual mais elegante, menos pesado e menos "gritado"
+   MEDINEXUS - Typography Tuning
 ========================================================= */
 
-main .font-black {
-  font-weight: 700 !important;
-}
-
+main .font-black,
 main .font-extrabold {
   font-weight: 700 !important;
 }
@@ -269,81 +299,34 @@ main h3.font-extrabold {
   letter-spacing: -0.025em !important;
 }
 
-main h1[class*="text-7xl"],
-main h1[class*="text-6xl"] {
-  font-size: clamp(2.45rem, 4.2vw, 4.05rem) !important;
-}
-
-main h1[class*="text-5xl"] {
-  font-size: clamp(2.25rem, 3.9vw, 3.65rem) !important;
-}
-
-main h2[class*="text-5xl"],
-main h2[class*="text-4xl"] {
-  font-size: clamp(1.85rem, 2.8vw, 2.75rem) !important;
-  line-height: 1.12 !important;
-}
-
-main h3[class*="text-3xl"] {
-  font-size: clamp(1.35rem, 1.8vw, 1.75rem) !important;
-  line-height: 1.18 !important;
-}
-
 main p {
   letter-spacing: -0.005em;
 }
 
-main .tracking-\[-0\.075em\],
-main .tracking-\[-0\.06em\],
-main .tracking-\[-0\.055em\],
-main .tracking-\[-0\.05em\] {
-  letter-spacing: -0.035em !important;
-}
-
-main .leading-\[0\.92\],
-main .leading-\[0\.98\] {
-  line-height: 1.08 !important;
-}
-
-@media (max-width: 640px) {
-  main h1[class*="text-7xl"],
-  main h1[class*="text-6xl"],
-  main h1[class*="text-5xl"] {
-    font-size: 2.25rem !important;
-    line-height: 1.1 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  main h2[class*="text-5xl"],
-  main h2[class*="text-4xl"] {
-    font-size: 1.85rem !important;
-    line-height: 1.14 !important;
-  }
-
-  main h3[class*="text-3xl"] {
-    font-size: 1.4rem !important;
-    line-height: 1.18 !important;
-  }
-}
-
 /* =========================================================
-   MEDINEXUS - Navbar Tuning
+   MEDINEXUS - Navbar & Grids
 ========================================================= */
 
 .medinexus-navbar-logo {
-  height: 7rem;
+  height: 2.5rem;
   width: auto;
   object-fit: contain;
 }
 
-@media (min-width: 1024px) {
-  .medinexus-navbar-logo {
-    height: 7.25rem;
+.home-hero-grid,
+.home-cards-grid {
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .home-hero-grid,
+  .home-cards-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
 /* =========================================================
-   MEDINEXUS - Print helpers
+   MEDINEXUS - Print Helpers
 ========================================================= */
 
 @media print {
@@ -360,18 +343,3 @@ main .leading-\[0\.98\] {
     border: 1px solid #cbd5e1 !important;
   }
 }
-.home-hero-grid,
-.home-cards-grid {
-  width: 100%;
-}
-
-@media (max-width: 1100px) {
-  .home-hero-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .home-cards-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-

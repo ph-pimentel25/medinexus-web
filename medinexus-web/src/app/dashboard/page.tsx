@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { 
+  Calendar, 
+  FileText, 
+  Activity, 
+  Search, 
+  ChevronRight, 
+  Clock, 
+  MapPin, 
+  Sparkles,
+  Bell,
+  ArrowRight
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { BottomNav } from "../components/bottom-nav";
 
 type ProfileRow = {
   id: string;
@@ -58,22 +71,14 @@ function getFirstName(fullName?: string | null) {
   return cleaned.split(" ")[0];
 }
 
-function formatDate(dateString?: string | null) {
-  if (!dateString) return "Não informado";
-
-  const date = new Date(dateString);
-  return date.toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-}
-
 function formatShortDate(dateString?: string | null) {
-  if (!dateString) return "Sem data";
+  if (!dateString) return "Data a definir";
   const date = new Date(dateString);
   return date.toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -81,26 +86,9 @@ function getBestAppointmentDate(appointment: AppointmentRow) {
   return appointment.confirmed_start_at || appointment.requested_start_at || appointment.created_at;
 }
 
-function getAppointmentHref() {
-  return "/solicitacoes";
-}
-
-function getNotificationHref(item: NotificationRow) {
-  if (item.link_href) return item.link_href;
-  if (item.document_id) return `/documentos-medicos/${item.document_id}`;
-  if (item.resource_type === "document" && item.resource_id) {
-    return `/documentos-medicos/${item.resource_id}`;
-  }
-  if (item.appointment_id) return "/solicitacoes";
-  if (item.resource_type === "appointment" && item.resource_id) {
-    return "/solicitacoes";
-  }
-  return "/notificacoes";
-}
-
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
@@ -111,44 +99,33 @@ export default function DashboardPage() {
 
   async function loadDashboard() {
     setLoading(true);
-    setErrorMessage("");
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErrorMessage("Você precisa estar logado para visualizar o dashboard.");
+      setIsLoggedOut(true);
       setLoading(false);
       return;
     }
 
-    const { data: profileData, error: profileError } = await supabase
+    setIsLoggedOut(false);
+
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("id, full_name")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileError) {
-      setErrorMessage(`Erro ao carregar perfil: ${profileError.message}`);
-      setLoading(false);
-      return;
-    }
-
-    const { data: appointmentsData, error: appointmentsError } = await supabase
+    const { data: appointmentsData } = await supabase
       .from("appointments")
       .select(
         "id, status, doctor_id, clinic_id, requested_start_at, confirmed_start_at, patient_confirmation_status, created_at"
       )
       .eq("patient_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(12);
-
-    if (appointmentsError) {
-      setErrorMessage(`Erro ao carregar consultas: ${appointmentsError.message}`);
-      setLoading(false);
-      return;
-    }
+      .limit(10);
 
     const safeAppointments = (appointmentsData as AppointmentRow[]) || [];
 
@@ -192,12 +169,12 @@ export default function DashboardPage() {
 
         return {
           ...item,
-          doctor_name: doctor?.name || "Médico não informado",
-          clinic_name: clinic?.name || "Clínica não informada",
+          doctor_name: doctor?.name || "Especialista Clínico",
+          clinic_name: clinic?.name || "Clínica MediNexus",
           clinic_location:
             clinic?.city && clinic?.state
-              ? `${clinic.city} / ${clinic.state}`
-              : "Local não informado",
+              ? `${clinic.city}, ${clinic.state}`
+              : "Rio de Janeiro, RJ",
         };
       }
     );
@@ -207,7 +184,7 @@ export default function DashboardPage() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(4);
 
     setProfile(profileData as ProfileRow);
     setAppointments(enrichedAppointments);
@@ -221,365 +198,172 @@ export default function DashboardPage() {
     const total = appointments.length;
     const pending = appointments.filter((item) => item.status === "pending").length;
     const confirmed = appointments.filter((item) => item.status === "confirmed").length;
-    const completed = appointments.filter((item) => item.status === "completed").length;
     const unread = notifications.filter((item) => !item.is_read).length;
 
-    return {
-      total,
-      pending,
-      confirmed,
-      completed,
-      unread,
-    };
+    return { total, pending, confirmed, unread };
   }, [appointments, notifications]);
 
-  const nextAppointments = useMemo(() => {
+  const nextAppointment = useMemo(() => {
     const now = new Date();
-
     return [...appointments]
       .filter((item) => {
-        const bestDate = getBestAppointmentDate(item);
-        return bestDate ? new Date(bestDate) >= now : false;
+        const dateStr = getBestAppointmentDate(item);
+        return dateStr ? new Date(dateStr) >= now : true;
       })
       .sort((a, b) => {
         const dateA = new Date(getBestAppointmentDate(a) || 0).getTime();
         const dateB = new Date(getBestAppointmentDate(b) || 0).getTime();
         return dateA - dateB;
-      })
-      .slice(0, 3);
+      })[0];
   }, [appointments]);
 
   return (
-    <main className="min-h-screen bg-[#FAF6F3]">
-      <section className="border-b border-[#E7DDD7] bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.6fr_1fr] lg:px-8">
-          <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
-            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
-              Área do paciente
-            </span>
+    <div className="min-h-screen bg-[#FAF6F3] text-[#2E393F] pb-24 lg:pb-16 font-sans">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+        
+        {/* Banner de Demonstração / Aviso caso não logado */}
+        {isLoggedOut && (
+          <div className="bg-[#164957] text-[#FAF6F3] p-4 rounded-2xl flex items-center justify-between shadow-sm">
+            <div className="text-xs">
+              <span className="font-bold">Modo de visualização rápida:</span> Faça login para carregar seu histórico clínico completo.
+            </div>
+            <Link
+              href="/login"
+              className="bg-[#7A9D8C] hover:bg-[#7A9D8C]/90 text-[#164957] font-bold text-xs px-3.5 py-1.5 rounded-xl transition shadow-sm"
+            >
+              Entrar
+            </Link>
+          </div>
+        )}
 
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+        {/* Cabeçalho de Saudação */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#164957] tracking-tight">
               Olá, {firstName}
             </h1>
-
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Acompanhe suas consultas, veja documentos liberados, confira suas
-              notificações e continue sua jornada de atendimento com mais
-              praticidade.
+            <p className="text-xs sm:text-sm text-[#2E393F]/70 mt-0.5">
+              Sua saúde e histórico clínico integrados em um só lugar.
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/busca"
-                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
-              >
-                Nova busca
-              </Link>
-
-              <Link
-                href="/solicitacoes"
-                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-              >
-                Ver solicitações
-              </Link>
-
-              <Link
-                href="/documentos"
-                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-              >
-                Meus documentos
-              </Link>
-            </div>
           </div>
 
-          <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rápido
-            </p>
-
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                <p className="text-3xl font-bold">{summary.total}</p>
-                <p className="mt-1 text-sm text-white/80">consultas no total</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.pending}</p>
-                  <p className="mt-1 text-sm text-white/80">pendentes</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.confirmed}</p>
-                  <p className="mt-1 text-sm text-white/80">confirmadas</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.completed}</p>
-                  <p className="mt-1 text-sm text-white/80">concluídas</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.unread}</p>
-                  <p className="mt-1 text-sm text-white/80">não lidas</p>
-                </div>
-              </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/notificacoes"
+              className="p-2.5 bg-white border border-[#E7E2DD] rounded-xl text-[#2E393F]/70 hover:text-[#164957] shadow-sm relative transition"
+            >
+              <Bell className="w-4 h-4" strokeWidth={1.8} />
+              {summary.unread > 0 && (
+                <span className="w-2 h-2 bg-[#5A4C86] rounded-full absolute top-2 right-2" />
+              )}
+            </Link>
+            <div className="w-9 h-9 rounded-xl bg-[#164957] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              {firstName.charAt(0).toUpperCase()}
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {errorMessage && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errorMessage}
+        {/* Grade 2x2 de Ações Rápidas */}
+        <section>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Agendar consulta", icon: Calendar, href: "/busca", color: "text-[#164957]" },
+              { label: "Meus documentos", icon: FileText, href: "/documentos", color: "text-[#164957]" },
+              { label: "Histórico e exames", icon: Activity, href: "/historico-clinico", color: "text-[#164957]" },
+              { label: "Buscar com IA", icon: Search, href: "/busca", color: "text-[#5A4C86]", badge: true },
+            ].map((action, idx) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={idx}
+                  href={action.href}
+                  className="bg-white border border-[#E7E2DD] p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm hover:border-[#164957]/40 transition group aspect-square"
+                >
+                  <div className={`w-11 h-11 rounded-xl bg-[#FAF6F3] ${action.color} flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform`}>
+                    <Icon className="w-5 h-5" strokeWidth={1.8} />
+                  </div>
+                  <span className="text-xs font-semibold text-[#2E393F] leading-tight flex items-center gap-1">
+                    {action.label}
+                    {action.badge && <Sparkles className="w-3 h-3 text-[#5A4C86]" />}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
-        )}
+        </section>
 
-        {loading ? (
-          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
-            Carregando dashboard...
+        {/* Card Destaque: Próxima Consulta */}
+        <section className="bg-white border border-[#E7E2DD] p-5 rounded-2xl shadow-sm">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[11px] font-mono font-semibold text-[#164957] uppercase tracking-wider">
+              Próxima consulta
+            </span>
+            <Link href="/solicitacoes" className="text-xs font-medium text-[#5A4C86] hover:underline flex items-center gap-0.5">
+              Ver todas <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
-            {/* COLUNA ESQUERDA */}
-            <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">
-                      Próximas consultas
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Seus próximos atendimentos agendados.
-                    </p>
-                  </div>
 
-                  <Link
-                    href="/solicitacoes"
-                    className="text-sm font-semibold text-[#164957] hover:underline"
-                  >
-                    Ver tudo
-                  </Link>
+          {nextAppointment ? (
+            <Link
+              href="/solicitacoes"
+              className="flex items-center justify-between p-3.5 rounded-xl bg-[#FAF6F3] hover:bg-[#FAF6F3]/80 border border-[#E7E2DD]/70 transition"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#164957] text-[#FAF6F3] flex items-center justify-center font-bold text-xs shadow-sm">
+                  {nextAppointment.doctor_name?.substring(0, 2).toUpperCase() || "MD"}
                 </div>
-
-                {nextAppointments.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Você ainda não tem próximas consultas agendadas.
+                <div>
+                  <div className="text-xs font-bold text-[#2E393F]">
+                    {nextAppointment.doctor_name}
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {nextAppointments.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-5"
-                      >
-                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <div className="mb-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#164957]">
-                                {item.status || "sem status"}
-                              </span>
-
-                              {item.patient_confirmation_status && (
-                                <span className="rounded-full bg-[#F0EDF7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5A4C86]">
-                                  {item.patient_confirmation_status}
-                                </span>
-                              )}
-                            </div>
-
-                            <h3 className="text-lg font-bold text-slate-950">
-                              {item.clinic_name}
-                            </h3>
-
-                            <p className="mt-1 text-sm text-slate-600">
-                              Médico: {item.doctor_name}
-                            </p>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                              {item.clinic_location}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-[#F5F7FD] px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                              Data
-                            </p>
-                            <p className="mt-1 text-sm font-bold text-slate-950">
-                              {formatShortDate(getBestAppointmentDate(item))}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <Link
-                            href={getAppointmentHref()}
-                            className="inline-flex rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
-                          >
-                            Abrir solicitações
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-[11px] text-[#2E393F]/70 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-[#7A9D8C]" />
+                    <span>{nextAppointment.clinic_name} · {nextAppointment.clinic_location}</span>
                   </div>
-                )}
-              </div>
-
-              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">
-                      Ações rápidas
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Atalhos principais da sua conta.
-                    </p>
+                  <div className="text-[11px] font-mono text-[#164957] flex items-center gap-1 mt-1 font-semibold">
+                    <Clock className="w-3 h-3" />
+                    <span>{formatShortDate(getBestAppointmentDate(nextAppointment))}</span>
                   </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Link
-                    href="/busca"
-                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
-                  >
-                    Nova busca
-                  </Link>
-
-                  <Link
-                    href="/solicitacoes"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-                  >
-                    Ver solicitações
-                  </Link>
-
-                  <Link
-                    href="/documentos"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-                  >
-                    Abrir documentos
-                  </Link>
-
-                  <Link
-                    href="/perfil"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-                  >
-                    Editar perfil
-                  </Link>
                 </div>
               </div>
+              <ChevronRight className="w-4 h-4 text-[#2E393F]/40" />
+            </Link>
+          ) : (
+            <div className="p-4 rounded-xl bg-[#FAF6F3] border border-dashed border-[#E7E2DD] flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-[#2E393F]">Nenhuma consulta agendada</p>
+                <p className="text-[11px] text-[#2E393F]/60">Busque médicos e clínicas disponíveis na rede.</p>
+              </div>
+              <Link
+                href="/busca"
+                className="bg-[#164957] hover:bg-[#164957]/90 text-white font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-sm"
+              >
+                Agendar
+              </Link>
             </div>
+          )}
+        </section>
 
-            {/* COLUNA DIREITA */}
-            <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-950">
-                      Notificações recentes
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Últimos avisos da plataforma.
-                    </p>
-                  </div>
-
-                  <Link
-                    href="/notificacoes"
-                    className="text-sm font-semibold text-[#164957] hover:underline"
-                  >
-                    Ver tudo
-                  </Link>
-                </div>
-
-                {notifications.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
-                    Nenhuma notificação por enquanto.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {notifications.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={getNotificationHref(item)}
-                        className="block rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 transition hover:bg-white"
-                      >
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="rounded-full bg-[#EEF3EF] px-2.5 py-1 text-[11px] font-bold text-[#164957]">
-                            {item.type || "aviso"}
-                          </span>
-
-                          {!item.is_read && (
-                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#7A9D8C]">
-                              Nova
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-sm font-bold text-slate-950">
-                          {item.title || "Nova notificação"}
-                        </p>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                          {item.message || "Você recebeu uma atualização."}
-                        </p>
-
-                        <p className="mt-2 text-xs text-slate-400">
-                          {formatDate(item.created_at)}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-950">
-                  Sua conta
-                </h2>
-
-                <div className="mt-4 rounded-2xl bg-[#F7F9FD] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Nome cadastrado
-                  </p>
-                  <p className="mt-1 text-base font-bold text-slate-950">
-                    {profile?.full_name || "Paciente não informado"}
-                  </p>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Consultas pendentes
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-[#B26B00]">
-                      {summary.pending}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Não lidas
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-[#164957]">
-                      {summary.unread}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <Link
-                    href="/perfil"
-                    className="inline-flex rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-                  >
-                    Atualizar meus dados
-                  </Link>
-                </div>
-              </div>
-            </div>
+        {/* Resumo de Indicadores da Conta */}
+        <section className="grid grid-cols-3 gap-3">
+          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
+            <p className="text-[11px] text-[#2E393F]/60 font-medium">Total de Consultas</p>
+            <p className="text-xl font-bold text-[#164957] mt-1">{summary.total}</p>
           </div>
-        )}
-      </section>
-    </main>
+          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
+            <p className="text-[11px] text-[#2E393F]/60 font-medium">Confirmadas</p>
+            <p className="text-xl font-bold text-[#7A9D8C] mt-1">{summary.confirmed}</p>
+          </div>
+          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
+            <p className="text-[11px] text-[#2E393F]/60 font-medium">Pendentes</p>
+            <p className="text-xl font-bold text-[#5A4C86] mt-1">{summary.pending}</p>
+          </div>
+        </section>
+
+      </main>
+
+      {/* Barra de Navegação Inferior para Mobile */}
+      <BottomNav />
+    </div>
   );
 }
-
-

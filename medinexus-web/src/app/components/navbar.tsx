@@ -130,6 +130,13 @@ export default function Navbar() {
 
   const accountRef = useRef<HTMLDivElement | null>(null);
 
+  if (
+    pathname?.startsWith("/medico") ||
+    pathname?.startsWith("/clinica")
+  ) {
+    return null;
+  }
+
   useEffect(() => {
     loadUser();
 
@@ -249,30 +256,33 @@ export default function Navbar() {
   const initials = getInitials(displayName, user?.email || null, role);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E7DDD7] bg-white/88 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-[1500px] grid-cols-[auto_1fr_auto] items-center gap-5 px-5 py-3 sm:px-8 lg:px-10">
-        <Link href={user ? homeHref : "/"} className="flex shrink-0 items-center">
-          <div className="relative h-[76px] w-[260px] sm:h-[82px] sm:w-[300px] lg:h-[88px] lg:w-[340px]">
-            <Image
-              src={LOGO_SRC}
-              alt="MediNexus"
-              fill
-              priority
-              sizes="340px"
-              className="object-contain object-left"
-            />
-          </div>
-        </Link>
+    <header className="sticky top-0 z-50 border-b border-[#E7E2DD] bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2.5 sm:px-6 lg:px-8">
+        
+        {/* Bloco Esquerdo: Logo + Links de Navegação Unidos */}
+        <div className="flex items-center gap-8 lg:gap-10">
+          <Link href={user ? homeHref : "/"} className="flex shrink-0 items-center">
+            <div className="relative h-[72px] w-[240px] sm:h-[80px] sm:w-[280px] lg:h-[86px] lg:w-[300px]">
+              <Image
+                src={LOGO_SRC}
+                alt="MediNexus"
+                fill
+                priority
+                sizes="(max-width: 768px) 240px, 300px"
+                className="object-contain object-left"
+              />
+            </div>
+          </Link>
 
-        <div className="hidden justify-center xl:flex">
-          <nav className="flex items-center gap-1 rounded-full border border-[#D8CCC5] bg-[#FAF6F3]/80 px-2 py-2 shadow-[0_14px_40px_-28px_rgba(46,57,63,0.55)] backdrop-blur">
+          {/* Links do Menu logo ao lado da Logo */}
+          <nav className="hidden xl:flex items-center gap-1 rounded-full border border-[#E7E2DD] bg-[#FAF6F3]/80 px-2 py-1.5 shadow-sm backdrop-blur">
             {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-5 py-3 text-[14px] font-semibold transition ${
+                className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
                   isActive(pathname, item.href)
-                    ? "bg-[#EEF3EF] text-[#164957]"
+                    ? "bg-[#164957] text-white shadow-sm"
                     : "text-[#2E393F]/75 hover:bg-white hover:text-[#164957]"
                 }`}
               >
@@ -282,6 +292,7 @@ export default function Navbar() {
           </nav>
         </div>
 
+        {/* Bloco Direito: Notificações e Ações/Conta */}
         <div className="hidden items-center justify-end gap-3 xl:flex">
           {!loading && user && <NotificationBell />}
 
@@ -289,14 +300,14 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="rounded-2xl border border-[#D8CCC5] bg-white/80 px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2.5 text-xs font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
               >
                 Entrar
               </Link>
 
               <Link
                 href="/cadastro"
-                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                className="rounded-xl bg-[#164957] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#164957]/90 shadow-sm"
               >
                 Criar conta
               </Link>
@@ -308,70 +319,68 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setAccountOpen((prev) => !prev)}
-                className="flex items-center gap-3 rounded-2xl border border-[#D8CCC5] bg-white/85 px-3 py-2 shadow-sm transition hover:bg-[#FAF6F3]"
+                className="flex items-center gap-2.5 rounded-xl border border-[#E7E2DD] bg-white px-3 py-1.5 shadow-sm transition hover:bg-[#FAF6F3]"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#164957] to-[#5A4C86] text-sm font-bold text-white">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#164957] text-xs font-bold text-[#FAF6F3]">
                   {initials}
                 </div>
 
                 <div className="text-left">
-                  <p className="max-w-[130px] truncate text-sm font-bold text-[#2E393F]">
+                  <p className="max-w-[120px] truncate text-xs font-bold text-[#2E393F]">
                     {firstName}
                   </p>
-                  <p className="text-xs text-[#2E393F]/55">{roleLabel}</p>
+                  <p className="text-[10px] text-[#2E393F]/60 font-medium">{roleLabel}</p>
                 </div>
 
-                <span className="text-xs font-bold text-[#2E393F]/40">▼</span>
+                <span className="text-[10px] font-bold text-[#2E393F]/40 ml-1">▼</span>
               </button>
 
               {accountOpen && (
-                <div className="absolute right-0 top-[calc(100%+12px)] z-[9999] w-[280px] overflow-hidden rounded-[28px] border border-[#D8CCC5] bg-white shadow-[0_30px_80px_-35px_rgba(46,57,63,0.45)]">
-                  <div className="border-b border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F0EDF7] p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#164957] to-[#5A4C86] text-sm font-bold text-white">
+                <div className="absolute right-0 top-[calc(100%+8px)] z-[9999] w-[260px] overflow-hidden rounded-2xl border border-[#E7E2DD] bg-white shadow-lg">
+                  <div className="border-b border-[#E7E2DD] bg-[#FAF6F3] p-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#164957] text-xs font-bold text-white">
                         {initials}
                       </div>
 
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-[#2E393F]">
-                          {firstName}
+                        <p className="truncate text-xs font-bold text-[#2E393F]">
+                          {displayName || firstName}
                         </p>
-                        <p className="truncate text-xs text-[#2E393F]/55">
+                        <p className="truncate text-[11px] text-[#2E393F]/60">
                           {user.email || "Usuário"}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3">
-                    <div className="space-y-2">
-                      <Link
-                        href={homeHref}
-                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                      >
-                        Dashboard
-                      </Link>
+                  <div className="p-2 space-y-1">
+                    <Link
+                      href={homeHref}
+                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
+                    >
+                      Dashboard
+                    </Link>
 
-                      <Link
-                        href={profileHref}
-                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                      >
-                        Perfil / Conta
-                      </Link>
+                    <Link
+                      href={profileHref}
+                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
+                    >
+                      Perfil / Conta
+                    </Link>
 
-                      <Link
-                        href="/notificacoes"
-                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                      >
-                        Notificações
-                      </Link>
-                    </div>
+                    <Link
+                      href="/notificacoes"
+                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
+                    >
+                      Notificações
+                    </Link>
 
-                    <div className="mt-3 border-t border-[#E7DDD7] pt-3">
+                    <div className="pt-1.5 border-t border-[#E7E2DD]">
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="w-full rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50"
                       >
                         Sair
                       </button>
@@ -383,27 +392,28 @@ export default function Navbar() {
           )}
         </div>
 
+        {/* Botão Mobile */}
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex h-12 w-12 items-center justify-center justify-self-end rounded-2xl border border-[#D8CCC5] bg-white text-xl font-bold text-[#164957] xl:hidden"
-          aria-label="Abrir menu"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E7E2DD] bg-white text-lg font-bold text-[#164957] xl:hidden"
+          aria-label="Menu"
         >
-          {mobileOpen ? "×" : "☰"}
+          {mobileOpen ? "✕" : "☰"}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-[#E7DDD7] bg-white px-4 py-4 xl:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-2">
+        <div className="border-t border-[#E7E2DD] bg-white px-4 py-3 xl:hidden">
+          <div className="flex flex-col gap-1.5">
             {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                className={`rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
                   isActive(pathname, item.href)
-                    ? "bg-[#EEF3EF] text-[#164957]"
-                    : "bg-[#FAF6F3] text-[#2E393F]/75 hover:text-[#164957]"
+                    ? "bg-[#164957] text-white"
+                    : "bg-[#FAF6F3] text-[#2E393F]/80 hover:text-[#164957]"
                 }`}
               >
                 {item.label}
@@ -414,22 +424,15 @@ export default function Navbar() {
               <>
                 <Link
                   href="/notificacoes"
-                  className="mt-2 rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-center text-sm font-semibold text-[#164957]"
+                  className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2.5 text-center text-xs font-semibold text-[#164957]"
                 >
                   Notificações
-                </Link>
-
-                <Link
-                  href={profileHref}
-                  className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-center text-sm font-semibold text-[#5A4C86]"
-                >
-                  Perfil / Conta
                 </Link>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-600"
                 >
                   Sair
                 </button>
@@ -437,21 +440,21 @@ export default function Navbar() {
             )}
 
             {!loading && !user && (
-              <>
+              <div className="grid grid-cols-2 gap-2 mt-2">
                 <Link
                   href="/login"
-                  className="mt-2 rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-center text-sm font-semibold text-[#5A4C86]"
+                  className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2 text-center text-xs font-semibold text-[#5A4C86]"
                 >
                   Entrar
                 </Link>
 
                 <Link
                   href="/cadastro"
-                  className="rounded-2xl bg-[#164957] px-5 py-3 text-center text-sm font-semibold text-white"
+                  className="rounded-xl bg-[#164957] px-4 py-2 text-center text-xs font-semibold text-white"
                 >
                   Criar conta
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
