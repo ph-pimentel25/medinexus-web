@@ -130,13 +130,6 @@ export default function Navbar() {
 
   const accountRef = useRef<HTMLDivElement | null>(null);
 
-  if (
-    pathname?.startsWith("/medico") ||
-    pathname?.startsWith("/clinica")
-  ) {
-    return null;
-  }
-
   useEffect(() => {
     loadUser();
 
@@ -188,8 +181,8 @@ export default function Navbar() {
 
     let detectedRole: UserRole = "patient";
     let foundDisplayName = "";
-    let foundClinicId: string | null = null;
 
+    // 1. Checagem de Médico
     const { data: doctorData } = await supabase
       .from("doctors")
       .select("id, name")
@@ -200,29 +193,39 @@ export default function Navbar() {
       detectedRole = "doctor";
       foundDisplayName = doctorData.name || "";
     } else {
-      const { data: clinicMemberData } = await supabase
-        .from("clinic_members")
-        .select("clinic_id")
+      // 2. Checagem direta de Dono de Clínica
+      const { data: clinicDirectData } = await supabase
+        .from("clinics")
+        .select("id, trade_name, legal_name")
         .eq("user_id", authUser.id)
-        .limit(1)
         .maybeSingle();
 
-      if (clinicMemberData?.clinic_id) {
+      if (clinicDirectData?.id) {
         detectedRole = "clinic";
-        foundClinicId = clinicMemberData.clinic_id;
+        foundDisplayName = clinicDirectData.trade_name || clinicDirectData.legal_name || "Clínica";
+      } else {
+        // 3. Checagem de Membro/Equipe da Clínica
+        const { data: clinicMemberData } = await supabase
+          .from("clinic_members")
+          .select("clinic_id")
+          .eq("user_id", authUser.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (clinicMemberData?.clinic_id) {
+          detectedRole = "clinic";
+          const { data: clinicData } = await supabase
+            .from("clinics")
+            .select("trade_name, legal_name")
+            .eq("id", clinicMemberData.clinic_id)
+            .maybeSingle();
+
+          foundDisplayName = clinicData?.trade_name || clinicData?.legal_name || "Clínica";
+        }
       }
     }
 
-    if (detectedRole === "clinic" && foundClinicId) {
-      const { data: clinicData } = await supabase
-        .from("clinics")
-        .select("trade_name, legal_name")
-        .eq("id", foundClinicId)
-        .maybeSingle();
-
-      foundDisplayName = clinicData?.trade_name || clinicData?.legal_name || "";
-    }
-
+    // 4. Se confirmado como Paciente
     if (detectedRole === "patient") {
       const { data: profileData } = await supabase
         .from("profiles")
@@ -255,11 +258,16 @@ export default function Navbar() {
   const firstName = getFirstName(displayName, user?.email || null);
   const initials = getInitials(displayName, user?.email || null, role);
 
+  if (
+    pathname?.startsWith("/medico") ||
+    pathname?.startsWith("/clinica")
+  ) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#E7E2DD] bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2.5 sm:px-6 lg:px-8">
-        
-        {/* Bloco Esquerdo: Logo + Links de Navegação Unidos */}
         <div className="flex items-center gap-8 lg:gap-10">
           <Link href={user ? homeHref : "/"} className="flex shrink-0 items-center">
             <div className="relative h-[72px] w-[240px] sm:h-[80px] sm:w-[280px] lg:h-[86px] lg:w-[300px]">
@@ -274,8 +282,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Links do Menu logo ao lado da Logo */}
-          <nav className="hidden xl:flex items-center gap-1 rounded-full border border-[#E7E2DD] bg-[#FAF6F3]/80 px-2 py-1.5 shadow-sm backdrop-blur">
+          <nav className="hidden xl:flex items-center gap-1 rounded-full border border-[#E7E2DD] bg-[#FAF6F3]/80 px-2.5 py-1.5 shadow-sm backdrop-blur">
             {links.map((item) => (
               <Link
                 key={item.href}
@@ -292,7 +299,6 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Bloco Direito: Notificações e Ações/Conta */}
         <div className="hidden items-center justify-end gap-3 xl:flex">
           {!loading && user && <NotificationBell />}
 
@@ -392,7 +398,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Botão Mobile */}
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
@@ -402,63 +407,6 @@ export default function Navbar() {
           {mobileOpen ? "✕" : "☰"}
         </button>
       </div>
-
-      {mobileOpen && (
-        <div className="border-t border-[#E7E2DD] bg-white px-4 py-3 xl:hidden">
-          <div className="flex flex-col gap-1.5">
-            {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
-                  isActive(pathname, item.href)
-                    ? "bg-[#164957] text-white"
-                    : "bg-[#FAF6F3] text-[#2E393F]/80 hover:text-[#164957]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-
-            {!loading && user && (
-              <>
-                <Link
-                  href="/notificacoes"
-                  className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2.5 text-center text-xs font-semibold text-[#164957]"
-                >
-                  Notificações
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-600"
-                >
-                  Sair
-                </button>
-              </>
-            )}
-
-            {!loading && !user && (
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <Link
-                  href="/login"
-                  className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2 text-center text-xs font-semibold text-[#5A4C86]"
-                >
-                  Entrar
-                </Link>
-
-                <Link
-                  href="/cadastro"
-                  className="rounded-xl bg-[#164957] px-4 py-2 text-center text-xs font-semibold text-white"
-                >
-                  Criar conta
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
