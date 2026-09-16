@@ -10,6 +10,7 @@ import {
 } from "react";
 import Alert from "../components/alert";
 import { geocodeBrazilAddress } from "../lib/geocode";
+import { reverseGeocode } from "../lib/geolocation";
 import { supabase } from "../lib/supabase";
 
 type ProfileRow = {
@@ -179,11 +180,11 @@ export default function PerfilPage() {
     }
 
     setCapturingLocation(true);
-    setMessage("Capturando sua localização precisa...");
+    setMessage("Capturando localização e identificando endereço...");
     setMessageType("info");
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
@@ -192,13 +193,32 @@ export default function PerfilPage() {
           longitude,
         });
 
-        setMessage("Localização precisa capturada com sucesso.");
-        setMessageType("success");
-        setCapturingLocation(false);
+        try {
+          const loc = await reverseGeocode(latitude, longitude);
+
+          setForm((prev) => ({
+            ...prev,
+            address_street: loc.street || prev.address_street,
+            address_neighborhood: loc.neighborhood || prev.address_neighborhood,
+            address_city: loc.city || prev.address_city,
+            address_state: loc.state || prev.address_state,
+            address_zipcode: loc.postalCode || prev.address_zipcode,
+          }));
+
+          setMessage("Localização e endereço identificados com sucesso!");
+          setMessageType("success");
+        } catch (err) {
+          console.error("Erro ao resolver endereço pelo GPS:", err);
+          setMessage("Coordenadas capturadas! Preencha os detalhes do endereço manualmente caso necessário.");
+          setMessageType("info");
+        } finally {
+          setCapturingLocation(false);
+        }
       },
-      () => {
+      (error) => {
+        console.error("Erro no GPS:", error.message);
         setMessage(
-          "Não foi possível capturar sua localização. Verifique a permissão do navegador."
+          "Não foi possível capturar sua localização. Verifique as permissões de GPS no navegador."
         );
         setMessageType("error");
         setCapturingLocation(false);
@@ -593,7 +613,7 @@ export default function PerfilPage() {
       <section className="app-shell py-10">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1B4B58]">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#164957]">
               Perfil do paciente
             </p>
             <h1 className="mt-3 app-section-title">
@@ -724,16 +744,16 @@ export default function PerfilPage() {
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={capturingLocation}
-                className="rounded-2xl border border-[#1B4B58]/20 bg-[#EAF1F0] px-5 py-3 text-sm font-bold text-[#1B4B58] transition hover:bg-[#DDEBE8] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-2xl border border-[#164957]/20 bg-[#FAF6F3] px-5 py-3 text-sm font-bold text-[#164957] transition hover:bg-[#EEF3EF] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {capturingLocation
-                  ? "Capturando localização..."
+                  ? "Capturando e identificando endereço..."
                   : "Usar minha localização atual"}
               </button>
 
               {deviceCoordinates.latitude && deviceCoordinates.longitude ? (
-                <p className="text-sm font-semibold text-emerald-700">
-                  Localização precisa capturada.
+                <p className="text-sm font-semibold text-[#164957]">
+                  Localização precisa e endereço capturados.
                 </p>
               ) : savedCoordinates.latitude && savedCoordinates.longitude ? (
                 <p className="text-sm text-slate-500">
@@ -866,7 +886,7 @@ export default function PerfilPage() {
                 onClick={() => handlePaymentModeChange("health_plan")}
                 className={`rounded-3xl border p-6 text-left transition ${
                   paymentMode === "health_plan"
-                    ? "border-[#1B4B58] bg-[#EAF1F0] text-[#1B4B58]"
+                    ? "border-[#164957] bg-[#EEF3EF] text-[#164957]"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -881,7 +901,7 @@ export default function PerfilPage() {
                 onClick={() => handlePaymentModeChange("private")}
                 className={`rounded-3xl border p-6 text-left transition ${
                   paymentMode === "private"
-                    ? "border-[#594E86] bg-[#F4F1FB] text-[#594E86]"
+                    ? "border-[#5A4C86] bg-[#F4F1FB] text-[#5A4C86]"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -1031,7 +1051,7 @@ export default function PerfilPage() {
           )}
 
           {paymentMode === "private" && (
-            <div className="rounded-3xl border border-purple-200 bg-purple-50 p-6 text-purple-800">
+            <div className="rounded-3xl border border-[#5A4C86]/20 bg-[#F4F1FB] p-6 text-[#5A4C86]">
               <p className="font-black">Atendimento particular selecionado</p>
               <p className="mt-2 text-sm leading-6">
                 Os campos de plano de saúde não serão exigidos. A busca poderá
@@ -1101,5 +1121,3 @@ export default function PerfilPage() {
     </main>
   );
 }
-
-
