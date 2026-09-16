@@ -10,7 +10,7 @@ type DoctorRow = {
   user_id: string | null;
   clinic_id: string | null;
   name: string | null;
-  crm: string | null;
+  crm: string | number | null;
   crm_state?: string | null;
   crm_uf?: string | null;
   state?: string | null;
@@ -22,10 +22,11 @@ type DoctorRow = {
 
 type ClinicRow = {
   id: string;
-  trade_name: string | null;
-  legal_name: string | null;
-  city: string | null;
-  state: string | null;
+  name?: string | null;
+  trade_name?: string | null;
+  legal_name?: string | null;
+  city?: string | null;
+  state?: string | null;
 };
 
 function formatSafeDate(value?: string | null) {
@@ -95,24 +96,26 @@ export default function MedicoPerfilPage() {
 
       const doc = doctorData as DoctorRow;
       setDoctor(doc);
-      setName(doc.name || "");
-      setCrm(doc.crm || "");
-      setCrmState(doc.crm_state || doc.crm_uf || doc.state || "RJ");
-      setSpecialty(doc.specialty || "Clínica Geral");
-      setBio(doc.bio || "");
+      
+      // Conversão estrita para string prevenindo erro de .trim()
+      setName(String(doc.name || ""));
+      setCrm(String(doc.crm || ""));
+      setCrmState(String(doc.crm_state || doc.crm_uf || doc.state || "RJ"));
+      setSpecialty(String(doc.specialty || "Clínica Geral"));
+      setBio(String(doc.bio || ""));
       setIsActive(doc.is_active ?? true);
 
       if (doc.clinic_id) {
         const { data: clinicData } = await supabase
           .from("clinics")
-          .select("id, trade_name, legal_name, city, state")
+          .select("*")
           .eq("id", doc.clinic_id)
           .maybeSingle();
 
         setClinic((clinicData as ClinicRow) || null);
       }
     } catch {
-      setMessage("Erro inesperado ao carregar os dados.");
+      setMessage("Erro inesperado ao processar os dados profissionais.");
       setIsError(true);
     } finally {
       setLoading(false);
@@ -123,7 +126,10 @@ export default function MedicoPerfilPage() {
     e.preventDefault();
     if (!doctor?.id) return;
 
-    if (!name.trim() || !crm.trim()) {
+    const safeName = String(name || "").trim();
+    const safeCrm = String(crm || "").trim();
+
+    if (!safeName || !safeCrm) {
       setMessage("Preencha nome e CRM.");
       setIsError(true);
       return;
@@ -134,15 +140,15 @@ export default function MedicoPerfilPage() {
 
     try {
       const payload: Record<string, string | boolean | null> = {
-        name: name.trim(),
-        crm: crm.trim(),
-        bio: bio.trim() || null,
+        name: safeName,
+        crm: safeCrm,
+        bio: String(bio || "").trim() || null,
         is_active: isActive,
       };
 
-      if (doctor.crm_state !== undefined) payload.crm_state = crmState.trim().toUpperCase();
-      if (doctor.crm_uf !== undefined) payload.crm_uf = crmState.trim().toUpperCase();
-      if (doctor.specialty !== undefined) payload.specialty = specialty.trim();
+      if (doctor.crm_state !== undefined) payload.crm_state = String(crmState || "RJ").trim().toUpperCase();
+      if (doctor.crm_uf !== undefined) payload.crm_uf = String(crmState || "RJ").trim().toUpperCase();
+      if (doctor.specialty !== undefined) payload.specialty = String(specialty || "").trim();
 
       const { error } = await supabase.from("doctors").update(payload).eq("id", doctor.id);
 
@@ -160,10 +166,17 @@ export default function MedicoPerfilPage() {
   }
 
   const completion = useMemo(() => {
-    const fields = [name.trim(), crm.trim(), crmState.trim(), bio.trim()];
+    const fields = [
+      String(name || "").trim(),
+      String(crm || "").trim(),
+      String(crmState || "").trim(),
+      String(bio || "").trim(),
+    ];
     const done = fields.filter(Boolean).length;
     return Math.round((done / fields.length) * 100);
   }, [name, crm, crmState, bio]);
+
+  const clinicDisplayName = clinic?.trade_name || clinic?.name || clinic?.legal_name || "Atendimento Autônomo";
 
   return (
     <main className="min-h-screen bg-[#FAF6F3] text-[#2E393F] font-sans pb-16">
@@ -221,7 +234,7 @@ export default function MedicoPerfilPage() {
               <section className="rounded-2xl border border-[#E7E2DD] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#164957] text-lg font-bold text-[#FAF6F3]">
-                    {name ? name.slice(0, 2).toUpperCase() : "MD"}
+                    {String(name || "MD").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-lg font-bold text-[#164957] truncate">{name || "Médico"}</h2>
@@ -250,7 +263,7 @@ export default function MedicoPerfilPage() {
                       <Building className="w-3.5 h-3.5 text-[#164957]" /> Clínica Vinculada
                     </p>
                     <p className="mt-1 text-xs font-bold text-[#2E393F]">
-                      {clinic?.trade_name || clinic?.legal_name || "Atendimento Autônomo"}
+                      {clinicDisplayName}
                     </p>
                     {clinic?.city && (
                       <p className="text-[11px] text-[#2E393F]/60 flex items-center gap-1 mt-0.5">
