@@ -1,412 +1,91 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import NotificationBell from "./notification-bell";
+import WorkspaceSearch from "./workspace-search";
+import { useAuth } from "./auth-provider";
 import { supabase } from "../lib/supabase";
+import { getRoleDashboardPath, getRoleProfilePath } from "../lib/auth";
+import { getNavigation, getSidebarNavigation, isActivePath, roleLabels } from "../lib/navigation";
 
-type UserRole = "public" | "patient" | "doctor" | "clinic";
-
-type UserInfo = {
-  id: string;
-  email: string | null;
-};
-
-type NavItem = {
-  label: string;
-  href: string;
-};
-
-const LOGO_SRC = "/brand/medinexus-logo.png";
-
-const publicLinks: NavItem[] = [
-  { label: "Início", href: "/" },
-  { label: "Sobre", href: "/sobre" },
-  { label: "Especialidades", href: "/especialidades" },
-  { label: "Clínicas", href: "/clinicas" },
-  { label: "Profissionais", href: "/profissionais" },
-  { label: "Pacotes", href: "/pacotes" },
-];
-
-const patientLinks: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Buscar", href: "/busca" },
-  { label: "Solicitações", href: "/solicitacoes" },
-  { label: "Documentos", href: "/documentos" },
-];
-
-const doctorLinks: NavItem[] = [
-  { label: "Dashboard", href: "/medico/dashboard" },
-  { label: "Solicitações", href: "/medico/solicitacoes" },
-  { label: "Disponibilidade", href: "/medico/disponibilidade" },
-  { label: "Perfil", href: "/medico/perfil" },
-];
-
-const clinicLinks: NavItem[] = [
-  { label: "Dashboard", href: "/clinica/dashboard" },
-  { label: "Solicitações", href: "/clinica/solicitacoes" },
-  { label: "Médicos", href: "/clinica/medicos" },
-  { label: "Configurações", href: "/clinica/configuracoes" },
-];
-
-function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function getDashboardHref(role: UserRole) {
-  if (role === "doctor") return "/medico/dashboard";
-  if (role === "clinic") return "/clinica/dashboard";
-  if (role === "patient") return "/dashboard";
-  return "/";
-}
-
-function getProfileHref(role: UserRole) {
-  if (role === "doctor") return "/medico/perfil";
-  if (role === "clinic") return "/clinica/configuracoes";
-  if (role === "patient") return "/perfil";
-  return "/";
-}
-
-function getLinks(role: UserRole) {
-  if (role === "doctor") return doctorLinks;
-  if (role === "clinic") return clinicLinks;
-  if (role === "patient") return patientLinks;
-  return publicLinks;
-}
-
-function getRoleLabel(role: UserRole) {
-  if (role === "doctor") return "Médico";
-  if (role === "clinic") return "Clínica";
-  if (role === "patient") return "Paciente";
-  return "Visitante";
-}
-
-function getInitials(name: string, email: string | null, role: UserRole) {
-  const source = name?.trim() || email?.split("@")[0] || "";
-  const parts = source.split(" ").filter(Boolean);
-
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-
-  if (parts.length === 1 && parts[0].length >= 2) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-
-  if (role === "doctor") return "MD";
-  if (role === "clinic") return "CL";
-  if (role === "patient") return "PT";
-  return "MN";
-}
-
-function getFirstName(fullName: string | null | undefined, email: string | null) {
-  const cleaned = (fullName || "").trim();
-
-  if (cleaned) {
-    return cleaned.split(" ")[0];
-  }
-
-  if (email) {
-    const raw = email.split("@")[0] || "Conta";
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  }
-
-  return "Conta";
-}
-
-export default function Navbar() {
+export default function Navbar({ workspace = false }: { workspace?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { access, loading, error } = useAuth();
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const [accountAt, setAccountAt] = useState<string | null>(null);
+  const [logoutError, setLogoutError] = useState("");
+  const wrapper = useRef<HTMLElement>(null);
+  const mobileOpen = openAt === pathname;
+  const accountOpen = accountAt === pathname;
+  const signedIn = !!access.userId;
+  const links = workspace ? getSidebarNavigation(access.role) : getNavigation(access.role);
+  const home = signedIn ? getRoleDashboardPath(access.role) : "/";
+  const name = access.name || access.email?.split("@")[0] || "Minha conta";
+  const initials = name.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [role, setRole] = useState<UserRole>("public");
-  const [displayName, setDisplayName] = useState("");
 
-  const accountRef = useRef<HTMLDivElement | null>(null);
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) { setLogoutError("Não foi possível sair. Tente novamente."); return; }
+    setOpenAt(null); setAccountAt(null); setLogoutError("");
+    router.replace("/login");
+  }
+
 
   useEffect(() => {
-    loadUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      loadUser();
-    });
-
-    return () => subscription.unsubscribe();
+    const close = (event: MouseEvent) => {
+      if (!wrapper.current?.contains(event.target as Node)) { setOpenAt(null); setAccountAt(null); }
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setOpenAt(null); setAccountAt(null); }
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", escape); };
   }, []);
 
-  useEffect(() => {
-    setMobileOpen(false);
-    setAccountOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    function handleOutsideClick(event: MouseEvent) {
-      if (!accountRef.current) return;
-      if (!accountRef.current.contains(event.target as Node)) {
-        setAccountOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  async function loadUser() {
-    setLoading(true);
-
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (!authUser) {
-      setUser(null);
-      setRole("public");
-      setDisplayName("");
-      setLoading(false);
-      return;
-    }
-
-    setUser({
-      id: authUser.id,
-      email: authUser.email || null,
-    });
-
-    let detectedRole: UserRole = "patient";
-    let foundDisplayName = "";
-
-    // 1. Checagem de Médico
-    const { data: doctorData } = await supabase
-      .from("doctors")
-      .select("id, name")
-      .eq("user_id", authUser.id)
-      .maybeSingle();
-
-    if (doctorData?.id) {
-      detectedRole = "doctor";
-      foundDisplayName = doctorData.name || "";
-    } else {
-      // 2. Checagem direta de Dono de Clínica
-      const { data: clinicDirectData } = await supabase
-        .from("clinics")
-        .select("id, trade_name, legal_name")
-        .eq("user_id", authUser.id)
-        .maybeSingle();
-
-      if (clinicDirectData?.id) {
-        detectedRole = "clinic";
-        foundDisplayName = clinicDirectData.trade_name || clinicDirectData.legal_name || "Clínica";
-      } else {
-        // 3. Checagem de Membro/Equipe da Clínica
-        const { data: clinicMemberData } = await supabase
-          .from("clinic_members")
-          .select("clinic_id")
-          .eq("user_id", authUser.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (clinicMemberData?.clinic_id) {
-          detectedRole = "clinic";
-          const { data: clinicData } = await supabase
-            .from("clinics")
-            .select("trade_name, legal_name")
-            .eq("id", clinicMemberData.clinic_id)
-            .maybeSingle();
-
-          foundDisplayName = clinicData?.trade_name || clinicData?.legal_name || "Clínica";
-        }
-      }
-    }
-
-    // 4. Se confirmado como Paciente
-    if (detectedRole === "patient") {
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      foundDisplayName = profileData?.full_name || "";
-    }
-
-    setRole(detectedRole);
-    setDisplayName(foundDisplayName);
-    setLoading(false);
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    setUser(null);
-    setRole("public");
-    setDisplayName("");
-    setAccountOpen(false);
-    router.push("/");
-    router.refresh();
-  }
-
-  const links = useMemo(() => getLinks(role), [role]);
-  const homeHref = getDashboardHref(role);
-  const profileHref = getProfileHref(role);
-  const roleLabel = getRoleLabel(role);
-  const firstName = getFirstName(displayName, user?.email || null);
-  const initials = getInitials(displayName, user?.email || null, role);
-
-  if (
-    pathname?.startsWith("/medico") ||
-    pathname?.startsWith("/clinica")
-  ) {
-    return null;
-  }
-
+  const closeMenus = () => { setOpenAt(null); setAccountAt(null); };
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E7E2DD] bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2.5 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8 lg:gap-10">
-          <Link href={user ? homeHref : "/"} className="flex shrink-0 items-center">
-            <div className="relative h-[72px] w-[240px] sm:h-[80px] sm:w-[280px] lg:h-[86px] lg:w-[300px]">
-              <Image
-                src={LOGO_SRC}
-                alt="MediNexus"
-                fill
-                priority
-                sizes="(max-width: 768px) 240px, 300px"
-                className="object-contain object-left"
-              />
-            </div>
-          </Link>
-
-          <nav className="hidden xl:flex items-center gap-1 rounded-full border border-[#E7E2DD] bg-[#FAF6F3]/80 px-2.5 py-1.5 shadow-sm backdrop-blur">
-            {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-                  isActive(pathname, item.href)
-                    ? "bg-[#164957] text-white shadow-sm"
-                    : "text-[#2E393F]/75 hover:bg-white hover:text-[#164957]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+    <header ref={wrapper} className={`mn-topbar sticky top-0 z-50 border-b border-mn-border bg-white/95 backdrop-blur-xl no-print ${workspace ? "mn-topbar-workspace" : ""}`}>
+      <div className="mn-topbar-inner mx-auto flex h-[76px] max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href={home} onClick={closeMenus} aria-label="MediNexus — início" className={`flex h-12 shrink-0 items-center gap-2 ${workspace ? "lg:hidden" : ""}`}>
+          <Image src="/icon-light.svg" alt="" width={38} height={38} priority /><span className="text-xl font-bold tracking-tight text-mn-teal sm:text-2xl">Medi<span className="font-normal text-mn-purple">Nexus</span></span>
+        </Link>
+        {workspace && <div className="hidden lg:block"><p className="text-xs text-mn-graphite/60">Seu espaço de cuidado</p><p className="mt-1 text-sm font-semibold text-mn-teal">{roleLabels[access.role]}</p></div>}
+        {workspace && <WorkspaceSearch />}
+        <nav aria-label="Navegação principal" className={workspace ? "hidden" : "hidden items-center gap-1 xl:flex"}>
+          {links.map(item => <Link key={item.href} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined} className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActivePath(pathname, item.href) ? "bg-mn-teal text-white" : "text-mn-graphite/70 hover:bg-mn-sand"}`}>{item.label}</Link>)}
+        </nav>
+        <div className="flex items-center gap-2">
+          {!loading && signedIn && <NotificationBell />}
+          {!loading && !signedIn && <Link href="/login" className="hidden rounded-xl bg-mn-teal px-4 py-2.5 text-sm font-semibold text-white sm:block">Entrar</Link>}
+          {!loading && signedIn && <div className={`relative hidden ${workspace ? "lg:block" : "xl:block"}`}>
+            <button onClick={() => setAccountAt(accountOpen ? null : pathname)} aria-expanded={accountOpen} aria-controls="account-menu" className="flex min-h-11 items-center gap-2 rounded-xl border border-mn-border px-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-mn-sage-light text-xs font-bold text-mn-teal">{initials}</span>
+              <span className="max-w-32 truncate text-left text-xs"><strong className="block truncate">{name}</strong><span className="text-mn-graphite/60">{roleLabels[access.role]}</span></span><ChevronDown size={14} />
+            </button>
+            {accountOpen && <div id="account-menu" className="absolute right-0 top-full mt-2 w-60 rounded-2xl border border-mn-border bg-white p-2 shadow-xl">
+              <Link onClick={closeMenus} href={getRoleProfilePath(access.role)} className="block rounded-xl p-3 text-sm hover:bg-mn-sand">Perfil e configurações</Link>
+              {access.role === "clinic" && <><Link onClick={closeMenus} href="/clinica/publico" className="block rounded-xl p-3 text-sm hover:bg-mn-sand">Página pública</Link><Link onClick={closeMenus} href="/clinica/planos" className="block rounded-xl p-3 text-sm hover:bg-mn-sand">Convênios</Link></>}
+              <button onClick={() => void logout()} className="flex w-full items-center gap-2 rounded-xl p-3 text-sm text-red-700 hover:bg-red-50"><LogOut size={16} />Sair da conta</button>
+            </div>}
+          </div>}
+          <button onClick={() => setOpenAt(mobileOpen ? null : pathname)} aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="mobile-menu" className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-mn-border text-mn-teal ${workspace ? "lg:hidden" : "xl:hidden"}`}>{mobileOpen ? <X size={21} /> : <Menu size={21} />}</button>
         </div>
-
-        <div className="hidden items-center justify-end gap-3 xl:flex">
-          {!loading && user && <NotificationBell />}
-
-          {!loading && !user && (
-            <>
-              <Link
-                href="/login"
-                className="rounded-xl border border-[#E7E2DD] bg-white px-4 py-2.5 text-xs font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-              >
-                Entrar
-              </Link>
-
-              <Link
-                href="/cadastro"
-                className="rounded-xl bg-[#164957] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#164957]/90 shadow-sm"
-              >
-                Criar conta
-              </Link>
-            </>
-          )}
-
-          {!loading && user && (
-            <div ref={accountRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setAccountOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 rounded-xl border border-[#E7E2DD] bg-white px-3 py-1.5 shadow-sm transition hover:bg-[#FAF6F3]"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#164957] text-xs font-bold text-[#FAF6F3]">
-                  {initials}
-                </div>
-
-                <div className="text-left">
-                  <p className="max-w-[120px] truncate text-xs font-bold text-[#2E393F]">
-                    {firstName}
-                  </p>
-                  <p className="text-[10px] text-[#2E393F]/60 font-medium">{roleLabel}</p>
-                </div>
-
-                <span className="text-[10px] font-bold text-[#2E393F]/40 ml-1">▼</span>
-              </button>
-
-              {accountOpen && (
-                <div className="absolute right-0 top-[calc(100%+8px)] z-[9999] w-[260px] overflow-hidden rounded-2xl border border-[#E7E2DD] bg-white shadow-lg">
-                  <div className="border-b border-[#E7E2DD] bg-[#FAF6F3] p-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#164957] text-xs font-bold text-white">
-                        {initials}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-[#2E393F]">
-                          {displayName || firstName}
-                        </p>
-                        <p className="truncate text-[11px] text-[#2E393F]/60">
-                          {user.email || "Usuário"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-2 space-y-1">
-                    <Link
-                      href={homeHref}
-                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                    >
-                      Dashboard
-                    </Link>
-
-                    <Link
-                      href={profileHref}
-                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                    >
-                      Perfil / Conta
-                    </Link>
-
-                    <Link
-                      href="/notificacoes"
-                      className="block rounded-lg px-3 py-2 text-xs font-semibold text-[#2E393F]/80 transition hover:bg-[#FAF6F3] hover:text-[#164957]"
-                    >
-                      Notificações
-                    </Link>
-
-                    <div className="pt-1.5 border-t border-[#E7E2DD]">
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                      >
-                        Sair
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E7E2DD] bg-white text-lg font-bold text-[#164957] xl:hidden"
-          aria-label="Menu"
-        >
-          {mobileOpen ? "✕" : "☰"}
-        </button>
       </div>
+      {(error || logoutError) && <p role="alert" className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">{logoutError || error}</p>}
+      {mobileOpen && <nav id="mobile-menu" aria-label="Menu do celular" className={`max-h-[calc(100dvh-76px)] overflow-y-auto border-t border-mn-border bg-white px-4 py-4 shadow-lg ${workspace ? "lg:hidden" : "xl:hidden"}`}>
+        {signedIn && <div className="mb-3 rounded-xl bg-mn-sand p-3"><p className="truncate text-sm font-bold text-mn-teal">{name}</p><p className="text-xs text-mn-graphite/65">{roleLabels[access.role]}</p></div>}
+        <div className="grid grid-cols-2 gap-2">{links.map(item => <Link key={item.href} onClick={closeMenus} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined} className={`rounded-xl p-3 text-sm font-semibold ${isActivePath(pathname, item.href) ? "bg-mn-teal text-white" : "bg-mn-sand text-mn-teal"}`}>{item.label}</Link>)}</div>
+        {access.role === "patient" && <Link onClick={closeMenus} href="/busca" className="mt-2 block rounded-xl bg-mn-sage-light p-3 text-sm font-semibold text-mn-teal">Buscar por convênio e distância</Link>}
+        {!workspace && access.role === "clinic" && <div className="mt-2 grid grid-cols-2 gap-2"><Link onClick={closeMenus} href="/clinica/publico" className="rounded-xl bg-mn-sand p-3 text-sm">Página pública</Link><Link onClick={closeMenus} href="/clinica/planos" className="rounded-xl bg-mn-sand p-3 text-sm">Convênios</Link></div>}
+        {signedIn ? <button onClick={() => void logout()} className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-semibold text-red-700"><LogOut size={16} />Sair da conta</button> : <div className="mt-3 flex gap-2"><Link onClick={closeMenus} href="/login" className="app-button-primary flex-1">Entrar</Link><Link onClick={closeMenus} href="/cadastro" className="app-button-secondary flex-1">Criar conta</Link></div>}
+      </nav>}
     </header>
   );
 }

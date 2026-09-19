@@ -1,0 +1,11 @@
+begin;
+alter table public.doctors add column if not exists address_zipcode text;
+alter table public.doctors add column if not exists address_street text;
+alter table public.doctors add column if not exists address_number text;
+alter table public.doctors add column if not exists address_complement text;
+alter table public.doctors add column if not exists address_neighborhood text;
+alter table public.doctors add column if not exists address_city text;
+alter table public.doctors add column if not exists address_state text;
+alter table public.doctors add column if not exists latitude double precision;
+alter table public.doctors add column if not exists longitude double precision;
+commit;

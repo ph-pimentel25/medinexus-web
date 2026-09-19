@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
+import { getCurrentDoctor } from "../../lib/auth";
 
 type DoctorRow = {
   id: string;
@@ -77,9 +78,6 @@ export default function MedicoDisponibilidadePage() {
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPage();
-  }, []);
 
   async function loadPage() {
     setLoading(true);
@@ -96,11 +94,7 @@ export default function MedicoDisponibilidadePage() {
       return;
     }
 
-    const { data: doctorData, error: doctorError } = await supabase
-      .from("doctors")
-      .select("id, name, crm, crm_state")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data: doctorData, error: doctorError } = await getCurrentDoctor();
 
     if (doctorError) {
       setMessage(`Erro ao carregar médico: ${doctorError.message}`);
@@ -139,6 +133,7 @@ export default function MedicoDisponibilidadePage() {
     setLoading(false);
   }
 
+
   async function handleCreateAvailability(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -160,6 +155,12 @@ export default function MedicoDisponibilidadePage() {
       return;
     }
 
+    if (!Number.isFinite(slotMinutes) || slotMinutes < 5 || slotMinutes > 240) {
+      setMessage("A duração precisa estar entre 5 e 240 minutos."); setMessageType("error"); return;
+    }
+    if (availability.some(item => item.is_active && getAvailabilityWeekday(item) === weekday && startTime < item.end_time.slice(0, 5) && endTime > item.start_time.slice(0, 5))) {
+      setMessage("Este intervalo se sobrepõe a outro horário ativo."); setMessageType("error"); return;
+    }
     setSaving(true);
     setMessage("");
 
@@ -187,6 +188,7 @@ export default function MedicoDisponibilidadePage() {
     setSaving(false);
   }
 
+
   async function handleToggleAvailability(item: AvailabilityRow) {
     setActionLoadingId(item.id);
     setMessage("");
@@ -213,6 +215,7 @@ export default function MedicoDisponibilidadePage() {
     await loadPage();
     setActionLoadingId(null);
   }
+
 
   async function handleDeleteAvailability(item: AvailabilityRow) {
     const confirmed = window.confirm(
@@ -242,6 +245,12 @@ export default function MedicoDisponibilidadePage() {
     setActionLoadingId(null);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
+
   const stats = useMemo(() => {
     const active = availability.filter((item) => item.is_active).length;
     const inactive = availability.filter((item) => !item.is_active).length;
@@ -267,11 +276,11 @@ export default function MedicoDisponibilidadePage() {
   }, [availability]);
 
   return (
-    <main className="min-h-screen bg-[#FAF6F3]">
-      <section className="border-b border-[#E7DDD7] bg-white">
+    <main className="min-h-screen bg-mn-sand">
+      <section className="border-b border-mn-border bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
+            <span className="inline-flex rounded-full border border-mn-border bg-mn-sand px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-mn-teal">
               Agenda médica
             </span>
 
@@ -295,14 +304,14 @@ export default function MedicoDisponibilidadePage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/medico/dashboard"
-              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+              className="rounded-2xl border border-mn-border bg-white px-5 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
             >
               Dashboard
             </Link>
 
             <Link
               href="/medico/solicitacoes"
-              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+              className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
               Solicitações
             </Link>
@@ -320,17 +329,17 @@ export default function MedicoDisponibilidadePage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             { label: "Total", value: stats.total, tone: "text-slate-950" },
-            { label: "Ativos", value: stats.active, tone: "text-[#7A9D8C]" },
+            { label: "Ativos", value: stats.active, tone: "text-mn-sage" },
             { label: "Inativos", value: stats.inactive, tone: "text-[#B26B00]" },
             {
               label: "Dias com agenda",
               value: stats.weekdaysWithAvailability,
-              tone: "text-[#164957]",
+              tone: "text-mn-teal",
             },
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-3xl border border-[#E7DDD7] bg-white p-5 shadow-sm"
+              className="rounded-3xl border border-mn-border bg-white p-5 shadow-sm"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 {item.label}
@@ -343,7 +352,7 @@ export default function MedicoDisponibilidadePage() {
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.2fr]">
-          <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
             <h2 className="text-xl font-bold text-slate-950">
               Adicionar horário
             </h2>
@@ -360,7 +369,7 @@ export default function MedicoDisponibilidadePage() {
                 <select
                   value={weekday}
                   onChange={(event) => setWeekday(Number(event.target.value))}
-                  className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#A7B5E5] focus:bg-white"
+                  className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-mn-purple focus:bg-white"
                 >
                   {WEEKDAYS.map((item) => (
                     <option key={item.value} value={item.value}>
@@ -379,7 +388,7 @@ export default function MedicoDisponibilidadePage() {
                     type="time"
                     value={startTime}
                     onChange={(event) => setStartTime(event.target.value)}
-                    className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#A7B5E5] focus:bg-white"
+                    className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-mn-purple focus:bg-white"
                   />
                 </div>
 
@@ -391,7 +400,7 @@ export default function MedicoDisponibilidadePage() {
                     type="time"
                     value={endTime}
                     onChange={(event) => setEndTime(event.target.value)}
-                    className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#A7B5E5] focus:bg-white"
+                    className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-mn-purple focus:bg-white"
                   />
                 </div>
               </div>
@@ -403,7 +412,7 @@ export default function MedicoDisponibilidadePage() {
                 <select
                   value={slotMinutes}
                   onChange={(event) => setSlotMinutes(Number(event.target.value))}
-                  className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#A7B5E5] focus:bg-white"
+                  className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-mn-purple focus:bg-white"
                 >
                   {[10, 15, 20, 30, 45, 60, 90, 120].map((item) => (
                     <option key={item} value={item}>
@@ -416,14 +425,14 @@ export default function MedicoDisponibilidadePage() {
               <button
                 type="submit"
                 disabled={saving || loading}
-                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
+                className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
               >
                 {saving ? "Salvando..." : "Adicionar disponibilidade"}
               </button>
             </form>
           </section>
 
-          <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-bold text-slate-950">
@@ -436,11 +445,11 @@ export default function MedicoDisponibilidadePage() {
             </div>
 
             {loading ? (
-              <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-5 text-sm text-slate-500">
+              <div className="rounded-2xl border border-mn-border bg-mn-sand p-5 text-sm text-slate-500">
                 Carregando disponibilidade...
               </div>
             ) : availability.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-8 text-center">
+              <div className="rounded-2xl border border-dashed border-mn-border bg-mn-sand p-8 text-center">
                 <h3 className="text-lg font-bold text-slate-950">
                   Nenhum horário cadastrado
                 </h3>
@@ -453,7 +462,7 @@ export default function MedicoDisponibilidadePage() {
                 {groupedAvailability.map((day) => (
                   <div
                     key={day.value}
-                    className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4"
+                    className="rounded-2xl border border-mn-border bg-mn-sand p-4"
                   >
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div>
@@ -467,7 +476,7 @@ export default function MedicoDisponibilidadePage() {
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#164957]">
+                      <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-mn-teal">
                         {day.short}
                       </span>
                     </div>
@@ -481,7 +490,7 @@ export default function MedicoDisponibilidadePage() {
                         {day.items.map((item) => (
                           <div
                             key={item.id}
-                            className="flex flex-col gap-3 rounded-2xl border border-[#E7DDD7] bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                            className="flex flex-col gap-3 rounded-2xl border border-mn-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
                           >
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -511,7 +520,7 @@ export default function MedicoDisponibilidadePage() {
                                 type="button"
                                 onClick={() => handleToggleAvailability(item)}
                                 disabled={actionLoadingId === item.id}
-                                className="rounded-2xl border border-[#D8CCC5] bg-white px-4 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3] disabled:opacity-50"
+                                className="rounded-2xl border border-mn-border bg-white px-4 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand disabled:opacity-50"
                               >
                                 {item.is_active ? "Desativar" : "Ativar"}
                               </button>

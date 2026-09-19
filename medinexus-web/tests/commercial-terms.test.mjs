@@ -1,0 +1,78 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import { PGlite } from '@electric-sql/pglite';
+const exports={};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/app/lib/commercial-plans.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports});
+test('commissions default to zero; configured future rates require explicit activation',()=>{
+  for(const tier of ['free','professional','clinic_premium']) {
+    const disabled=exports.calculateCommission(10000,tier);
+    assert.equal(disabled.basisPoints,0);assert.equal(disabled.commissionCents,0);
+    assert.equal(disabled.recipientBeforeProviderFeesCents,10000);
+  }
+  assert.equal(exports.calculateCommission(10000,'clinic_premium',700).commissionCents,0);
+  for(const [tier,cents] of [['free',1500],['professional',1000],['clinic_premium',800]])assert.equal(exports.calculateCommission(10000,tier,null,true).commissionCents,cents);
+  assert.equal(exports.calculateCommission(10000,'clinic_premium',700,true).commissionCents,700);
+  assert.equal(exports.calculateCommission(10000,'clinic_premium',750,true).commissionCents,750);
+  assert.equal(exports.calculateCommission(9999,'free',null,true).commissionCents,1500);
+  for(const rate of [0,699,801,700.5])assert.throws(()=>exports.calculateCommission(10000,'clinic_premium',rate));
+  assert.throws(()=>exports.calculateCommission(10000,'free',700));
+  assert.throws(()=>exports.calculateCommission(10000,'toString'));
+  for(const amount of [0,-1,NaN,Infinity,10.1,1e12])assert.throws(()=>exports.calculateCommission(amount,'free'));
+});
+test('database derives price and contract, preserves quote and prevents client financial mutations',async()=>{
+  const db=new PGlite();const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+  try{
+    await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;
+      create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+      create table patients(id uuid primary key);create table doctors(id uuid primary key,user_id uuid,private_price_cents integer);
+      create table clinics(id uuid primary key,base_private_price_cents integer);
+      create table appointments(id uuid primary key,patient_id uuid,doctor_id uuid,clinic_id uuid,appointment_mode text,status text);
+      grant usage on schema auth to authenticated;grant select on doctors to authenticated;
+      insert into patients values('${id(1)}'),('${id(2)}');insert into doctors values('${id(3)}','${id(4)}',10000);
+      insert into clinics values('${id(5)}',20000);
+      insert into appointments values('${id(6)}','${id(1)}','${id(3)}','${id(5)}','private','confirmed'),('${id(7)}','${id(1)}','${id(3)}','${id(5)}','private','confirmed'),('${id(8)}','${id(1)}','${id(3)}','${id(5)}','private','pending'),('${id(9)}','${id(1)}','${id(3)}','${id(5)}','health_plan','confirmed');`);
+    await db.exec(fs.readFileSync('supabase/migrations/20260917010000_commercial_terms.sql','utf8'));
+    await db.exec(fs.readFileSync('supabase/migrations/20260917080000_payment_sandbox.sql','utf8'));
+    await db.query("select set_config('test.uid',$1,false)",[id(1)]);
+    await db.exec('set role authenticated');
+    const quote=(await db.query('select * from prepare_appointment_payment($1)',[id(6)])).rows[0];
+    assert.equal(quote.gross_cents,10000);assert.equal(quote.commission_cents,0);
+    await assert.rejects(db.query('update appointment_payment_quotes set commission_bps=700'));
+    await assert.rejects(db.query('update platform_commercial_policy set commission_enabled=true'));
+    await assert.rejects(db.query('delete from platform_commercial_policy'));
+    await assert.rejects(db.query(`insert into professional_commercial_terms(doctor_id,tier,contract_reference) values($1,'clinic_premium','forged')`,[id(3)]));
+    await assert.rejects(db.query("select * from prepare_appointment_payment($1,'pix')",[id(6)]));
+    await assert.rejects(db.query('select * from prepare_appointment_payment($1)',[id(8)]));
+    await assert.rejects(db.query('select * from prepare_appointment_payment($1)',[id(9)]));
+    await assert.rejects(db.query("select apply_sandbox_checkout_event('forged','test','CHECKOUT_PAID',10000)"));
+    await db.exec('reset role');
+    await db.query("insert into appointment_checkout_sessions(quote_id,method,gross_cents,provider_reference,status) values($1,'pix',10000,'test-checkout','pending')",[quote.id]);
+    await assert.rejects(db.query("select apply_sandbox_checkout_event('wrong-amount','test-checkout','CHECKOUT_PAID',9999)"));
+    await db.query("select apply_sandbox_checkout_event('paid','test-checkout','CHECKOUT_PAID',10000)");
+    await db.query("select apply_sandbox_checkout_event('paid','test-checkout','CHECKOUT_PAID',10000)");
+    await db.query("select apply_sandbox_checkout_event('late-cancel','test-checkout','CHECKOUT_CANCELED',10000)");
+    assert.equal((await db.query('select status from appointment_checkout_sessions')).rows[0].status,'paid_test');
+    assert.equal((await db.query('select status from appointment_payment_quotes where id=$1',[quote.id])).rows[0].status,'quoted','Sandbox never marks real payment as paid');
+    assert.equal((await db.query('select count(*)::int n from payment_webhook_events')).rows[0].n,2);
+    await db.exec('set role authenticated');
+    const cash=(await db.query("select * from prepare_appointment_payment($1,'cash')",[id(6)])).rows[0];assert.equal(cash.status,'cash_due');assert.equal(cash.id,quote.id);
+    await db.exec('reset role');await db.exec(`update doctors set private_price_cents=40000;
+      insert into professional_commercial_terms(doctor_id,tier,contract_reference) values('${id(3)}','professional','contract-1');`);
+    const same=(await db.query('select * from prepare_appointment_payment($1)',[id(6)])).rows[0];assert.equal(same.gross_cents,10000);assert.equal(same.commission_bps,0);
+    const professional=(await db.query('select * from prepare_appointment_payment($1)',[id(7)])).rows[0];assert.equal(professional.commission_bps,0);assert.equal(professional.gross_cents,40000);
+    await db.exec(`update platform_commercial_policy set commission_enabled=true;
+      insert into appointments values('${id(10)}','${id(1)}','${id(3)}','${id(5)}','private','confirmed');`);
+    const enabled=(await db.query('select * from prepare_appointment_payment($1)',[id(10)])).rows[0];assert.equal(enabled.commission_bps,1000);
+    const preserved=(await db.query('select * from prepare_appointment_payment($1)',[id(6)])).rows[0];assert.equal(preserved.commission_bps,0);
+    await db.exec(`update platform_commercial_policy set commission_enabled=false;
+      insert into professional_commercial_terms(clinic_id,tier,contracted_commission_bps,contract_reference) values('${id(5)}','clinic_premium',700,'contract-2');
+      insert into appointments values('${id(11)}','${id(1)}','${id(3)}','${id(5)}','private','confirmed');`);
+    const premium=(await db.query('select * from prepare_appointment_payment($1)',[id(11)])).rows[0];assert.equal(premium.tier,'clinic_premium');assert.equal(premium.commission_bps,0);
+    await db.query("select set_config('test.uid',$1,false)",[id(2)]);await db.exec('set role authenticated');
+    assert.equal((await db.query('select * from appointment_payment_quotes')).rows.length,0);
+    await assert.rejects(db.query('select * from prepare_appointment_payment($1)',[id(6)]));
+  }finally{await db.close();}
+});

@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
   if (
     appointment.status !== "confirmed" ||
-    appointment.patient_confirmation_status !== "waiting"
+    appointment.patient_confirmation_status !== "awaiting_confirmation"
   ) {
     return NextResponse.redirect(
       `${baseUrl}/solicitacoes?appointmentAction=not-available`
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
   const { error: cancelError } = await admin
     .from("appointments")
     .update({
-      status: "cancelled",
+      status: "cancelled_by_patient",
       patient_confirmation_status: "cancelled_by_patient",
     })
     .eq("id", appointment.id);

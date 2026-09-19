@@ -1,6 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { Bell } from "lucide-react";
+import { useAuth } from "./auth-provider";
+import { getRoleRequestsPath } from "../lib/auth";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -8,6 +11,8 @@ type NotificationRow = {
   id: string;
   title?: string | null;
   message?: string | null;
+  body?: string | null;
+  notification_type?: string | null;
   type?: string | null;
   is_read?: boolean | null;
   created_at?: string | null;
@@ -41,11 +46,11 @@ function getNotificationTitle(item: NotificationRow) {
 }
 
 function getNotificationMessage(item: NotificationRow) {
-  return item.message || "Você recebeu uma nova atualização.";
+  return item.message || item.body || "Você recebeu uma nova atualização.";
 }
 
 function getTypeLabel(item: NotificationRow) {
-  const raw = (item.type || "").toLowerCase();
+  const raw = (item.type || item.notification_type || "").toLowerCase();
 
   if (raw.includes("document")) return "Documento";
   if (raw.includes("consulta")) return "Consulta";
@@ -55,47 +60,27 @@ function getTypeLabel(item: NotificationRow) {
   return "Aviso";
 }
 
-function getNotificationHref(item: NotificationRow) {
+function getNotificationHref(item: NotificationRow, role: string) {
   if (item.link_href) return item.link_href;
   if (item.document_id) return `/documentos-medicos/${item.document_id}`;
   if (item.resource_type === "document" && item.resource_id) {
     return `/documentos-medicos/${item.resource_id}`;
   }
-  if (item.appointment_id) return "/solicitacoes";
+  if (item.appointment_id) return getRoleRequestsPath(role);
   if (item.resource_type === "appointment" && item.resource_id) {
-    return "/solicitacoes";
+    return getRoleRequestsPath(role);
   }
   return "/notificacoes";
 }
 
 export default function NotificationBell() {
+  const { access } = useAuth();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    loadNotifications();
-
-    const interval = setInterval(() => {
-      loadNotifications();
-    }, 20000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    function handleOutsideClick(event: MouseEvent) {
-      if (!wrapperRef.current) return;
-      if (!wrapperRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
 
   async function loadNotifications() {
     setLoading(true);
@@ -121,6 +106,29 @@ export default function NotificationBell() {
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadNotifications(), 0);
+
+    const interval = setInterval(() => {
+      loadNotifications();
+    }, 20000);
+
+    return () => { clearTimeout(initialLoad); clearInterval(interval); };
+  }, []);
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (!wrapperRef.current) return;
+      if (!wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   const unreadCount = useMemo(
     () => items.filter((item) => !item.is_read).length,
     [items]
@@ -136,24 +144,26 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[#D8CCC5] bg-white text-lg shadow-sm transition hover:bg-[#FAF6F3]"
+        className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-mn-border bg-white text-lg shadow-sm transition hover:bg-mn-sand"
         aria-label="Abrir notificações"
+        aria-expanded={open}
+        aria-controls="notification-preview"
       >
-        <span>🔔</span>
+        <Bell size={19} strokeWidth={1.8} />
 
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#E03131] px-1.5 text-[11px] font-bold text-white shadow">
+          <span className="absolute -right-1 -top-1 flex min-h-[22px] min-w-[22px] items-center justify-center rounded-full bg-mn-purple px-1.5 text-[11px] font-bold text-white shadow">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+12px)] z-[9999] w-[390px] overflow-hidden rounded-[28px] border border-[#D8CCC5] bg-white shadow-[0_35px_90px_-30px_rgba(40,60,122,0.4)]">
-          <div className="border-b border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F0EDF7] p-5">
+        <div id="notification-preview" className="absolute right-0 top-[calc(100%+12px)] z-[9999] w-[min(390px,calc(100vw-80px))] overflow-hidden rounded-2xl border border-mn-border bg-white shadow-[0_35px_90px_-30px_rgba(40,60,122,0.4)]">
+          <div className="border-b border-mn-border bg-gradient-to-r from-mn-sand to-mn-purple-light p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-mn-purple">
                   Notificações
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-950">
@@ -165,7 +175,7 @@ export default function NotificationBell() {
               </div>
 
               <div className="rounded-2xl bg-white px-3 py-2 shadow-sm">
-                <p className="text-right text-xl font-bold text-[#164957]">
+                <p className="text-right text-xl font-bold text-mn-teal">
                   {unreadCount}
                 </p>
                 <p className="text-[11px] text-slate-500">não lidas</p>
@@ -175,11 +185,11 @@ export default function NotificationBell() {
 
           <div className="max-h-[380px] overflow-y-auto p-3">
             {loading ? (
-              <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 text-sm text-slate-500">
+              <div className="rounded-2xl border border-mn-border bg-mn-sand p-4 text-sm text-slate-500">
                 Carregando notificações...
               </div>
             ) : previewItems.length === 0 ? (
-              <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4">
+              <div className="rounded-2xl border border-mn-border bg-mn-sand p-4">
                 <p className="text-sm font-semibold text-slate-700">
                   Nenhuma notificação no momento.
                 </p>
@@ -192,11 +202,11 @@ export default function NotificationBell() {
                 {previewItems.map((item) => (
                   <Link
                     key={item.id}
-                    href={getNotificationHref(item)}
-                    className="block rounded-2xl border border-[#E7DDD7] bg-white p-4 transition hover:border-[#D7DDF4] hover:bg-[#FAF6F3]"
+                    href={getNotificationHref(item, access.role)}
+                    className="block rounded-2xl border border-mn-border bg-white p-4 transition hover:border-mn-purple-light hover:bg-mn-sand"
                   >
                     <div className="mb-2 flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-[#EEF3EF] px-2.5 py-1 text-[11px] font-bold text-[#164957]">
+                      <span className="rounded-full bg-mn-sage-light px-2.5 py-1 text-[11px] font-bold text-mn-teal">
                         {getTypeLabel(item)}
                       </span>
 
@@ -218,10 +228,10 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="border-t border-[#E7DDD7] p-3">
+          <div className="border-t border-mn-border p-3">
             <Link
               href="/notificacoes"
-              className="flex w-full items-center justify-center rounded-2xl bg-[#164957] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+              className="flex w-full items-center justify-center rounded-2xl bg-mn-teal px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
               Ver notificações completas
             </Link>

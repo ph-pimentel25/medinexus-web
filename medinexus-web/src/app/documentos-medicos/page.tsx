@@ -1,7 +1,10 @@
 ﻿"use client";
 
+import { markDocumentPreview } from "../lib/document-preview";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../components/auth-provider";
+import IssuedDocuments from "../components/issued-documents";
 import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
 
@@ -170,6 +173,13 @@ function getDocumentTypeBadge(type: DocumentItem["document_type"]) {
 }
 
 export default function DocumentosMedicosPage() {
+  const {access,loading,error}=useAuth();
+  if(loading)return <p className="p-8">Carregando documentos…</p>;
+  if(error)return <p role="alert" className="p-8">{error}</p>;
+  if(access.role==="doctor")return access.id?<IssuedDocuments doctorId={access.id}/>:<p className="p-8">Complete seu cadastro médico.</p>;
+  return <PatientDocumentsPage/>;
+}
+function PatientDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -182,9 +192,6 @@ export default function DocumentosMedicosPage() {
   const [healthPlanName, setHealthPlanName] = useState("Não informado");
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
 
   async function loadDocuments() {
     setLoading(true);
@@ -306,6 +313,7 @@ export default function DocumentosMedicosPage() {
     setLoading(false);
   }
 
+
   async function handleDownloadPdf(item: DocumentItem) {
     setDownloadingId(item.id);
 
@@ -421,6 +429,7 @@ export default function DocumentosMedicosPage() {
         pageHeight - 10
       );
 
+      markDocumentPreview(doc);
       doc.save(
         `${slugify(getDocumentTypeLabel(item.document_type))}-${slugify(
           profile?.full_name || "paciente"
@@ -430,6 +439,7 @@ export default function DocumentosMedicosPage() {
       setDownloadingId(null);
     }
   }
+
 
   function handlePrint(item: DocumentItem) {
     const popup = window.open("", "_blank", "width=900,height=1200");
@@ -521,7 +531,7 @@ export default function DocumentosMedicosPage() {
           </style>
         </head>
         <body>
-          <div class="sheet">
+          <div class="sheet"><p style="border:1px solid #965321;padding:12px;color:#965321;font-weight:bold">PRÉVIA SEM ASSINATURA DIGITAL ICP-BRASIL</p>
             <div class="header">
               <h1>MediNexus</h1>
               <p>Documento médico digital</p>
@@ -591,6 +601,12 @@ export default function DocumentosMedicosPage() {
 
     popup.document.close();
   }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadDocuments(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
 
   const counters = useMemo(() => {
     return {

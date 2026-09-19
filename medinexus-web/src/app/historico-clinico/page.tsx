@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/app/lib/supabase";
+import ClinicalAISummary from "../components/clinical-ai-summary";
+import ClinicalHistorySharing from "../components/clinical-history-sharing";
 import Alert from "@/app/components/alert";
 
 type MaybeArray<T> = T | T[] | null | undefined;
@@ -26,7 +28,7 @@ type AppointmentRow = {
   }>;
   doctors?: MaybeArray<{
     id: string;
-    full_name: string | null;
+    name: string | null;
     crm: string | null;
   }>;
   specialties?: MaybeArray<{
@@ -84,9 +86,6 @@ export default function HistoricoClinicoPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [items, setItems] = useState<HistoryItem[]>([]);
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
 
   async function loadHistory() {
     setLoading(true);
@@ -113,7 +112,7 @@ export default function HistoricoClinicoPage() {
         confirmed_start_at,
         confirmed_end_at,
         clinics(id, trade_name, city, state),
-        doctors(id, full_name, crm),
+        doctors(id, name, crm),
         specialties(id, name)
       `)
       .eq("patient_id", user.id)
@@ -170,7 +169,7 @@ export default function HistoricoClinicoPage() {
         id: appointment.id,
         clinicName: clinic?.trade_name || "Clínica MediNexus",
         clinicLocation: `${clinic?.city || "-"}${clinic?.state ? ` / ${clinic.state}` : ""}`,
-        doctorName: doctor?.full_name || "Médico não identificado",
+        doctorName: doctor?.name || "Médico não identificado",
         doctorCrm: doctor?.crm || "-",
         specialtyName: specialty?.name || "Especialidade não informada",
         consultationDate: formatDateTime(appointment.confirmed_start_at),
@@ -189,6 +188,12 @@ export default function HistoricoClinicoPage() {
     setItems(historyItems);
     setLoading(false);
   }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadHistory(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
 
   const totalConsultations = useMemo(() => items.length, [items]);
 
@@ -239,6 +244,7 @@ export default function HistoricoClinicoPage() {
         </div>
       </div>
 
+      <ClinicalHistorySharing/>
       {loading ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-slate-600">Carregando histórico...</p>
@@ -254,7 +260,7 @@ export default function HistoricoClinicoPage() {
           {items.map((item) => (
             <section
               key={item.id}
-              className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm"
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -297,12 +303,13 @@ export default function HistoricoClinicoPage() {
 
               <div className="mt-6 rounded-2xl bg-[var(--color-offwhite,#F8F4F2)] p-5">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Resumo da consulta
+                  Resumo registrado pelo médico
                 </h3>
                 <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
                   {item.summary}
                 </p>
               </div>
+              <ClinicalAISummary appointmentId={item.id}/>
             </section>
           ))}
         </div>

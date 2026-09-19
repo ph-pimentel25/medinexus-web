@@ -1,13 +1,5 @@
-﻿"use client";
-
+"use client";
 import RoleGuard from "../components/role-guard";
-
-export default function ClinicaLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return <RoleGuard area="clinic">{children}</RoleGuard>;
 }
-
-

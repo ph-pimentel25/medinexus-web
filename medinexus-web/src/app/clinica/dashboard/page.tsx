@@ -1,8 +1,10 @@
 ﻿"use client";
 
 import Link from "next/link";
+import DashboardOverview from "../../components/dashboard-overview";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { getCurrentClinicMember } from "../../lib/auth";
 
 type ClinicRow = {
   id: string;
@@ -82,16 +84,6 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
 
 function getClinicName(clinic: ClinicRow | null) {
   return clinic?.trade_name || clinic?.legal_name || "Clínica";
-}
-
-function getClinicLocation(clinic: ClinicRow | null) {
-  const parts = [
-    clinic?.address_neighborhood,
-    clinic?.address_city || clinic?.city,
-    clinic?.address_state || clinic?.state,
-  ].filter(Boolean);
-
-  return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
 }
 
 function getFirstName(value?: string | null) {
@@ -204,9 +196,6 @@ export default function ClinicaDashboardPage() {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
 
   async function loadDashboard() {
     setLoading(true);
@@ -222,12 +211,7 @@ export default function ClinicaDashboardPage() {
       return;
     }
 
-    const { data: memberData, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("clinic_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .maybeSingle();
+    const { data: memberData, error: memberError } = await getCurrentClinicMember();
 
     if (memberError) {
       setMessage(`Erro ao carregar vínculo da clínica: ${memberError.message}`);
@@ -304,6 +288,12 @@ export default function ClinicaDashboardPage() {
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadDashboard(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
+
   const summary = useMemo(() => {
     return {
       doctors: doctors.length,
@@ -323,6 +313,7 @@ export default function ClinicaDashboardPage() {
     const now = new Date();
 
     return [...appointments]
+      .filter((item) => ["pending", "confirmed"].includes(item.status || ""))
       .filter((item) => {
         const date = getAppointmentDate(item);
         if (!date) return false;
@@ -337,89 +328,10 @@ export default function ClinicaDashboardPage() {
   }, [appointments]);
 
   return (
-    <main className="min-h-screen bg-[#FAF6F3]">
-      <section className="border-b border-[#E7DDD7] bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.55fr_1fr] lg:px-8">
-          <div className="rounded-[32px] border border-[#E7DDD7] bg-gradient-to-r from-[#FAF6F3] to-[#F8F5FF] p-8">
-            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#164957]">
-              Área da clínica
-            </span>
-
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Olá, {getFirstName(getClinicName(clinic))}
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Gerencie médicos vinculados, acompanhe solicitações de consulta e
-              mantenha os dados da clínica organizados.
-            </p>
-
-            <p className="mt-3 text-sm font-semibold text-slate-500">
-              {getClinicName(clinic)} • {getClinicLocation(clinic)}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/clinica/solicitacoes"
-                className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
-              >
-                Ver solicitações
-              </Link>
-
-              <Link
-                href="/clinica/medicos"
-                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-              >
-                Médicos da clínica
-              </Link>
-
-              <Link
-                href="/clinica/configuracoes"
-                className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
-              >
-                Configurações
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-[32px] bg-gradient-to-br from-[#3A4DA0] to-[#7058D8] p-6 text-white shadow-[0_30px_80px_-35px_rgba(58,77,160,0.7)]">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-              Resumo rápido
-            </p>
-
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                <p className="text-3xl font-bold">{summary.totalAppointments}</p>
-                <p className="mt-1 text-sm text-white/80">
-                  solicitações recentes
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.doctors}</p>
-                  <p className="mt-1 text-sm text-white/80">médicos</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.activeDoctors}</p>
-                  <p className="mt-1 text-sm text-white/80">ativos</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.pending}</p>
-                  <p className="mt-1 text-sm text-white/80">pendentes</p>
-                </div>
-
-                <div className="rounded-[24px] bg-white/12 p-4 backdrop-blur">
-                  <p className="text-2xl font-bold">{summary.unread}</p>
-                  <p className="mt-1 text-sm text-white/80">não lidas</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+    <main className="mn-dashboard min-h-screen bg-mn-sand">
+      <DashboardOverview eyebrow="Gestão da clínica" title={`Olá, ${getFirstName(getClinicName(clinic))}.`} description="Uma visão clara da equipe, das consultas e do cuidado com seus pacientes." loading={loading}
+        actions={[{label:"Ver consultas",href:"/clinica/solicitacoes"},{label:"Gerenciar equipe",href:"/clinica/medicos"}]}
+        metrics={[{label:"Consultas recentes",value:summary.totalAppointments,hint:"Resumo dos atendimentos"},{label:"Médicos ativos",value:summary.activeDoctors,hint:"Sua equipe de atendimento"},{label:"Solicitações pendentes",value:summary.pending,hint:"Aguardando análise da clínica"},{label:"Consultas confirmadas",value:summary.confirmed,hint:"Próximos passos organizados"}]} />
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
@@ -429,33 +341,33 @@ export default function ClinicaDashboardPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
             Carregando painel da clínica...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
             <div className="space-y-6">
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
                       Próximas consultas
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Solicitações futuras vinculadas Ã  clínica.
+                      Solicitações futuras vinculadas à clínica.
                     </p>
                   </div>
 
                   <Link
                     href="/clinica/solicitacoes"
-                    className="text-sm font-semibold text-[#164957] hover:underline"
+                    className="text-sm font-semibold text-mn-teal hover:underline"
                   >
                     Ver tudo
                   </Link>
                 </div>
 
                 {upcomingAppointments.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-mn-border bg-mn-sand p-5 text-sm text-slate-500">
                     Nenhuma consulta futura encontrada.
                   </div>
                 ) : (
@@ -463,16 +375,16 @@ export default function ClinicaDashboardPage() {
                     {upcomingAppointments.map((item) => (
                       <article
                         key={item.id}
-                        className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-5"
+                        className="rounded-2xl border border-mn-border bg-mn-sand p-5"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div>
                             <div className="mb-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#164957]">
+                              <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-mn-teal">
                                 {getStatusLabel(item.status)}
                               </span>
 
-                              <span className="rounded-full bg-[#F0EDF7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5A4C86]">
+                              <span className="rounded-full bg-mn-purple-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-mn-purple">
                                 {getConfirmationLabel(
                                   item.patient_confirmation_status
                                 )}
@@ -492,7 +404,7 @@ export default function ClinicaDashboardPage() {
                             </p>
                           </div>
 
-                          <div className="rounded-2xl bg-[#F5F7FD] px-4 py-3">
+                          <div className="rounded-2xl bg-mn-sand px-4 py-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                               Data
                             </p>
@@ -507,7 +419,7 @@ export default function ClinicaDashboardPage() {
                 )}
               </section>
 
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="mb-5">
                   <h2 className="text-xl font-bold text-slate-950">
                     Ações rápidas
@@ -520,28 +432,28 @@ export default function ClinicaDashboardPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Link
                     href="/clinica/solicitacoes"
-                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                    className="rounded-2xl bg-mn-teal px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
                     Ver solicitações
                   </Link>
 
                   <Link
                     href="/clinica/medicos"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-5 py-4 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Gerenciar médicos
                   </Link>
 
                   <Link
                     href="/clinica/configuracoes"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-5 py-4 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Configurações
                   </Link>
 
                   <Link
                     href="/notificacoes"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-5 py-4 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Notificações
                   </Link>
@@ -550,7 +462,7 @@ export default function ClinicaDashboardPage() {
             </div>
 
             <div className="space-y-6">
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
@@ -563,14 +475,14 @@ export default function ClinicaDashboardPage() {
 
                   <Link
                     href="/clinica/medicos"
-                    className="text-sm font-semibold text-[#164957] hover:underline"
+                    className="text-sm font-semibold text-mn-teal hover:underline"
                   >
                     Ver tudo
                   </Link>
                 </div>
 
                 {doctors.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-mn-border bg-mn-sand p-5 text-sm text-slate-500">
                     Nenhum médico vinculado ainda.
                   </div>
                 ) : (
@@ -578,7 +490,7 @@ export default function ClinicaDashboardPage() {
                     {doctors.slice(0, 5).map((doctor) => (
                       <div
                         key={doctor.id}
-                        className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4"
+                        className="rounded-2xl border border-mn-border bg-mn-sand p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -607,7 +519,7 @@ export default function ClinicaDashboardPage() {
                 )}
               </section>
 
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">
@@ -620,14 +532,14 @@ export default function ClinicaDashboardPage() {
 
                   <Link
                     href="/notificacoes"
-                    className="text-sm font-semibold text-[#164957] hover:underline"
+                    className="text-sm font-semibold text-mn-teal hover:underline"
                   >
                     Ver tudo
                   </Link>
                 </div>
 
                 {notifications.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#D8DEEF] bg-[#FAFBFF] p-5 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-mn-border bg-mn-sand p-5 text-sm text-slate-500">
                     Nenhuma notificação por enquanto.
                   </div>
                 ) : (
@@ -636,15 +548,15 @@ export default function ClinicaDashboardPage() {
                       <Link
                         key={item.id}
                         href={getNotificationHref(item)}
-                        className="block rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4 transition hover:bg-white"
+                        className="block rounded-2xl border border-mn-border bg-mn-sand p-4 transition hover:bg-white"
                       >
                         <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="rounded-full bg-[#EEF3EF] px-2.5 py-1 text-[11px] font-bold text-[#164957]">
+                          <span className="rounded-full bg-mn-sage-light px-2.5 py-1 text-[11px] font-bold text-mn-teal">
                             {getNotificationTypeLabel(item)}
                           </span>
 
                           {!item.is_read && (
-                            <span className="rounded-full bg-[#E9F7EF] px-2.5 py-1 text-[11px] font-bold text-[#7A9D8C]">
+                            <span className="rounded-full bg-mn-sage-light px-2.5 py-1 text-[11px] font-bold text-mn-sage">
                               Nova
                             </span>
                           )}

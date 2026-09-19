@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
+import { getCurrentClinicMember } from "../../lib/auth";
 
 type HealthPlan = {
   id: string;
   name: string;
+  operator_name: string|null;
+  catalog_scope: string|null;
 };
 
 export default function ClinicaPlanosPage() {
@@ -24,63 +27,10 @@ export default function ClinicaPlanosPage() {
   const [clinicId, setClinicId] = useState<string>("");
   const [memberRole, setMemberRole] = useState<string>("");
 
+  const [operator,setOperator]=useState("");
   const [plans, setPlans] = useState<HealthPlan[]>([]);
   const [acceptedPlanIds, setAcceptedPlanIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    async function loadPlansPage() {
-      setLoading(true);
-      setMessage("");
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      const { data: member, error: memberError } = await supabase
-        .from("clinic_members")
-        .select("clinic_id, member_role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (memberError || !member) {
-        setMessage("Você não possui acesso Ã  área da clínica.");
-        setMessageType("error");
-        setLoading(false);
-        return;
-      }
-
-      setClinicId(member.clinic_id);
-      setMemberRole(member.member_role);
-
-      const { data: allPlans, error: allPlansError } = await supabase
-        .from("health_plans")
-        .select("id, name")
-        .order("name", { ascending: true });
-
-      const { data: clinicPlans, error: clinicPlansError } = await supabase
-        .from("clinic_health_plans")
-        .select("health_plan_id")
-        .eq("clinic_id", member.clinic_id);
-
-      if (allPlansError || clinicPlansError) {
-        setMessage("Não foi possível carregar os planos.");
-        setMessageType("error");
-        setLoading(false);
-        return;
-      }
-
-      setPlans(allPlans || []);
-      setAcceptedPlanIds((clinicPlans || []).map((item) => item.health_plan_id));
-      setLoading(false);
-    }
-
-    loadPlansPage();
-  }, [router]);
 
   async function handleTogglePlan(planId: string, isCurrentlyAccepted: boolean) {
     if (!clinicId) return;
@@ -133,6 +83,58 @@ export default function ClinicaPlanosPage() {
     setSavingId(null);
   }
 
+
+  useEffect(() => {
+    async function loadPlansPage() {
+      setLoading(true);
+      setMessage("");
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data: member, error: memberError } = await getCurrentClinicMember();
+
+      if (memberError || !member) {
+        setMessage("Você não possui acesso à área da clínica.");
+        setMessageType("error");
+        setLoading(false);
+        return;
+      }
+
+      setClinicId(member.clinic_id);
+      setMemberRole(member.member_role);
+
+      const { data: allPlans, error: allPlansError } = await supabase
+        .from("health_plans")
+        .select("id, name, operator_name, catalog_scope")
+        .order("name", { ascending: true });
+
+      const { data: clinicPlans, error: clinicPlansError } = await supabase
+        .from("clinic_health_plans")
+        .select("health_plan_id")
+        .eq("clinic_id", member.clinic_id);
+
+      if (allPlansError || clinicPlansError) {
+        setMessage("Não foi possível carregar os planos.");
+        setMessageType("error");
+        setLoading(false);
+        return;
+      }
+
+      setPlans(allPlans || []);
+      setAcceptedPlanIds((clinicPlans || []).map((item) => item.health_plan_id));
+      setLoading(false);
+    }
+
+    loadPlansPage();
+  }, [router]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -171,8 +173,10 @@ export default function ClinicaPlanosPage() {
           </div>
         )}
 
+        <label className="mb-5 block text-sm font-semibold">Operadora<select className="app-input mt-2" value={operator} onChange={e=>setOperator(e.target.value)}><option value="">Todas as operadoras</option>{[...new Set(plans.map(p=>p.operator_name).filter(Boolean))].map(o=><option key={o} value={o!}>{o}</option>)}</select></label>
+        <p className="mb-5 text-sm">Marque somente os planos/categorias que seu contrato aceita. A seleção não autoriza automaticamente procedimentos ou comprova elegibilidade do beneficiário.</p>
         <div className="grid gap-4">
-          {plans.map((plan) => {
+          {plans.filter(plan=>!operator||plan.operator_name===operator).map((plan) => {
             const accepted = acceptedPlanIds.includes(plan.id);
 
             return (
@@ -182,8 +186,9 @@ export default function ClinicaPlanosPage() {
               >
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">
-                    {plan.name}
+                    {plan.operator_name} · {plan.name}
                   </h2>
+                  <p className="mt-1 text-xs">{plan.catalog_scope}</p>
                   <p className="mt-1 text-sm text-slate-500">
                     {accepted ? "Plano já aceito pela clínica" : "Plano ainda não aceito"}
                   </p>

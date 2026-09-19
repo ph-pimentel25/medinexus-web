@@ -128,10 +128,6 @@ export default function ConfirmarConsultaPage() {
     "info"
   );
 
-  useEffect(() => {
-    loadAppointment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointmentId]);
 
   async function loadAppointment() {
     setLoading(true);
@@ -205,30 +201,6 @@ export default function ConfirmarConsultaPage() {
     setLoading(false);
   }
 
-  const doctor = pickOne(appointment?.doctors);
-  const clinic = pickOne(appointment?.clinics);
-
-  const appointmentStart =
-    appointment?.confirmed_start_at || appointment?.requested_start_at;
-
-  const clinicName =
-    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
-
-  const clinicLocation = useMemo(() => {
-    const parts = [
-      clinic?.address_neighborhood,
-      clinic?.address_city || clinic?.city,
-      clinic?.address_state || clinic?.state,
-    ].filter(Boolean);
-
-    return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
-  }, [clinic]);
-
-  const isFinalStatus =
-    appointment?.patient_confirmation_status === "confirmed" ||
-    appointment?.patient_confirmation_status === "cancelled_by_patient" ||
-    appointment?.patient_confirmation_status === "reschedule_requested" ||
-    appointment?.status === "completed";
 
   async function createEvent(
     eventType: string,
@@ -251,6 +223,7 @@ export default function ConfirmarConsultaPage() {
     });
   }
 
+
   async function createNotification(
     userId: string | null | undefined,
     notificationType: string,
@@ -259,8 +232,10 @@ export default function ConfirmarConsultaPage() {
   ) {
     if (!userId || !appointment) return;
 
+    const { data: recipient } = await supabase.from("doctors").select("user_id").eq("id", userId).maybeSingle();
+    if (!recipient?.user_id) return;
     await supabase.from("notifications").insert({
-      user_id: userId,
+      user_id: recipient.user_id,
       appointment_id: appointment.id,
       notification_type: notificationType,
       title,
@@ -269,6 +244,7 @@ export default function ConfirmarConsultaPage() {
       delivery_status: "pending",
     });
   }
+
 
   async function handleConfirmPresence() {
     if (!appointment) return;
@@ -314,6 +290,7 @@ export default function ConfirmarConsultaPage() {
     await loadAppointment();
     setSavingAction(null);
   }
+
 
   async function handleCancelAppointment() {
     if (!appointment) return;
@@ -376,6 +353,7 @@ export default function ConfirmarConsultaPage() {
     setSavingAction(null);
   }
 
+
   async function handleRequestReschedule() {
     if (!appointment) return;
 
@@ -430,9 +408,41 @@ export default function ConfirmarConsultaPage() {
     setSavingAction(null);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadAppointment(), 0);
+    return () => clearTimeout(initialLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentId]);
+
+  const doctor = pickOne(appointment?.doctors);
+  const clinic = pickOne(appointment?.clinics);
+
+  const appointmentStart =
+    appointment?.confirmed_start_at || appointment?.requested_start_at;
+
+  const clinicName =
+    clinic?.trade_name || clinic?.legal_name || "Clínica não informada";
+
+  const clinicLocation = useMemo(() => {
+    const parts = [
+      clinic?.address_neighborhood,
+      clinic?.address_city || clinic?.city,
+      clinic?.address_state || clinic?.state,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(" • ") : "Localização não informada";
+  }, [clinic]);
+
+  const isFinalStatus =
+    appointment?.patient_confirmation_status === "confirmed" ||
+    appointment?.patient_confirmation_status === "cancelled_by_patient" ||
+    appointment?.patient_confirmation_status === "reschedule_requested" ||
+    appointment?.status === "completed";
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-mn-sand">
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-slate-600">Carregando consulta...</p>
         </section>
@@ -442,13 +452,13 @@ export default function ConfirmarConsultaPage() {
 
   if (!appointment) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-mn-sand">
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
           {message && <Alert variant={messageType}>{message}</Alert>}
 
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white"
+            className="mt-6 inline-flex rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white"
           >
             Voltar ao dashboard
           </Link>
@@ -458,14 +468,14 @@ export default function ConfirmarConsultaPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
+    <main className="min-h-screen overflow-hidden bg-mn-sand">
       <section className="relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
 
         <section className="relative mx-auto max-w-5xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
                 Confirmação de consulta
               </p>
 
@@ -481,7 +491,7 @@ export default function ConfirmarConsultaPage() {
 
             <Link
               href="/solicitacoes"
-              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
+              className="inline-flex justify-center rounded-2xl border border-mn-purple-light bg-white px-6 py-4 text-sm font-bold text-mn-purple shadow-sm transition hover:bg-mn-purple-light"
             >
               Minhas solicitações
             </Link>
@@ -497,8 +507,8 @@ export default function ConfirmarConsultaPage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <article className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+          <article className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
               Consulta
             </p>
 
@@ -507,7 +517,7 @@ export default function ConfirmarConsultaPage() {
             </h2>
 
             <div className="mt-6 grid gap-4">
-              <div className="rounded-[28px] bg-[#F8FAFC] p-5">
+              <div className="rounded-2xl bg-mn-sand p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                   Médico
                 </p>
@@ -520,7 +530,7 @@ export default function ConfirmarConsultaPage() {
                 </p>
               </div>
 
-              <div className="rounded-[28px] bg-[#F8FAFC] p-5">
+              <div className="rounded-2xl bg-mn-sand p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                   Clínica
                 </p>
@@ -529,7 +539,7 @@ export default function ConfirmarConsultaPage() {
               </div>
 
               <div
-                className={`rounded-[28px] border p-5 ${getStatusTone(
+                className={`rounded-2xl border p-5 ${getStatusTone(
                   appointment.patient_confirmation_status
                 )}`}
               >
@@ -543,8 +553,8 @@ export default function ConfirmarConsultaPage() {
             </div>
           </article>
 
-          <article className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+          <article className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-purple">
               Sua resposta
             </p>
 
@@ -553,7 +563,7 @@ export default function ConfirmarConsultaPage() {
             </h2>
 
             {isFinalStatus ? (
-              <div className="mt-6 rounded-[28px] bg-[#F8FAFC] p-6 text-slate-600">
+              <div className="mt-6 rounded-2xl bg-mn-sand p-6 text-slate-600">
                 Esta consulta já recebeu uma resposta do paciente.
               </div>
             ) : (
@@ -576,7 +586,7 @@ export default function ConfirmarConsultaPage() {
                   <textarea
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
-                    className="min-h-[130px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#5A4C86] focus:bg-white"
+                    className="min-h-[130px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     placeholder="Use este campo para cancelar ou pedir remarcação."
                   />
                 </div>
@@ -609,7 +619,7 @@ export default function ConfirmarConsultaPage() {
           </article>
         </div>
 
-        <div className="mt-8 rounded-[34px] border border-[#D9D6F4] bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
+        <div className="mt-8 rounded-2xl border border-mn-purple-light bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
           <strong className="text-slate-950">Importante:</strong> confirme sua
           presença apenas se realmente puder comparecer. Cancelamentos e
           remarcações podem ficar registrados para controle de disponibilidade e

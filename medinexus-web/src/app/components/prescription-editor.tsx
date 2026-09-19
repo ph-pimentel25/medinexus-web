@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   downloadPrescriptionPdf,
   printPrescription,
@@ -47,11 +47,28 @@ export default function PrescriptionEditor({
   const [notes, setNotes] = useState(initialNotes || "");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await onSave({
+        title,
+        content,
+        notes,
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+
+  const [previousInitial, setPreviousInitial] = useState({ initialTitle, initialContent, initialNotes });
+  if (previousInitial.initialTitle !== initialTitle || previousInitial.initialContent !== initialContent || previousInitial.initialNotes !== initialNotes) {
+    setPreviousInitial({ initialTitle, initialContent, initialNotes });
     setTitle(initialTitle || "Receituário médico");
     setContent(initialContent || "");
     setNotes(initialNotes || "");
-  }, [initialTitle, initialContent, initialNotes]);
+  }
 
   const payload: PrescriptionPayload = {
     clinicName,
@@ -68,19 +85,6 @@ export default function PrescriptionEditor({
     notes,
     createdAt: new Date().toISOString(),
   };
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await onSave({
-        title,
-        content,
-        notes,
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -167,8 +171,8 @@ export default function PrescriptionEditor({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-[var(--color-offwhite,#F8F4F2)] p-5 shadow-sm">
-            <div className="rounded-[24px] bg-[var(--color-brand,#1B4B58)] p-5 text-white">
+          <div className="rounded-2xl border border-slate-200 bg-[var(--color-offwhite,#F8F4F2)] p-5 shadow-sm">
+            <div className="rounded-2xl bg-[var(--color-brand,#1B4B58)] p-5 text-white">
               <h3 className="text-2xl font-bold">MediNexus</h3>
               <p className="mt-1 text-sm text-white/80">Receituário médico digital</p>
             </div>

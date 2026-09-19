@@ -1,0 +1,10 @@
+"use client";
+import {useEffect,useState} from "react";
+import {supabase} from "../lib/supabase";
+type Summary={id:string;summary:string;reviewed_at:string|null;created_at:string};
+export default function ClinicalAISummary({appointmentId,canReview=false}:{appointmentId:string;canReview?:boolean}){
+ const [rows,setRows]=useState<Summary[]>([]);const [error,setError]=useState("");const [revision,setRevision]=useState(0);const [busy,setBusy]=useState(false);
+ useEffect(()=>{let alive=true;void supabase.from("clinical_ai_summaries").select("id,summary,reviewed_at,created_at").eq("appointment_id",appointmentId).order("created_at",{ascending:false}).limit(1).then(result=>{if(!alive)return;if(result.error)setError("Resumo IA indisponível no momento.");else{setRows(result.data||[]);setError("");}});return()=>{alive=false;};},[appointmentId,revision]);
+ async function review(id:string){setBusy(true);const result=await supabase.rpc("review_clinical_summary",{p_summary_id:id});if(result.error)setError(result.error.message);else setRevision(n=>n+1);setBusy(false);}
+ return <section className="mt-4 rounded-2xl border border-mn-purple-light bg-mn-sand p-5"><h3 className="font-semibold text-mn-purple">Resumo elaborado por IA</h3>{rows.map(row=><div key={row.id}><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{row.summary}</p><p className="mt-3 text-xs">{row.reviewed_at?"Conferido pelo médico responsável":"Aguardando conferência médica; ainda não liberado ao paciente"}. Gerado em {new Date(row.created_at).toLocaleString("pt-BR")}.</p>{canReview&&!row.reviewed_at&&<button className="mn-button-secondary mt-3" disabled={busy} onClick={()=>void review(row.id)}>Conferi o resumo e autorizo exibição no histórico</button>}</div>)}{error&&<p role="alert" className="mt-2 text-sm">{error}</p>}{!rows.length&&!error&&<p className="mt-2 text-sm">{"Nenhum resumo de IA liberado. Os registros originais continuam disponíveis."}</p>}<p className="mt-3 text-xs text-mn-graphite/60">Síntese auxiliar. Não substitui receitas, exames, orientações nem registros originais.</p></section>;
+}

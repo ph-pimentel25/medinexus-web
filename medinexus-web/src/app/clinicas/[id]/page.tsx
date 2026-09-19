@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import Link from "next/link";
+import DoctorAvatar from "../../components/doctor-avatar";
+import { Reviews } from "../../components/reviews";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
@@ -23,6 +25,12 @@ type ClinicRow = {
   phone: string | null;
   email: string | null;
   website: string | null;
+  website_url: string | null;
+  hero_title: string | null;
+  hero_subtitle: string | null;
+  public_highlight_1: string | null;
+  public_highlight_2: string | null;
+  public_highlight_3: string | null;
   public_slug: string | null;
   public_page_enabled: boolean | null;
   cover_image_url: string | null;
@@ -32,6 +40,7 @@ type ClinicRow = {
 };
 
 type DoctorRow = {
+  photo_path: string | null;
   id: string;
   name: string | null;
   crm: string | null;
@@ -167,10 +176,6 @@ export default function ClinicPublicPage() {
     "info"
   );
 
-  useEffect(() => {
-    loadClinicPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clinicIdentifier]);
 
   async function loadClinicPage() {
     setLoading(true);
@@ -207,7 +212,7 @@ export default function ClinicPublicPage() {
       address_zip_code,
       phone,
       email,
-      website,
+      website, website_url, hero_title, hero_subtitle, public_highlight_1, public_highlight_2, public_highlight_3,
       public_slug,
       public_page_enabled,
       cover_image_url,
@@ -256,7 +261,8 @@ export default function ClinicPublicPage() {
           clinic_id,
           average_consultation_minutes,
           accepts_private_consultation,
-          private_price_cents
+          private_price_cents,
+          photo_path
         `
         )
         .eq("clinic_id", clinicData.id)
@@ -331,6 +337,13 @@ export default function ClinicPublicPage() {
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadClinicPage(), 0);
+    return () => clearTimeout(initialLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clinicIdentifier]);
+
   const clinicName = clinic ? getClinicName(clinic) : "Clínica MediNexus";
 
   const specialtyNames = useMemo(
@@ -366,7 +379,7 @@ export default function ClinicPublicPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-mn-sand">
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <p className="text-slate-600">Carregando página da clínica...</p>
         </section>
@@ -376,15 +389,15 @@ export default function ClinicPublicPage() {
 
   if (!clinic) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-mn-sand">
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="rounded-[34px] border border-red-200 bg-red-50 p-6 text-red-700">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
             {message || "Clínica não encontrada."}
           </div>
 
           <Link
             href="/clinicas"
-            className="mt-6 inline-flex rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white"
+            className="mt-6 inline-flex rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white"
           >
             Voltar para clínicas
           </Link>
@@ -394,13 +407,13 @@ export default function ClinicPublicPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
+    <main className="min-h-screen overflow-hidden bg-mn-sand">
       <section className="relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
 
         <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-14 lg:pt-20">
-          <div className="overflow-hidden rounded-[46px] border border-[#D9D6F4] bg-white shadow-[0_34px_110px_-75px_rgba(40,60,122,0.55)]">
-            <div className="relative min-h-[280px] bg-gradient-to-br from-[#164957] via-[#5A4C86] to-[#5A4C86]">
+          <div className="overflow-hidden rounded-[46px] border border-mn-purple-light bg-white shadow-[0_34px_110px_-75px_rgba(40,60,122,0.55)]">
+            <div className="relative min-h-[280px] bg-gradient-to-br from-mn-teal via-mn-purple to-mn-purple">
               {clinic.cover_image_url && (
                 <img
                   src={clinic.cover_image_url}
@@ -409,7 +422,7 @@ export default function ClinicPublicPage() {
                 />
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-br from-[#172554]/75 via-[#4338CA]/55 to-[#5A4C86]/70" />
+              <div className="absolute inset-0 bg-gradient-to-br from-mn-teal/75 via-[#4338CA]/55 to-mn-purple/70" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_36%)]" />
 
               <div className="relative flex min-h-[280px] flex-col justify-end p-7 text-white sm:p-10 lg:p-12">
@@ -434,7 +447,7 @@ export default function ClinicPublicPage() {
                 <div className="grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
                   <div>
                     <div className="mb-5 flex items-center gap-4">
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[26px] border border-white/25 bg-white/15 text-2xl font-bold text-white backdrop-blur">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-white/25 bg-white/15 text-2xl font-bold text-white backdrop-blur">
                         {clinic.logo_url ? (
                           <img
                             src={clinic.logo_url}
@@ -460,11 +473,11 @@ export default function ClinicPublicPage() {
                     </div>
 
                     <h1 className="max-w-4xl text-5xl font-black tracking-[-0.06em] text-white sm:text-6xl">
-                      {clinicName}
+                      {clinic.hero_title || clinicName}
                     </h1>
 
                     <p className="mt-5 max-w-3xl text-lg leading-8 text-white/78">
-                      {clinic.description ||
+                      {clinic.hero_subtitle || clinic.description ||
                         "Conheça a estrutura, médicos, especialidades e formas de atendimento desta clínica dentro da MediNexus."}
                     </p>
                   </div>
@@ -472,7 +485,7 @@ export default function ClinicPublicPage() {
                   <div className="grid gap-3 sm:grid-cols-2 lg:w-[320px] lg:grid-cols-1">
                     <Link
                       href={isLogged ? `/busca?clinicId=${clinic.id}` : "/login"}
-                      className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-bold text-[#164957] shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100"
+                      className="inline-flex justify-center rounded-2xl bg-white px-7 py-4 text-sm font-bold text-mn-teal shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100"
                     >
                       {isLogged ? "Agendar nesta clínica" : "Entrar para agendar"}
                     </Link>
@@ -488,26 +501,26 @@ export default function ClinicPublicPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 border-t border-[#E0E7FF] bg-white p-6 md:grid-cols-4">
-              <div className="rounded-[26px] bg-[#F1F5FF] p-5">
+            <div className="grid gap-4 border-t border-mn-purple-light bg-white p-6 md:grid-cols-4">
+              <div className="rounded-2xl bg-mn-sand p-5">
                 <p className="text-sm font-semibold text-slate-500">
                   Médicos
                 </p>
-                <p className="mt-2 text-4xl font-bold text-[#164957]">
+                <p className="mt-2 text-4xl font-bold text-mn-teal">
                   {doctors.length}
                 </p>
               </div>
 
-              <div className="rounded-[26px] bg-[#F6F3FF] p-5">
+              <div className="rounded-2xl bg-mn-purple-light p-5">
                 <p className="text-sm font-semibold text-slate-500">
                   Especialidades
                 </p>
-                <p className="mt-2 text-4xl font-bold text-[#5A4C86]">
+                <p className="mt-2 text-4xl font-bold text-mn-purple">
                   {specialtyNames.length}
                 </p>
               </div>
 
-              <div className="rounded-[26px] bg-[#F8FAFC] p-5">
+              <div className="rounded-2xl bg-mn-sand p-5">
                 <p className="text-sm font-semibold text-slate-500">
                   Convênios
                 </p>
@@ -516,7 +529,7 @@ export default function ClinicPublicPage() {
                 </p>
               </div>
 
-              <div className="rounded-[26px] bg-[#F8FAFC] p-5">
+              <div className="rounded-2xl bg-mn-sand p-5">
                 <p className="text-sm font-semibold text-slate-500">
                   Particular
                 </p>
@@ -534,7 +547,7 @@ export default function ClinicPublicPage() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {message && (
           <div
-            className={`mb-6 rounded-[26px] border p-5 text-sm font-semibold ${
+            className={`mb-6 rounded-2xl border p-5 text-sm font-semibold ${
               messageType === "error"
                 ? "border-red-200 bg-red-50 text-red-700"
                 : messageType === "success"
@@ -547,8 +560,8 @@ export default function ClinicPublicPage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <article className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+          <article className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
               Sobre a clínica
             </p>
 
@@ -562,7 +575,7 @@ export default function ClinicPublicPage() {
             </p>
 
             <div className="mt-7 grid gap-3">
-              <div className="rounded-3xl border border-[#E0E7FF] bg-[#F8FAFC] p-5">
+              <div className="rounded-3xl border border-mn-purple-light bg-mn-sand p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                   Endereço
                 </p>
@@ -572,7 +585,7 @@ export default function ClinicPublicPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-3xl border border-[#E0E7FF] bg-[#F8FAFC] p-5">
+                <div className="rounded-3xl border border-mn-purple-light bg-mn-sand p-5">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                     Telefone
                   </p>
@@ -581,7 +594,7 @@ export default function ClinicPublicPage() {
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-[#E0E7FF] bg-[#F8FAFC] p-5">
+                <div className="rounded-3xl border border-mn-purple-light bg-mn-sand p-5">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                     E-mail
                   </p>
@@ -591,12 +604,12 @@ export default function ClinicPublicPage() {
                 </div>
               </div>
 
-              {clinic.website && (
+              {(clinic.website_url || clinic.website) && (
                 <a
-                  href={clinic.website}
+                  href={/^https?:\/\//i.test(clinic.website_url || clinic.website || "") ? (clinic.website_url || clinic.website || "") : "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-5 py-4 text-sm font-bold text-[#5A4C86] transition hover:bg-[#F6F3FF]"
+                  className="inline-flex justify-center rounded-2xl border border-mn-purple-light bg-white px-5 py-4 text-sm font-bold text-mn-purple transition hover:bg-mn-purple-light"
                 >
                   Acessar site da clínica
                 </a>
@@ -604,8 +617,8 @@ export default function ClinicPublicPage() {
             </div>
           </article>
 
-          <article className="rounded-[38px] border border-[#D9D6F4] bg-gradient-to-br from-[#F6F3FF] to-[#F1F5FF] p-7 shadow-[0_24px_80px_-70px_rgba(94,75,154,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+          <article className="rounded-[38px] border border-mn-purple-light bg-gradient-to-br from-mn-purple-light to-mn-sand p-7 shadow-[0_24px_80px_-70px_rgba(94,75,154,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-purple">
               Especialidades
             </p>
 
@@ -622,7 +635,7 @@ export default function ClinicPublicPage() {
                 {specialtyNames.map((name) => (
                   <span
                     key={name}
-                    className="rounded-full border border-[#D9D6F4] bg-white px-4 py-2 text-sm font-bold text-[#5A4C86]"
+                    className="rounded-full border border-mn-purple-light bg-white px-4 py-2 text-sm font-bold text-mn-purple"
                   >
                     {name}
                   </span>
@@ -630,7 +643,7 @@ export default function ClinicPublicPage() {
               </div>
             )}
 
-            <div className="mt-8 rounded-[30px] bg-white/80 p-5 ring-1 ring-white">
+            <div className="mt-8 rounded-2xl bg-white/80 p-5 ring-1 ring-white">
               <p className="text-sm font-bold text-slate-700">
                 Quer buscar uma consulta por especialidade?
               </p>
@@ -641,7 +654,7 @@ export default function ClinicPublicPage() {
 
               <Link
                 href={isLogged ? `/busca?clinicId=${clinic.id}` : "/login"}
-                className="mt-5 inline-flex rounded-2xl bg-[#5A4C86] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#5A4C86]"
+                className="mt-5 inline-flex rounded-2xl bg-mn-purple px-6 py-3 text-sm font-bold text-white transition hover:bg-mn-purple"
               >
                 {isLogged ? "Buscar nesta clínica" : "Entrar para buscar"}
               </Link>
@@ -653,24 +666,24 @@ export default function ClinicPublicPage() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
               Equipe médica
             </p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-slate-950">
-              Médicos vinculados Ã  clínica
+              Médicos vinculados à clínica
             </h2>
           </div>
 
           <Link
             href={isLogged ? `/busca?clinicId=${clinic.id}` : "/login"}
-            className="inline-flex justify-center rounded-2xl bg-[#164957] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#164957]"
+            className="inline-flex justify-center rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white transition hover:bg-mn-teal"
           >
             Agendar consulta
           </Link>
         </div>
 
         {doctorsWithSpecialties.length === 0 ? (
-          <div className="rounded-[34px] border border-[#D9D6F4] bg-white p-8 text-slate-600 shadow-sm">
+          <div className="rounded-2xl border border-mn-purple-light bg-white p-8 text-slate-600 shadow-sm">
             Nenhum médico público vinculado a esta clínica ainda.
           </div>
         ) : (
@@ -678,12 +691,10 @@ export default function ClinicPublicPage() {
             {doctorsWithSpecialties.map((doctor) => (
               <article
                 key={doctor.id}
-                className="rounded-[34px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]"
+                className="rounded-2xl border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]"
               >
                 <div className="flex gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#164957] to-[#5A4C86] text-lg font-bold text-white">
-                    {getInitials(doctor.name || "Médico")}
-                  </div>
+                  <DoctorAvatar path={doctor.photo_path} name={doctor.name||"Médico"}/>
 
                   <div className="min-w-0">
                     <h3 className="text-2xl font-black tracking-[-0.04em] text-slate-950">
@@ -697,14 +708,14 @@ export default function ClinicPublicPage() {
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       {doctor.specialtyNames.length === 0 ? (
-                        <span className="rounded-full bg-[#F8FAFC] px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-[#E0E7FF]">
+                        <span className="rounded-full bg-mn-sand px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-mn-purple-light">
                           Especialidade não informada
                         </span>
                       ) : (
                         doctor.specialtyNames.map((name) => (
                           <span
                             key={name}
-                            className="rounded-full bg-[#F1F5FF] px-3 py-1 text-xs font-bold text-[#164957] ring-1 ring-[#E0E7FF]"
+                            className="rounded-full bg-mn-sand px-3 py-1 text-xs font-bold text-mn-teal ring-1 ring-mn-purple-light"
                           >
                             {name}
                           </span>
@@ -715,7 +726,7 @@ export default function ClinicPublicPage() {
                 </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-3xl bg-[#F8FAFC] p-5">
+                  <div className="rounded-3xl bg-mn-sand p-5">
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
                       Duração média
                     </p>
@@ -724,7 +735,7 @@ export default function ClinicPublicPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-3xl bg-[#F8FAFC] p-5">
+                  <div className="rounded-3xl bg-mn-sand p-5">
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
                       Particular
                     </p>
@@ -742,10 +753,10 @@ export default function ClinicPublicPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 pb-20 sm:px-6 lg:px-8">
-        <div className="rounded-[42px] border border-[#D9D6F4] bg-white p-8 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+        <div className="rounded-[42px] border border-mn-purple-light bg-white p-8 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-purple">
                 Convênios aceitos
               </p>
               <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
@@ -758,7 +769,7 @@ export default function ClinicPublicPage() {
             </div>
 
             {healthPlans.length === 0 ? (
-              <div className="rounded-[30px] bg-[#F8FAFC] p-6 text-slate-600">
+              <div className="rounded-2xl bg-mn-sand p-6 text-slate-600">
                 Esta clínica ainda não cadastrou convênios públicos.
               </div>
             ) : (
@@ -766,7 +777,7 @@ export default function ClinicPublicPage() {
                 {healthPlans.map((plan, index) => (
                   <div
                     key={`${plan.clinic_id}-${index}`}
-                    className="rounded-[28px] border border-[#E0E7FF] bg-[#F8FAFC] p-5"
+                    className="rounded-2xl border border-mn-purple-light bg-mn-sand p-5"
                   >
                     <p className="font-bold text-slate-950">
                       {plan.health_plan_operator || "Operadora não informada"}
@@ -803,6 +814,7 @@ export default function ClinicPublicPage() {
           </div>
         </div>
       </section>
+      {clinic && <div className="mx-auto max-w-7xl px-4 pb-12"><div className="mb-6 grid gap-4 sm:grid-cols-3">{[clinic.public_highlight_1,clinic.public_highlight_2,clinic.public_highlight_3].filter(Boolean).map((text,i)=><div key={i} className="mn-panel text-sm font-semibold">{text}</div>)}</div><Reviews kind="clinic" targetId={clinic.id}/></div>}
     </main>
   );
 }

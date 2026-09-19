@@ -27,9 +27,6 @@ export default function EspecialidadesPage() {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    loadSpecialties();
-  }, []);
 
   async function loadSpecialties() {
     setLoading(true);
@@ -51,6 +48,12 @@ export default function EspecialidadesPage() {
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadSpecialties(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
+
   const filteredSpecialties = useMemo(() => {
     const normalizedQuery = normalize(query);
 
@@ -61,21 +64,21 @@ export default function EspecialidadesPage() {
   }, [specialties, query]);
 
   return (
-    <main className="min-h-screen bg-[#FAF6F3] text-[#2E393F]">
-      <section className="relative overflow-hidden border-b border-[#E7DDD7]">
+    <main className="min-h-screen bg-mn-sand text-mn-graphite">
+      <section className="relative overflow-hidden border-b border-mn-border">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(122,157,140,0.25),transparent_30%),radial-gradient(circle_at_86%_16%,rgba(90,76,134,0.20),transparent_32%)]" />
 
         <div className="relative mx-auto max-w-[1500px] px-6 py-20 sm:px-10 lg:px-14 lg:py-28">
           <div className="max-w-5xl">
-            <div className="mb-7 inline-flex rounded-full border border-[#D8CCC5] bg-white/65 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#164957] shadow-sm backdrop-blur-xl">
+            <div className="mb-7 inline-flex rounded-full border border-mn-border bg-white/65 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-mn-teal shadow-sm backdrop-blur-xl">
               Especialidades
             </div>
 
-            <h1 className="max-w-6xl text-[4rem] font-semibold leading-[0.92] tracking-[-0.075em] text-[#2E393F] sm:text-[5.6rem] lg:text-[7rem]">
+            <h1 className="max-w-6xl text-[4rem] font-semibold leading-[0.92] tracking-[-0.075em] text-mn-graphite sm:text-[5.6rem] lg:text-[7rem]">
               Encontre o cuidado certo para cada necessidade.
             </h1>
 
-            <p className="mt-8 max-w-3xl text-xl leading-9 text-[#2E393F]/70">
+            <p className="mt-8 max-w-3xl text-xl leading-9 text-mn-graphite/70">
               Navegue pelas especialidades disponíveis e encontre profissionais
               ou clínicas que fazem parte da rede MediNexus.
             </p>
@@ -83,14 +86,14 @@ export default function EspecialidadesPage() {
             <div className="mt-10 flex flex-wrap gap-4">
               <Link
                 href="/profissionais"
-                className="rounded-full bg-[#164957] px-8 py-4 text-sm font-semibold text-white shadow-[0_24px_80px_-42px_rgba(22,73,87,0.85)] transition hover:-translate-y-0.5 hover:bg-[#123B46]"
+                className="rounded-full bg-mn-teal px-8 py-4 text-sm font-semibold text-white shadow-[0_24px_80px_-42px_rgba(22,73,87,0.85)] transition hover:-translate-y-0.5 hover:bg-[#123B46]"
               >
                 Ver profissionais
               </Link>
 
               <Link
                 href="/clinicas"
-                className="rounded-full border border-[#D8CCC5] bg-white/70 px-8 py-4 text-sm font-semibold text-[#2E393F] shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white"
+                className="rounded-full border border-mn-border bg-white/70 px-8 py-4 text-sm font-semibold text-mn-graphite shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white"
               >
                 Ver clínicas
               </Link>
@@ -107,48 +110,48 @@ export default function EspecialidadesPage() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-[2rem] border border-[#E7DDD7] bg-white/70 p-6 shadow-sm backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+          <div className="rounded-2xl border border-mn-border bg-white/70 p-6 shadow-sm backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
               Especialidades
             </p>
-            <p className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#2E393F]">
+            <p className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-mn-graphite">
               {specialties.length}
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-[#E7DDD7] bg-white/70 p-6 shadow-sm backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+          <div className="rounded-2xl border border-mn-border bg-white/70 p-6 shadow-sm backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
               Resultado atual
             </p>
-            <p className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#5A4C86]">
+            <p className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-mn-purple">
               {filteredSpecialties.length}
             </p>
           </div>
         </div>
 
-        <div className="mt-6 rounded-[2.4rem] border border-[#E7DDD7] bg-white/70 p-5 shadow-sm backdrop-blur">
-          <label className="mb-2 block text-sm font-semibold text-[#2E393F]">
+        <div className="mt-6 rounded-2xl border border-mn-border bg-white/70 p-5 shadow-sm backdrop-blur">
+          <label className="mb-2 block text-sm font-semibold text-mn-graphite">
             Buscar especialidade
           </label>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Busque por cardiologia, dermatologia, ortopedia..."
-            className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-[#2E393F] outline-none transition placeholder:text-[#2E393F]/40 focus:border-[#164957] focus:bg-white"
+            className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-mn-graphite outline-none transition placeholder:text-mn-graphite/40 focus:border-mn-teal focus:bg-white"
           />
         </div>
 
         <div className="mt-8">
           {loading ? (
-            <div className="rounded-[2.4rem] border border-[#E7DDD7] bg-white/70 p-8 text-sm text-[#2E393F]/60 shadow-sm backdrop-blur">
+            <div className="rounded-2xl border border-mn-border bg-white/70 p-8 text-sm text-mn-graphite/60 shadow-sm backdrop-blur">
               Carregando especialidades...
             </div>
           ) : filteredSpecialties.length === 0 ? (
-            <div className="rounded-[2.4rem] border border-[#E7DDD7] bg-white/70 p-12 text-center shadow-sm backdrop-blur">
-              <h2 className="text-2xl font-semibold tracking-[-0.04em] text-[#2E393F]">
+            <div className="rounded-2xl border border-mn-border bg-white/70 p-12 text-center shadow-sm backdrop-blur">
+              <h2 className="text-2xl font-semibold tracking-[-0.04em] text-mn-graphite">
                 Nenhuma especialidade encontrada
               </h2>
-              <p className="mt-3 text-sm text-[#2E393F]/60">
+              <p className="mt-3 text-sm text-mn-graphite/60">
                 Tente ajustar o termo pesquisado.
               </p>
             </div>
@@ -157,23 +160,23 @@ export default function EspecialidadesPage() {
               {filteredSpecialties.map((item, index) => (
                 <article
                   key={item.id}
-                  className="group rounded-[2.2rem] border border-[#E7DDD7] bg-white/72 p-7 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:bg-white hover:shadow-[0_30px_90px_-65px_rgba(46,57,63,0.65)]"
+                  className="group rounded-2xl border border-mn-border bg-white/72 p-7 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:bg-white hover:shadow-[0_30px_90px_-65px_rgba(46,57,63,0.65)]"
                 >
                   <div className="mb-8 flex items-center justify-between gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#164957] text-sm font-semibold text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-mn-teal text-sm font-semibold text-white">
                       {String(index + 1).padStart(2, "0")}
                     </div>
 
-                    <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#164957]">
+                    <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-mn-teal">
                       Área médica
                     </span>
                   </div>
 
-                  <h2 className="text-3xl font-semibold tracking-[-0.05em] text-[#2E393F]">
+                  <h2 className="text-3xl font-semibold tracking-[-0.05em] text-mn-graphite">
                     {getSpecialtyName(item)}
                   </h2>
 
-                  <p className="mt-4 text-sm leading-7 text-[#2E393F]/66">
+                  <p className="mt-4 text-sm leading-7 text-mn-graphite/66">
                     Encontre profissionais e clínicas relacionados a essa área
                     dentro da rede MediNexus.
                   </p>
@@ -181,14 +184,14 @@ export default function EspecialidadesPage() {
                   <div className="mt-7 flex flex-wrap gap-3">
                     <Link
                       href="/profissionais"
-                      className="rounded-full bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                      className="rounded-full bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                     >
                       Ver profissionais
                     </Link>
 
                     <Link
                       href="/clinicas"
-                      className="rounded-full border border-[#D8CCC5] bg-white/70 px-5 py-3 text-sm font-semibold text-[#2E393F] transition hover:bg-white"
+                      className="rounded-full border border-mn-border bg-white/70 px-5 py-3 text-sm font-semibold text-mn-graphite transition hover:bg-white"
                     >
                       Ver clínicas
                     </Link>

@@ -6,7 +6,7 @@ type ReminderAppointment = {
   patient_id: string;
   confirmed_start_at: string;
   confirmed_end_at: string | null;
-  patient_confirmation_deadline_at: string;
+  confirmation_deadline_at: string;
   clinics?: { trade_name: string | null } | { trade_name: string | null }[] | null;
   doctors?: { name: string | null } | { name: string | null }[] | null;
   specialties?: { name: string | null } | { name: string | null }[] | null;
@@ -179,7 +179,7 @@ function buildExpiredEmailHtml(params: {
       </div>
 
       <p style="font-size:14px;color:#64748B;">
-        Você pode voltar Ã  MediNexus e fazer uma nova solicitação de consulta.
+        Você pode voltar à MediNexus e fazer uma nova solicitação de consulta.
       </p>
     </div>
   `;
@@ -250,9 +250,9 @@ export async function GET(request: NextRequest) {
     })
     .eq("status", "confirmed")
     .eq("short_notice", false)
-    .eq("patient_confirmation_status", "waiting")
+    .eq("patient_confirmation_status", "awaiting_confirmation")
     .is("patient_confirmed_at", null)
-    .lt("patient_confirmation_deadline_at", nowIso)
+    .lt("confirmation_deadline_at", nowIso)
     .select(`
       id,
       patient_id,
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
   } else if (expiredAppointments && expiredAppointments.length > 0) {
     expiredCount = expiredAppointments.length;
 
-    const patientIds = expiredAppointments.map((item: any) => item.patient_id);
+    const patientIds = expiredAppointments.map((item) => item.patient_id);
 
     const { data: profiles } = await admin
       .from("profiles")
@@ -281,7 +281,7 @@ export async function GET(request: NextRequest) {
       ((profiles || []) as ProfileRow[]).map((profile) => [profile.id, profile])
     );
 
-    for (const raw of expiredAppointments as any[]) {
+    for (const raw of expiredAppointments as unknown as ExpiredAppointment[]) {
       const appointment = raw as ExpiredAppointment;
       const profile = profileMap[appointment.patient_id];
       const clinic = pickOne(appointment.clinics);
@@ -316,8 +316,8 @@ export async function GET(request: NextRequest) {
             confirmedStartAt: appointment.confirmed_start_at,
           }),
         });
-      } catch (error: any) {
-        errors.push(`expiredEmail:${appointment.id}:${error.message}`);
+      } catch (error: unknown) {
+        errors.push(`expiredEmail:${appointment.id}:${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -330,7 +330,7 @@ export async function GET(request: NextRequest) {
       patient_id,
       confirmed_start_at,
       confirmed_end_at,
-      patient_confirmation_deadline_at,
+      confirmation_deadline_at,
       clinics (
         trade_name
       ),
@@ -343,11 +343,11 @@ export async function GET(request: NextRequest) {
     `)
     .eq("status", "confirmed")
     .eq("short_notice", false)
-    .eq("patient_confirmation_status", "waiting")
+    .eq("patient_confirmation_status", "awaiting_confirmation")
     .is("patient_confirmed_at", null)
     .is("confirmation_reminder_sent_at", null)
-    .gte("patient_confirmation_deadline_at", windowStart)
-    .lte("patient_confirmation_deadline_at", windowEnd);
+    .gte("confirmation_deadline_at", windowStart)
+    .lte("confirmation_deadline_at", windowEnd);
 
   if (reminderError) {
     errors.push(`reminderQueryError: ${reminderError.message}`);
@@ -387,12 +387,12 @@ export async function GET(request: NextRequest) {
           {
             appointment_id: appointment.id,
             action: "confirm",
-            expires_at: appointment.patient_confirmation_deadline_at,
+            expires_at: appointment.confirmation_deadline_at,
           },
           {
             appointment_id: appointment.id,
             action: "cancel",
-            expires_at: appointment.patient_confirmation_deadline_at,
+            expires_at: appointment.confirmation_deadline_at,
           },
         ])
         .select("action, token");
@@ -429,7 +429,7 @@ export async function GET(request: NextRequest) {
             doctorName: doctor?.name || "Médico",
             specialtyName: specialty?.name || "Especialidade",
             confirmedStartAt: appointment.confirmed_start_at,
-            deadlineAt: appointment.patient_confirmation_deadline_at,
+            deadlineAt: appointment.confirmation_deadline_at,
             confirmUrl,
             cancelUrl,
           }),
@@ -439,7 +439,7 @@ export async function GET(request: NextRequest) {
             doctorName: doctor?.name || "Médico",
             specialtyName: specialty?.name || "Especialidade",
             confirmedStartAt: appointment.confirmed_start_at,
-            deadlineAt: appointment.patient_confirmation_deadline_at,
+            deadlineAt: appointment.confirmation_deadline_at,
             confirmUrl,
             cancelUrl,
           }),
@@ -461,16 +461,16 @@ export async function GET(request: NextRequest) {
         });
 
         remindersSent += 1;
-      } catch (error: any) {
+      } catch (error: unknown) {
         await admin.from("appointment_notification_logs").insert({
           appointment_id: appointment.id,
           channel: "email",
           kind: "confirmation_required",
           status: "failed",
-          detail: error.message,
+          detail: error instanceof Error ? error.message : String(error),
         });
 
-        errors.push(`sendError:${appointment.id}:${error.message}`);
+        errors.push(`sendError:${appointment.id}:${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }

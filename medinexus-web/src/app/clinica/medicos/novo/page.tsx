@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Alert from "../../../components/alert";
 import { supabase } from "../../../lib/supabase";
+import { getCurrentClinicMember } from "../../../lib/auth";
 
 type Specialty = {
   id: string;
@@ -50,9 +51,6 @@ export default function ClinicaNovoMedicoPage() {
 
   const canManage = memberRole === "owner" || memberRole === "admin";
 
-  useEffect(() => {
-    loadPage();
-  }, []);
 
   async function loadPage() {
     setLoading(true);
@@ -67,14 +65,10 @@ export default function ClinicaNovoMedicoPage() {
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("clinic_id, member_role")
-      .eq("user_id", user.id)
-      .single();
+    const { data: member, error: memberError } = await getCurrentClinicMember();
 
     if (memberError || !member) {
-      setMessage("Você não possui acesso Ã  área da clínica.");
+      setMessage("Você não possui acesso à área da clínica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -99,6 +93,7 @@ export default function ClinicaNovoMedicoPage() {
     setLoading(false);
   }
 
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
@@ -111,6 +106,7 @@ export default function ClinicaNovoMedicoPage() {
     }));
   }
 
+
   function handleSpecialtyToggle(specialtyId: string) {
     setForm((prev) => ({
       ...prev,
@@ -119,6 +115,7 @@ export default function ClinicaNovoMedicoPage() {
         : [...prev.specialtyIds, specialtyId],
     }));
   }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -202,6 +199,12 @@ export default function ClinicaNovoMedicoPage() {
       router.push("/clinica/medicos");
     }, 1000);
   }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
 
   if (loading) {
     return (

@@ -74,7 +74,7 @@ function BuscaPageContent() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [patient, setPatient] = useState<PatientRow | null>(null);
 
-  const [specialtyId, setSpecialtyId] = useState("");
+  const [specialtyId, setSpecialtyId] = useState(searchParams.get("specialtyId") || "");
   const [preferredStartDate, setPreferredStartDate] = useState("");
   const [preferredEndDate, setPreferredEndDate] = useState("");
   const [maxRadiusKm, setMaxRadiusKm] = useState("10");
@@ -89,10 +89,6 @@ function BuscaPageContent() {
     },
   ]);
 
-  useEffect(() => {
-    loadPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clinicIdFromQuery]);
 
   async function loadPage() {
     setLoading(true);
@@ -199,22 +195,6 @@ function BuscaPageContent() {
     setLoading(false);
   }
 
-  const isClinicPrefiltered = useMemo(
-    () => Boolean(selectedClinic?.id),
-    [selectedClinic]
-  );
-
-  const hasPreciseLocation = useMemo(() => {
-    return Boolean(profile?.latitude && profile?.longitude);
-  }, [profile]);
-
-  const hasHealthPlanData = useMemo(() => {
-    return Boolean(
-      patient?.health_plan_operator ||
-        patient?.health_plan_product_name ||
-        patient?.default_health_plan_id
-    );
-  }, [patient]);
 
   function handleTimeWindowChange(
     index: number,
@@ -233,6 +213,7 @@ function BuscaPageContent() {
     );
   }
 
+
   function handleAddWindow() {
     setTimeWindows((prev) => [
       ...prev,
@@ -244,9 +225,11 @@ function BuscaPageContent() {
     ]);
   }
 
+
   function handleRemoveWindow(index: number) {
     setTimeWindows((prev) => prev.filter((_, i) => i !== index));
   }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -390,6 +373,26 @@ function BuscaPageContent() {
     }, 700);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clinicIdFromQuery]);
+
+  const isClinicPrefiltered = useMemo(
+    () => Boolean(selectedClinic?.id),
+    [selectedClinic]
+  );
+
+  const hasPreciseLocation = profile?.latitude != null && profile?.longitude != null;
+
+  const hasHealthPlanData = Boolean(
+      patient?.health_plan_operator ||
+        patient?.health_plan_product_name ||
+        patient?.default_health_plan_id
+    );
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -403,14 +406,14 @@ function BuscaPageContent() {
       <section className="app-shell py-10">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1B4B58]">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-mn-teal">
               Nova busca
             </p>
             <h1 className="mt-3 app-section-title">
-              Encontre a melhor opção para consulta
+              Quando você pode ir à consulta?
             </h1>
             <p className="app-section-subtitle">
-              Defina especialidade, raio, forma de atendimento e horários desejados.
+              Informe seus dias e horários. Vamos priorizar os médicos que se encaixam na sua disponibilidade e mostrar alternativas próximas se necessário.
             </p>
           </div>
 
@@ -444,7 +447,7 @@ function BuscaPageContent() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">
-                  Busca restrita Ã  clínica
+                  Busca restrita à clínica
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
                   {selectedClinic.trade_name || "Clínica"}
@@ -535,7 +538,7 @@ function BuscaPageContent() {
                 disabled={!hasHealthPlanData}
                 className={`rounded-3xl border p-6 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   appointmentMode === "health_plan"
-                    ? "border-[#1B4B58] bg-[#EAF1F0] text-[#1B4B58]"
+                    ? "border-mn-teal bg-mn-sage-light text-mn-teal"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -555,7 +558,7 @@ function BuscaPageContent() {
                 onClick={() => setAppointmentMode("private")}
                 className={`rounded-3xl border p-6 text-left transition ${
                   appointmentMode === "private"
-                    ? "border-[#594E86] bg-[#F4F1FB] text-[#594E86]"
+                    ? "border-mn-purple bg-mn-purple-light text-mn-purple"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >

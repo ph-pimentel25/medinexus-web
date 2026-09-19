@@ -93,6 +93,7 @@ type FormState = {
   plainText: string;
   medicationName: string;
   medicationUse: string;
+  dosage: string; route: string; duration: string; quantity: string;
   examName: string;
   examObservation: string;
   daysOff: string;
@@ -170,12 +171,9 @@ function getDefaultTitle(type: DocumentType) {
 function createPlainText(form: FormState, patientName: string) {
   if (form.documentType === "prescription") {
     return [
-      `Paciente: ${patientName}`,
-      "",
-      "Receita médica",
-      "",
-      form.medicationName ? `Medicamento: ${form.medicationName}` : "",
-      form.medicationUse ? `Modo de uso: ${form.medicationUse}` : "",
+      form.medicationName,
+      form.medicationUse ? `Posologia: ${form.medicationUse}` : "",
+      ...([ ["Dosagem",form.dosage],["Via",form.route],["Duração",form.duration],["Quantidade",form.quantity] ].filter(([,v])=>v).map(([label,v])=>`${label}: ${v}`)),
       form.plainText ? `Orientações: ${form.plainText}` : "",
     ]
       .filter(Boolean)
@@ -240,15 +238,10 @@ function createPlainText(form: FormState, patientName: string) {
 }
 
 function getContentPayload(form: FormState) {
-  return {
-    medication_name: form.medicationName,
-    medication_use: form.medicationUse,
-    exam_name: form.examName,
-    exam_observation: form.examObservation,
-    notes: form.plainText,
-    purpose: form.purpose,
-    days_off: form.daysOff ? Number(form.daysOff) : null,
-  };
+  if(form.documentType === "prescription") return {medication_name:form.medicationName,medication_use:form.medicationUse,dosage:form.dosage,route:form.route,duration:form.duration,quantity:form.quantity,notes:form.plainText};
+  if(form.documentType === "medical_certificate") return {notes:form.plainText,purpose:form.purpose,days_off:form.daysOff?Number(form.daysOff):null};
+  if(form.documentType === "exam_request") return {exam_name:form.examName,exam_observation:form.examObservation,notes:form.plainText};
+  return {notes:form.plainText,purpose:form.purpose};
 }
 
 export default function ConsultaDocumentosPage() {
@@ -274,7 +267,7 @@ export default function ConsultaDocumentosPage() {
     cidDescription: "",
     plainText: "",
     medicationName: "",
-    medicationUse: "",
+    medicationUse: "", dosage: "", route: "", duration: "", quantity: "",
     examName: "",
     examObservation: "",
     daysOff: "1",
@@ -282,10 +275,6 @@ export default function ConsultaDocumentosPage() {
     releaseToPatient: true,
   });
 
-  useEffect(() => {
-    loadPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointmentId]);
 
   async function loadPage() {
     setLoading(true);
@@ -367,6 +356,106 @@ export default function ConsultaDocumentosPage() {
     setLoading(false);
   }
 
+
+  function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
+
+  function handleChangeType(type: DocumentType) {
+    setForm((prev) => ({
+      ...prev,
+      documentType: type,
+      title: getDefaultTitle(type),
+      releaseToPatient: true,
+    }));
+  }
+
+
+  async function handleIssueDocument() {
+    if (!appointment) return;
+
+    setSaving(true);
+    setMessage("");
+
+    if (form.documentType === "prescription" && (!form.medicationName.trim() || !form.medicationUse.trim())) {
+      setMessage("Informe o nome do medicamento e a posologia.");
+      setMessageType("error"); setSaving(false); return;
+    }
+    const plainText = createPlainText(form, patientName);
+
+    if (!plainText.trim()) {
+      setMessage("Preencha o conteúdo do documento antes de emitir.");
+      setMessageType("error");
+      setSaving(false);
+      return;
+    }
+
+    const { error } = await supabase.from("medical_documents").insert({
+      document_type: form.documentType,
+      status: "draft",
+      signature_status: "pending",
+      patient_id: appointment.patient_id,
+      doctor_id: appointment.doctor_id,
+      clinic_id: appointment.clinic_id,
+      appointment_id: appointment.id,
+      title: form.title || getDefaultTitle(form.documentType),
+      clinical_indication: form.clinicalIndication || null,
+      cid_code: form.cidCode || null,
+      cid_description: form.cidDescription || null,
+      content: getContentPayload(form),
+      plain_text: plainText,
+      released_to_patient: false,
+      days_off:
+        form.documentType === "medical_certificate" && form.daysOff
+          ? Number(form.daysOff)
+          : null,
+      purpose: form.documentType === "medical_certificate" || form.documentType === "attendance_declaration" ? form.purpose || null : null,
+      doctor_name: doctorName,
+      doctor_crm: doctor?.crm || null,
+      doctor_crm_state: doctor?.crm_state || null,
+      clinic_name: clinicName,
+    });
+
+    if (error) {
+      setMessage(`Erro ao emitir documento: ${error.message}`);
+      setMessageType("error");
+      setSaving(false);
+      return;
+    }
+
+    setMessage("Documento preparado. A emissão final e a liberação ao paciente dependem da assinatura digital ICP-Brasil.");
+    setMessageType("success");
+
+    setForm((prev) => ({
+      ...prev,
+      clinicalIndication: "",
+      cidCode: "",
+      cidDescription: "",
+      plainText: "",
+      medicationName: "",
+      medicationUse: "", dosage: "", route: "", duration: "", quantity: "",
+      examName: "",
+      examObservation: "",
+      daysOff: "1",
+      purpose: "",
+      releaseToPatient: true,
+    }));
+
+    await loadPage();
+    setSaving(false);
+  }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentId]);
+
   const patient = pickOne(appointment?.patients);
   const doctor = pickOne(appointment?.doctors);
   const clinic = pickOne(appointment?.clinics);
@@ -386,94 +475,9 @@ export default function ConsultaDocumentosPage() {
     [form.documentType]
   );
 
-  function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }
-
-  function handleChangeType(type: DocumentType) {
-    setForm((prev) => ({
-      ...prev,
-      documentType: type,
-      title: getDefaultTitle(type),
-      releaseToPatient: true,
-    }));
-  }
-
-  async function handleIssueDocument() {
-    if (!appointment) return;
-
-    setSaving(true);
-    setMessage("");
-
-    const plainText = createPlainText(form, patientName);
-
-    if (!plainText.trim()) {
-      setMessage("Preencha o conteúdo do documento antes de emitir.");
-      setMessageType("error");
-      setSaving(false);
-      return;
-    }
-
-    const { error } = await supabase.from("medical_documents").insert({
-      document_type: form.documentType,
-      status: "issued",
-      patient_id: appointment.patient_id,
-      doctor_id: appointment.doctor_id,
-      clinic_id: appointment.clinic_id,
-      appointment_id: appointment.id,
-      title: form.title || getDefaultTitle(form.documentType),
-      clinical_indication: form.clinicalIndication || null,
-      cid_code: form.cidCode || null,
-      cid_description: form.cidDescription || null,
-      content: getContentPayload(form),
-      plain_text: plainText,
-      released_to_patient: form.releaseToPatient,
-      days_off:
-        form.documentType === "medical_certificate" && form.daysOff
-          ? Number(form.daysOff)
-          : null,
-      purpose: form.purpose || null,
-      doctor_name: doctorName,
-      doctor_crm: doctor?.crm || null,
-      doctor_crm_state: doctor?.crm_state || null,
-      clinic_name: clinicName,
-    });
-
-    if (error) {
-      setMessage(`Erro ao emitir documento: ${error.message}`);
-      setMessageType("error");
-      setSaving(false);
-      return;
-    }
-
-    setMessage("Documento emitido com sucesso.");
-    setMessageType("success");
-
-    setForm((prev) => ({
-      ...prev,
-      clinicalIndication: "",
-      cidCode: "",
-      cidDescription: "",
-      plainText: "",
-      medicationName: "",
-      medicationUse: "",
-      examName: "",
-      examObservation: "",
-      daysOff: "1",
-      purpose: "",
-      releaseToPatient: true,
-    }));
-
-    await loadPage();
-    setSaving(false);
-  }
-
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-mn-sand">
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-slate-600">Carregando documentos...</p>
         </section>
@@ -482,14 +486,14 @@ export default function ConsultaDocumentosPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F8FAFC]">
+    <main className="min-h-screen overflow-hidden bg-mn-sand">
       <section className="relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
 
         <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
                 Documentos médicos
               </p>
               <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
@@ -503,7 +507,7 @@ export default function ConsultaDocumentosPage() {
 
             <Link
               href={`/medico/consultas/${appointmentId}`}
-              className="inline-flex justify-center rounded-2xl border border-[#D9D6F4] bg-white px-6 py-4 text-sm font-bold text-[#5A4C86] shadow-sm transition hover:bg-[#F6F3FF]"
+              className="inline-flex justify-center rounded-2xl border border-mn-purple-light bg-white px-6 py-4 text-sm font-bold text-mn-purple shadow-sm transition hover:bg-mn-purple-light"
             >
               Voltar ao prontuário
             </Link>
@@ -519,7 +523,7 @@ export default function ConsultaDocumentosPage() {
         )}
 
         <div className="mb-8 grid gap-4 lg:grid-cols-4">
-          <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Paciente
             </p>
@@ -529,7 +533,7 @@ export default function ConsultaDocumentosPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Médico
             </p>
@@ -540,7 +544,7 @@ export default function ConsultaDocumentosPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Clínica
             </p>
@@ -550,7 +554,7 @@ export default function ConsultaDocumentosPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-[#D9D6F4] bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               Consulta
             </p>
@@ -564,8 +568,8 @@ export default function ConsultaDocumentosPage() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+          <section className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
               Novo documento
             </p>
 
@@ -579,10 +583,10 @@ export default function ConsultaDocumentosPage() {
                   key={item.value}
                   type="button"
                   onClick={() => handleChangeType(item.value)}
-                  className={`rounded-[26px] border p-5 text-left transition ${
+                  className={`rounded-2xl border p-5 text-left transition ${
                     form.documentType === item.value
-                      ? "border-[#5A4C86] bg-[#F6F3FF]"
-                      : "border-[#E0E7FF] bg-[#F8FAFC] hover:bg-white"
+                      ? "border-mn-purple bg-mn-purple-light"
+                      : "border-mn-purple-light bg-mn-sand hover:bg-white"
                   }`}
                 >
                   <p className="font-bold text-slate-950">{item.label}</p>
@@ -594,8 +598,8 @@ export default function ConsultaDocumentosPage() {
             </div>
           </section>
 
-          <section className="rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#5A4C86]">
+          <section className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-purple">
               {selectedType.label}
             </p>
 
@@ -603,6 +607,7 @@ export default function ConsultaDocumentosPage() {
               Conteúdo do documento
             </h2>
 
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">A emissão final exige certificado ICP-Brasil e autorização do médico. O serviço de certificação ainda precisa ser configurado. Até lá, os documentos permanecem como rascunho.</div>
             <div className="mt-6 grid gap-4">
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -611,13 +616,13 @@ export default function ConsultaDocumentosPage() {
                 <input
                   value={form.title}
                   onChange={(event) => updateForm("title", event.target.value)}
-                  className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                  className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                 />
               </div>
 
               {form.documentType === "prescription" && (
                 <>
-                  <div>
+<div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Medicamento
                     </label>
@@ -626,24 +631,25 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("medicationName", event.target.value)
                       }
-                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Ex: Dipirona 500mg"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      Modo de uso
+                      Posologia
                     </label>
                     <textarea
                       value={form.medicationUse}
                       onChange={(event) =>
                         updateForm("medicationUse", event.target.value)
                       }
-                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="min-h-[120px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Ex: Tomar 1 comprimido a cada 6 horas por 3 dias."
                     />
                   </div>
+                  <div className="grid gap-4 sm:grid-cols-2">{([['dosage','Dosagem'],['route','Via de administração'],['duration','Duração'],['quantity','Quantidade']] as const).map(([key,label])=><label key={key} className="text-sm font-semibold">{label}<input className="app-input mt-2" value={form[key]} onChange={event=>updateForm(key,event.target.value)}/></label>)}</div>
                 </>
               )}
 
@@ -658,7 +664,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("examName", event.target.value)
                       }
-                      className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Ex: Ultrassonografia de abdome total"
                     />
                   </div>
@@ -672,7 +678,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("clinicalIndication", event.target.value)
                       }
-                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="min-h-[100px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Ex: Investigação de dor abdominal."
                     />
                   </div>
@@ -686,7 +692,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("examObservation", event.target.value)
                       }
-                      className="min-h-[90px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="min-h-[90px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Jejum, preparo ou observações adicionais."
                     />
                   </div>
@@ -707,7 +713,7 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("daysOff", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                        className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       />
                     </div>
 
@@ -720,7 +726,7 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("cidCode", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                        className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                         placeholder="Ex: J11"
                       />
                     </div>
@@ -734,7 +740,7 @@ export default function ConsultaDocumentosPage() {
                         onChange={(event) =>
                           updateForm("purpose", event.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                        className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       >
                         <option value="">Selecione</option>
                         <option value="Trabalhista">Trabalhista</option>
@@ -754,7 +760,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("cidDescription", event.target.value)
                       }
-                      className="min-h-[100px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="min-h-[100px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                     />
                   </div>
                 </>
@@ -772,7 +778,7 @@ export default function ConsultaDocumentosPage() {
                       onChange={(event) =>
                         updateForm("clinicalIndication", event.target.value)
                       }
-                      className="min-h-[120px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                      className="min-h-[120px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Descreva a finalidade ou resumo clínico."
                     />
                   </div>
@@ -788,38 +794,39 @@ export default function ConsultaDocumentosPage() {
                   onChange={(event) =>
                     updateForm("plainText", event.target.value)
                   }
-                  className="min-h-[110px] w-full rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#5A4C86] focus:bg-white"
+                  className="min-h-[110px] w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                   placeholder="Orientações adicionais, conduta ou observações."
                 />
               </div>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-[#D9D6F4] bg-[#F8FAFC] p-4 text-sm font-bold text-slate-700">
+              <label className="flex items-center gap-3 rounded-2xl border border-mn-purple-light bg-mn-sand p-4 text-sm font-bold text-slate-700">
                 <input
                   type="checkbox"
-                  checked={form.releaseToPatient}
+                  disabled
+                  checked={false}
                   onChange={(event) =>
                     updateForm("releaseToPatient", event.target.checked)
                   }
                 />
-                Liberar documento para o paciente
+                Liberar após certificação (integração pendente)
               </label>
 
               <button
                 type="button"
                 onClick={handleIssueDocument}
                 disabled={saving}
-                className="inline-flex justify-center rounded-2xl bg-[#164957] px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-[#164957] disabled:opacity-50"
+                className="inline-flex justify-center rounded-2xl bg-mn-teal px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-mn-teal disabled:opacity-50"
               >
-                {saving ? "Emitindo..." : "Emitir documento"}
+                {saving ? "Preparando..." : "Preparar para assinatura digital"}
               </button>
             </div>
           </section>
         </div>
 
-        <section className="mt-8 rounded-[38px] border border-[#D9D6F4] bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
+        <section className="mt-8 rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#164957]">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
                 Documentos emitidos
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-slate-950">
@@ -829,7 +836,7 @@ export default function ConsultaDocumentosPage() {
           </div>
 
           {documents.length === 0 ? (
-            <div className="mt-6 rounded-[30px] bg-[#F8FAFC] p-6 text-slate-600">
+            <div className="mt-6 rounded-2xl bg-mn-sand p-6 text-slate-600">
               Nenhum documento emitido para esta consulta ainda.
             </div>
           ) : (
@@ -837,15 +844,15 @@ export default function ConsultaDocumentosPage() {
               {documents.map((document) => (
                 <div
                   key={document.id}
-                  className="grid gap-4 rounded-[28px] border border-[#E0E7FF] bg-[#F8FAFC] p-5 md:grid-cols-[1fr_auto]"
+                  className="grid gap-4 rounded-2xl border border-mn-purple-light bg-mn-sand p-5 md:grid-cols-[1fr_auto]"
                 >
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#5A4C86]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-mn-purple">
                       {getDocumentLabel(document.document_type)}
                     </p>
                     <Link
   href={`/documentos-medicos/${document.id}`}
-  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-[#5A4C86]"
+  className="mt-2 inline-flex text-xl font-bold text-slate-950 transition hover:text-mn-purple"
 >
   {document.title || "Documento médico"}
 </Link>

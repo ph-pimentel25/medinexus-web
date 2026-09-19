@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.next
+**/.vercel
+**/.env*
+**/artifacts
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+medinexus-mobile

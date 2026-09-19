@@ -1,11 +1,13 @@
 ﻿"use client";
 
+import { markDocumentPreview } from "../../../lib/document-preview";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 import Alert from "../../../components/alert";
 import { supabase } from "../../../lib/supabase";
+import { getCurrentDoctor } from "../../../lib/auth";
 
 type MemberRow = {
   doctor_id: string | null;
@@ -108,7 +110,6 @@ export default function MedicoReceituarioPage() {
   const appointmentId = params?.id;
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const [message, setMessage] = useState("");
@@ -121,7 +122,7 @@ export default function MedicoReceituarioPage() {
   const [birthDate, setBirthDate] = useState<string | null>(null);
   const [healthPlanName, setHealthPlanName] = useState("Não informado");
   const [doctor, setDoctor] = useState<DoctorRow | null>(null);
-  const [lockedAt, setLockedAt] = useState<string | null>(null);
+  const [, setLockedAt] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     document_type: "medication" as "medication" | "exam" | "freeform",
@@ -130,12 +131,6 @@ export default function MedicoReceituarioPage() {
     guidance: "",
   });
 
-  useEffect(() => {
-    if (appointmentId) {
-      loadPage();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointmentId]);
 
   async function loadPage() {
     setLoading(true);
@@ -150,15 +145,11 @@ export default function MedicoReceituarioPage() {
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("doctor_id, member_role")
-      .eq("user_id", user.id)
-      .eq("member_role", "doctor")
-      .single<MemberRow>();
+    const { data: currentDoctor, error: memberError } = await getCurrentDoctor();
+    const member = currentDoctor ? { doctor_id: currentDoctor.id } : null;
 
     if (memberError || !member || !member.doctor_id) {
-      setMessage("Você não possui acesso Ã  área médica.");
+      setMessage("Você não possui acesso à área médica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -262,6 +253,7 @@ export default function MedicoReceituarioPage() {
     setLoading(false);
   }
 
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
@@ -273,46 +265,6 @@ export default function MedicoReceituarioPage() {
     }));
   }
 
-  async function handleSave() {
-    if (!appointment || lockedAt) return;
-
-    setSaving(true);
-    setMessage("");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const { error } = await supabase.from("prescriptions").upsert(
-      {
-        appointment_id: appointment.id,
-        patient_id: appointment.patient_id,
-        clinic_id: appointment.clinic_id,
-        doctor_id: appointment.doctor_id,
-        specialty_id: appointment.specialty_id,
-        created_by: user?.id || null,
-        document_type: form.document_type,
-        title: form.title || null,
-        content: form.content || null,
-        guidance: form.guidance || null,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "appointment_id",
-      }
-    );
-
-    if (error) {
-      setMessage(`Erro ao salvar receituário: ${error.message}`);
-      setMessageType("error");
-      setSaving(false);
-      return;
-    }
-
-    setMessage("Receituário salvo com sucesso.");
-    setMessageType("success");
-    setSaving(false);
-  }
 
   async function handleDownloadPdf() {
     if (!appointment) return;
@@ -362,6 +314,7 @@ export default function MedicoReceituarioPage() {
       };
 
       drawTitle();
+      drawBlock("RASCUNHO — SEM CERTIFICAÇÃO", "Para emitir um documento com assinatura digital, utilize Documentos da consulta. Esta exportação é apenas uma prévia.");
 
       drawBlock("Paciente", patientName);
       drawBlock("Data de nascimento", formatBirthDate(birthDate));
@@ -407,11 +360,20 @@ export default function MedicoReceituarioPage() {
         y + 38
       );
 
+      markDocumentPreview(doc);
       doc.save(`receituario-${slugify(patientName)}.pdf`);
     } finally {
       setDownloading(false);
     }
   }
+
+
+  useEffect(() => {
+    if (!appointmentId) return;
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentId]);
 
   if (loading) {
     return (
@@ -431,7 +393,7 @@ export default function MedicoReceituarioPage() {
     );
   }
 
-  const isLocked = Boolean(lockedAt);
+  const isLocked = true;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -450,7 +412,7 @@ export default function MedicoReceituarioPage() {
             </p>
             <h1 className="mt-3 app-section-title">{patientName}</h1>
             <p className="app-section-subtitle">
-              Gere uma receita, solicitação de exame ou documento livre com assinatura médica.
+              Consulte o registro anterior. Novos documentos usam o formulário estruturado da consulta.
             </p>
           </div>
 
@@ -471,7 +433,7 @@ export default function MedicoReceituarioPage() {
         {isLocked && (
           <div className="mb-6">
             <Alert variant="info">
-              Este receituário está bloqueado para edição.
+              Este registro anterior está preservado para consulta. Para prescrever, use o formulário estruturado, com medicamento em destaque e certificação obrigatória.
             </Alert>
           </div>
         )}
@@ -567,14 +529,7 @@ export default function MedicoReceituarioPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || isLocked}
-                className="app-button-primary"
-              >
-                {saving ? "Salvando..." : "Salvar receituário"}
-              </button>
+              <Link href={`/medico/consultas/${appointment.id}/documentos`} className="app-button-primary">Preparar nova receita ou documento</Link>
 
               <button
                 type="button"

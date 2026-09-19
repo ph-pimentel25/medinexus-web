@@ -1,11 +1,16 @@
 ﻿"use client";
 
 import Link from "next/link";
+import DoctorAvatar from "../components/doctor-avatar";
 import { useEffect, useMemo, useState } from "react";
 import Alert from "../components/alert";
+import { ReviewForm } from "../components/reviews";
+import AppointmentPayment from "../components/appointment-payment";
+import AppointmentDirections from "../components/appointment-directions";
 import { supabase } from "../lib/supabase";
 
 type AppointmentRow = {
+  appointment_mode: string | null;
   id: string;
   status: string | null;
 
@@ -40,11 +45,13 @@ type AppointmentRow = {
 
   doctors:
     | {
+        photo_path: string | null;
         name: string | null;
         crm: string | null;
         crm_state: string | null;
       }
     | {
+        photo_path: string | null;
         name: string | null;
         crm: string | null;
         crm_state: string | null;
@@ -74,9 +81,11 @@ type AppointmentRow = {
 
   specialties:
     | {
+        photo_path: string | null;
         name: string | null;
       }
     | {
+        photo_path: string | null;
         name: string | null;
       }[]
     | null;
@@ -208,9 +217,6 @@ export default function SolicitacoesPage() {
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
 
   async function loadAppointments() {
     setLoading(true);
@@ -238,6 +244,7 @@ export default function SolicitacoesPage() {
         clinic_id,
         requested_start_at,
         requested_end_at,
+        appointment_mode,
         confirmed_start_at,
         confirmed_end_at,
         patient_confirmation_status,
@@ -253,6 +260,7 @@ export default function SolicitacoesPage() {
           full_name
         ),
         doctors (
+          photo_path,
           name,
           crm,
           crm_state
@@ -284,6 +292,78 @@ export default function SolicitacoesPage() {
     setAppointments((data || []) as AppointmentRow[]);
     setLoading(false);
   }
+
+
+  async function createEvent(
+    appointment: AppointmentRow,
+    eventType: string,
+    title: string,
+    description?: string
+  ) {
+    await supabase.from("appointment_events").insert({
+      appointment_id: appointment.id,
+      patient_id: appointment.patient_id,
+      doctor_id: appointment.doctor_id,
+      clinic_id: appointment.clinic_id,
+      event_type: eventType,
+      title,
+      description: description || null,
+      metadata: {
+        source: "patient_requests_page",
+      },
+    });
+  }
+
+
+  async function handleCancelPendingAppointment(appointment: AppointmentRow) {
+    const confirmCancel = window.confirm(
+      "Tem certeza que deseja cancelar esta consulta?"
+    );
+
+    if (!confirmCancel) return;
+
+    setActionLoadingId(appointment.id);
+    setMessage("");
+
+    const now = new Date().toISOString();
+
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        status: "cancelled_by_patient",
+        patient_confirmation_status: "cancelled_by_patient",
+        patient_cancelled_at: now,
+        patient_cancellation_reason:
+          "Cancelada pelo paciente antes da confirmação.",
+      })
+      .eq("id", appointment.id)
+      .eq("patient_id", appointment.patient_id);
+
+    if (error) {
+      setMessage(`Erro ao cancelar consulta: ${error.message}`);
+      setMessageType("error");
+      setActionLoadingId(null);
+      return;
+    }
+
+    await createEvent(
+      appointment,
+      "cancelled_by_patient",
+      "Paciente cancelou a consulta",
+      "Consulta cancelada pelo paciente na área de solicitações."
+    );
+
+    setMessage("Consulta cancelada com sucesso.");
+    setMessageType("success");
+    await loadAppointments();
+    setActionLoadingId(null);
+  }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadAppointments(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
 
   const filteredAppointments = useMemo(() => {
     const query = normalize(search);
@@ -333,76 +413,12 @@ export default function SolicitacoesPage() {
     };
   }, [appointments]);
 
-  async function createEvent(
-    appointment: AppointmentRow,
-    eventType: string,
-    title: string,
-    description?: string
-  ) {
-    await supabase.from("appointment_events").insert({
-      appointment_id: appointment.id,
-      patient_id: appointment.patient_id,
-      doctor_id: appointment.doctor_id,
-      clinic_id: appointment.clinic_id,
-      event_type: eventType,
-      title,
-      description: description || null,
-      metadata: {
-        source: "patient_requests_page",
-      },
-    });
-  }
-
-  async function handleCancelPendingAppointment(appointment: AppointmentRow) {
-    const confirmCancel = window.confirm(
-      "Tem certeza que deseja cancelar esta consulta?"
-    );
-
-    if (!confirmCancel) return;
-
-    setActionLoadingId(appointment.id);
-    setMessage("");
-
-    const now = new Date().toISOString();
-
-    const { error } = await supabase
-      .from("appointments")
-      .update({
-        status: "cancelled_by_patient",
-        patient_confirmation_status: "cancelled_by_patient",
-        patient_cancelled_at: now,
-        patient_cancellation_reason:
-          "Cancelada pelo paciente antes da confirmação.",
-      })
-      .eq("id", appointment.id)
-      .eq("patient_id", appointment.patient_id);
-
-    if (error) {
-      setMessage(`Erro ao cancelar consulta: ${error.message}`);
-      setMessageType("error");
-      setActionLoadingId(null);
-      return;
-    }
-
-    await createEvent(
-      appointment,
-      "cancelled_by_patient",
-      "Paciente cancelou a consulta",
-      "Consulta cancelada pelo paciente na área de solicitações."
-    );
-
-    setMessage("Consulta cancelada com sucesso.");
-    setMessageType("success");
-    await loadAppointments();
-    setActionLoadingId(null);
-  }
-
   return (
-    <main className="min-h-screen bg-[#FAF6F3]">
-      <section className="border-b border-[#E7DDD7] bg-white">
+    <main className="min-h-screen bg-mn-sand">
+      <section className="border-b border-mn-border bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
+            <span className="inline-flex rounded-full border border-mn-border bg-mn-sand px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-mn-teal">
               Minhas consultas
             </span>
 
@@ -419,14 +435,14 @@ export default function SolicitacoesPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard"
-              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+              className="rounded-2xl border border-mn-border bg-white px-5 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
             >
               Dashboard
             </Link>
 
             <Link
               href="/busca"
-              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+              className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
               Nova busca
             </Link>
@@ -445,13 +461,13 @@ export default function SolicitacoesPage() {
           {[
             { label: "Total", value: stats.total, tone: "text-slate-950" },
             { label: "Pendentes", value: stats.pending, tone: "text-[#B26B00]" },
-            { label: "Confirmadas", value: stats.confirmed, tone: "text-[#7A9D8C]" },
-            { label: "A confirmar", value: stats.toConfirm, tone: "text-[#164957]" },
-            { label: "Concluídas", value: stats.completed, tone: "text-[#5A4C86]" },
+            { label: "Confirmadas", value: stats.confirmed, tone: "text-mn-sage" },
+            { label: "A confirmar", value: stats.toConfirm, tone: "text-mn-teal" },
+            { label: "Concluídas", value: stats.completed, tone: "text-mn-purple" },
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-3xl border border-[#E7DDD7] bg-white p-5 shadow-sm"
+              className="rounded-3xl border border-mn-border bg-white p-5 shadow-sm"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 {item.label}
@@ -463,7 +479,7 @@ export default function SolicitacoesPage() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[#E7DDD7] bg-white p-5 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-mn-border bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="w-full xl:max-w-xl">
               <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -473,7 +489,7 @@ export default function SolicitacoesPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Busque por clínica, médico, especialidade ou status"
-                className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
               />
             </div>
 
@@ -493,8 +509,8 @@ export default function SolicitacoesPage() {
                   onClick={() => setFilter(item.value as FilterType)}
                   className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     filter === item.value
-                      ? "bg-[#164957] text-white"
-                      : "border border-[#D8CCC5] bg-white text-[#5A4C86] hover:bg-[#FAF6F3]"
+                      ? "bg-mn-teal text-white"
+                      : "border border-mn-border bg-white text-mn-purple hover:bg-mn-sand"
                   }`}
                 >
                   {item.label}
@@ -506,11 +522,11 @@ export default function SolicitacoesPage() {
 
         <div className="mt-6 grid gap-4">
           {loading ? (
-            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+            <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
               Carregando solicitações...
             </div>
           ) : filteredAppointments.length === 0 ? (
-            <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-10 text-center shadow-sm">
+            <div className="rounded-2xl border border-mn-border bg-white p-10 text-center shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
                 Nenhuma solicitação encontrada
               </h2>
@@ -527,12 +543,12 @@ export default function SolicitacoesPage() {
               return (
                 <article
                   key={item.id}
-                  className="rounded-[28px] border border-[#E7DDD7] bg-white p-5 shadow-sm"
+                  className="rounded-2xl border border-mn-border bg-white p-5 shadow-sm"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[#EEF3EF] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#164957]">
+                        <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-mn-teal">
                           {getSpecialtyName(item)}
                         </span>
 
@@ -544,7 +560,7 @@ export default function SolicitacoesPage() {
                           {getStatusLabel(item.status)}
                         </span>
 
-                        <span className="rounded-full bg-[#F0EDF7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#5A4C86]">
+                        <span className="rounded-full bg-mn-purple-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-mn-purple">
                           {getConfirmationLabel(item.patient_confirmation_status)}
                         </span>
                       </div>
@@ -559,7 +575,7 @@ export default function SolicitacoesPage() {
 
                       <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                         <p>
-                          <strong className="text-slate-800">Médico:</strong>{" "}
+                          <DoctorAvatar size={40} path={pickOne(item.doctors)?.photo_path} name={getDoctorName(item)}/> <strong className="text-slate-800">Médico:</strong>{" "}
                           {getDoctorName(item)}
                         </p>
 
@@ -600,7 +616,7 @@ export default function SolicitacoesPage() {
                       {canConfirmPresence && (
                         <Link
                           href={`/consultas/${item.id}/confirmar`}
-                          className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                          className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                         >
                           Confirmar presença
                         </Link>
@@ -619,11 +635,14 @@ export default function SolicitacoesPage() {
                         </button>
                       )}
 
+                      {item.status === "completed" && <><ReviewForm appointmentId={item.id} kind="doctor" />{item.clinic_id && <ReviewForm appointmentId={item.id} kind="clinic" />}</>}
+                      {item.status === "confirmed" && item.appointment_mode === "private" && <AppointmentPayment appointmentId={item.id} />}
+                      {item.status === "confirmed" && <AppointmentDirections clinicId={item.clinic_id} doctorId={item.doctor_id} />}
                       {item.status === "confirmed" &&
                         item.patient_confirmation_status === "confirmed" && (
                           <Link
                             href={`/consultas/${item.id}/confirmar`}
-                            className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                            className="rounded-2xl border border-mn-border bg-white px-5 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                           >
                             Ver confirmação
                           </Link>

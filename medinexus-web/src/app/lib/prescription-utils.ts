@@ -1,4 +1,5 @@
-﻿import jsPDF from "jspdf";
+﻿import { markDocumentPreview } from "./document-preview";
+import jsPDF from "jspdf";
 
 export type PrescriptionPayload = {
   clinicName: string;
@@ -155,6 +156,7 @@ export function generatePrescriptionPdf(payload: PrescriptionPayload) {
     { align: "center" }
   );
 
+  markDocumentPreview(doc);
   return doc;
 }
 
@@ -163,7 +165,8 @@ export function downloadPrescriptionPdf(payload: PrescriptionPayload) {
   const fileName = `receituario-${payload.patientName
     .toLowerCase()
     .replace(/\s+/g, "-")}.pdf`;
-  doc.save(fileName);
+  markDocumentPreview(doc);
+      doc.save(fileName);
 }
 
 export function printPrescription(payload: PrescriptionPayload) {
@@ -258,7 +261,7 @@ export function printPrescription(payload: PrescriptionPayload) {
         </style>
       </head>
       <body>
-        <div class="sheet">
+        <div class="sheet"><p style="border:1px solid #965321;padding:12px;color:#965321;font-weight:bold">PRÉVIA SEM ASSINATURA DIGITAL ICP-BRASIL</p>
           <div class="header">
             <h1>MediNexus</h1>
             <p>Receituário médico digital</p>

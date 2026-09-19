@@ -9,6 +9,9 @@ import {
   type FormEvent,
 } from "react";
 import Alert from "../components/alert";
+import NotificationPreferences from "../components/notification-preferences";
+import HealthPlanPicker, {type CatalogPlan} from "../components/health-plan-picker";
+import ProfilePhoto from "../components/profile-photo";
 import { geocodeBrazilAddress } from "../lib/geocode";
 import { reverseGeocode } from "../lib/geolocation";
 import { supabase } from "../lib/supabase";
@@ -47,10 +50,7 @@ type PatientRow = {
   patient_notes: string | null;
 };
 
-type HealthPlanRow = {
-  id: string;
-  name: string | null;
-};
+type HealthPlanRow = CatalogPlan;
 
 type PaymentMode = "" | "health_plan" | "private";
 
@@ -124,22 +124,6 @@ export default function PerfilPage() {
     data_usage_consent: false,
   });
 
-  useEffect(() => {
-    loadPage();
-  }, []);
-
-  useEffect(() => {
-    const zip = onlyDigits(form.address_zipcode);
-
-    if (zip.length !== 8) return;
-
-    const timeout = window.setTimeout(() => {
-      fetchAddressByZipcode(zip);
-    }, 500);
-
-    return () => window.clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.address_zipcode]);
 
   async function fetchAddressByZipcode(zipcode: string) {
     setLoadingCep(true);
@@ -155,13 +139,14 @@ export default function PerfilPage() {
         return;
       }
 
-      setForm((prev) => ({
+      setDeviceCoordinates({ latitude: null, longitude: null });
+      setForm((prev) => prev.address_zipcode.replace(/\D/g, "") !== zipcode ? prev : ({
         ...prev,
         address_zipcode: zipcode,
-        address_street: data.logradouro || prev.address_street,
-        address_neighborhood: data.bairro || prev.address_neighborhood,
-        address_city: data.localidade || prev.address_city,
-        address_state: data.uf || prev.address_state,
+        address_street: data.logradouro || "",
+        address_neighborhood: data.bairro || "",
+        address_city: data.localidade || "",
+        address_state: data.uf || "",
         address_country: "Brasil",
       }));
     } catch {
@@ -171,6 +156,7 @@ export default function PerfilPage() {
       setLoadingCep(false);
     }
   }
+
 
   function handleUseCurrentLocation() {
     if (!navigator.geolocation) {
@@ -188,28 +174,26 @@ export default function PerfilPage() {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
-        setDeviceCoordinates({
-          latitude,
-          longitude,
-        });
-
         try {
           const loc = await reverseGeocode(latitude, longitude);
+          setDeviceCoordinates({ latitude, longitude });
 
           setForm((prev) => ({
             ...prev,
-            address_street: loc.street || prev.address_street,
-            address_neighborhood: loc.neighborhood || prev.address_neighborhood,
-            address_city: loc.city || prev.address_city,
-            address_state: loc.state || prev.address_state,
-            address_zipcode: loc.postalCode || prev.address_zipcode,
+            address_street: loc.street,
+            address_number: loc.number,
+            address_neighborhood: loc.neighborhood,
+            address_city: loc.city,
+            address_state: loc.state,
+            address_zipcode: loc.postalCode,
           }));
 
           setMessage("Localização e endereço identificados com sucesso!");
           setMessageType("success");
         } catch (err) {
+          setDeviceCoordinates({ latitude: null, longitude: null });
           console.error("Erro ao resolver endereço pelo GPS:", err);
-          setMessage("Coordenadas capturadas! Preencha os detalhes do endereço manualmente caso necessário.");
+          setMessage("Não foi possível identificar o endereço pelo GPS. Preencha seu endereço manualmente ou use o CEP.");
           setMessageType("info");
         } finally {
           setCapturingLocation(false);
@@ -230,6 +214,7 @@ export default function PerfilPage() {
       }
     );
   }
+
 
   async function loadPage() {
     setLoading(true);
@@ -291,7 +276,7 @@ export default function PerfilPage() {
         )
         .eq("id", user.id)
         .maybeSingle<PatientRow>(),
-      supabase.from("health_plans").select("id, name").order("name"),
+      supabase.from("health_plans").select("id, name, operator_name, catalog_scope").order("name"),
     ]);
 
     if (profileResponse.error) {
@@ -378,10 +363,12 @@ export default function PerfilPage() {
     setLoading(false);
   }
 
+
   function handleChange(
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value, type } = e.target;
+    if (name.startsWith("address_")) setDeviceCoordinates({ latitude: null, longitude: null });
 
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
@@ -399,6 +386,7 @@ export default function PerfilPage() {
       [name]: value,
     }));
   }
+
 
   function handlePaymentModeChange(mode: PaymentMode) {
     setPaymentMode(mode);
@@ -426,52 +414,6 @@ export default function PerfilPage() {
     }
   }
 
-  const requiredMissing = useMemo(() => {
-    const requiredFields = [
-      ["Nome completo", form.full_name],
-      ["Telefone", form.phone],
-      ["CPF", form.cpf],
-      ["Data de nascimento", form.birth_date],
-      ["CEP", form.address_zipcode],
-      ["Rua", form.address_street],
-      ["Número", form.address_number],
-      ["Bairro", form.address_neighborhood],
-      ["Cidade", form.address_city],
-      ["Estado", form.address_state],
-    ];
-
-    const missing = requiredFields
-      .filter(([, value]) => !String(value || "").trim())
-      .map(([label]) => label);
-
-    if (form.cpf && !validateCpf(form.cpf)) {
-      missing.push("CPF válido com 11 dígitos");
-    }
-
-    if (!paymentMode) {
-      missing.push("Tipo de atendimento: plano de saúde ou particular");
-    }
-
-    if (paymentMode === "health_plan") {
-      if (!form.health_plan_operator.trim()) {
-        missing.push("Operadora do plano");
-      }
-
-      if (!form.health_plan_product_name.trim()) {
-        missing.push("Modelo exato do plano");
-      }
-
-      if (!form.health_plan_card_number.trim()) {
-        missing.push("Número da carteirinha");
-      }
-    }
-
-    if (!form.data_usage_consent) {
-      missing.push("Consentimento de uso de dados");
-    }
-
-    return missing;
-  }, [form, paymentMode]);
 
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -549,6 +491,9 @@ export default function PerfilPage() {
     const { error: patientError } = await supabase.from("patients").upsert(
       {
         id: user.id,
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
+        email: user.email,
         birth_date: form.birth_date,
         default_health_plan_id: hasHealthPlan
           ? form.default_health_plan_id || null
@@ -600,6 +545,72 @@ export default function PerfilPage() {
     setSaving(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
+
+  useEffect(() => {
+    const zip = onlyDigits(form.address_zipcode);
+
+    if (zip.length !== 8) return;
+
+    const timeout = window.setTimeout(() => {
+      fetchAddressByZipcode(zip);
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.address_zipcode]);
+
+  const requiredMissing = (() => {
+    const requiredFields = [
+      ["Nome completo", form.full_name],
+      ["Telefone", form.phone],
+      ["CPF", form.cpf],
+      ["Data de nascimento", form.birth_date],
+      ["CEP", form.address_zipcode],
+      ["Rua", form.address_street],
+      ["Número", form.address_number],
+      ["Bairro", form.address_neighborhood],
+      ["Cidade", form.address_city],
+      ["Estado", form.address_state],
+    ];
+
+    const missing = requiredFields
+      .filter(([, value]) => !String(value || "").trim())
+      .map(([label]) => label);
+
+    if (form.cpf && !validateCpf(form.cpf)) {
+      missing.push("CPF válido com 11 dígitos");
+    }
+
+    if (!paymentMode) {
+      missing.push("Tipo de atendimento: plano de saúde ou particular");
+    }
+
+    if (paymentMode === "health_plan") {
+      if (!form.health_plan_operator.trim()) {
+        missing.push("Operadora do plano");
+      }
+
+      if (!form.health_plan_product_name.trim()) {
+        missing.push("Modelo exato do plano");
+      }
+
+      if (!form.health_plan_card_number.trim()) {
+        missing.push("Número da carteirinha");
+      }
+    }
+
+    if (!form.data_usage_consent) {
+      missing.push("Consentimento de uso de dados");
+    }
+
+    return missing;
+  })();
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -613,7 +624,7 @@ export default function PerfilPage() {
       <section className="app-shell py-10">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#164957]">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-mn-teal">
               Perfil do paciente
             </p>
             <h1 className="mt-3 app-section-title">
@@ -645,6 +656,9 @@ export default function PerfilPage() {
           </div>
         )}
 
+        <ProfilePhoto />
+        <NotificationPreferences />
+          <div className="mn-panel mb-6"><h2 className="text-xl font-semibold">Toda a rede MediNexus</h2><p className="my-3 text-sm">Conheça médicos, clínicas, especialidades, planos aceitos e avaliações. Encontre um atendimento que combine com sua disponibilidade.</p><div className="flex flex-wrap gap-3"><Link className="mn-button" href="/profissionais">Explorar a rede cadastrada</Link><Link className="mn-button-secondary" href="/clinicas">Ver clínicas</Link><Link className="mn-button-secondary" href="/busca">Informar minha disponibilidade</Link></div></div>
         <form onSubmit={handleSave} className="grid gap-6">
           <div className="app-card p-8">
             <h2 className="text-2xl font-black text-slate-950">
@@ -744,18 +758,18 @@ export default function PerfilPage() {
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={capturingLocation}
-                className="rounded-2xl border border-[#164957]/20 bg-[#FAF6F3] px-5 py-3 text-sm font-bold text-[#164957] transition hover:bg-[#EEF3EF] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-2xl border border-mn-teal/20 bg-mn-sand px-5 py-3 text-sm font-bold text-mn-teal transition hover:bg-mn-sage-light disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {capturingLocation
                   ? "Capturando e identificando endereço..."
                   : "Usar minha localização atual"}
               </button>
 
-              {deviceCoordinates.latitude && deviceCoordinates.longitude ? (
-                <p className="text-sm font-semibold text-[#164957]">
+              {deviceCoordinates.latitude !== null && deviceCoordinates.longitude !== null ? (
+                <p className="text-sm font-semibold text-mn-teal">
                   Localização precisa e endereço capturados.
                 </p>
-              ) : savedCoordinates.latitude && savedCoordinates.longitude ? (
+              ) : savedCoordinates.latitude !== null && savedCoordinates.longitude !== null ? (
                 <p className="text-sm text-slate-500">
                   Localização salva: {formatCoordinate(savedCoordinates.latitude)}
                   , {formatCoordinate(savedCoordinates.longitude)}
@@ -886,7 +900,7 @@ export default function PerfilPage() {
                 onClick={() => handlePaymentModeChange("health_plan")}
                 className={`rounded-3xl border p-6 text-left transition ${
                   paymentMode === "health_plan"
-                    ? "border-[#164957] bg-[#EEF3EF] text-[#164957]"
+                    ? "border-mn-teal bg-mn-sage-light text-mn-teal"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -901,7 +915,7 @@ export default function PerfilPage() {
                 onClick={() => handlePaymentModeChange("private")}
                 className={`rounded-3xl border p-6 text-left transition ${
                   paymentMode === "private"
-                    ? "border-[#5A4C86] bg-[#F4F1FB] text-[#5A4C86]"
+                    ? "border-mn-purple bg-mn-purple-light text-mn-purple"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
@@ -921,52 +935,7 @@ export default function PerfilPage() {
               </h2>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Plano cadastrado na MediNexus
-                  </label>
-                  <select
-                    name="default_health_plan_id"
-                    value={form.default_health_plan_id}
-                    onChange={handleChange}
-                    className="app-input"
-                  >
-                    <option value="">Não selecionar</option>
-                    {healthPlans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Operadora *
-                  </label>
-                  <input
-                    name="health_plan_operator"
-                    value={form.health_plan_operator}
-                    onChange={handleChange}
-                    className="app-input"
-                    placeholder="Ex: Bradesco Saúde"
-                    required={paymentMode === "health_plan"}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Modelo exato do plano *
-                  </label>
-                  <input
-                    name="health_plan_product_name"
-                    value={form.health_plan_product_name}
-                    onChange={handleChange}
-                    className="app-input"
-                    placeholder="Ex: Top Quarto Rede Ideal I"
-                    required={paymentMode === "health_plan"}
-                  />
-                </div>
+                <HealthPlanPicker plans={healthPlans} value={form} onChange={plan=>setForm(old=>({...old,...plan}))}/>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -1051,7 +1020,7 @@ export default function PerfilPage() {
           )}
 
           {paymentMode === "private" && (
-            <div className="rounded-3xl border border-[#5A4C86]/20 bg-[#F4F1FB] p-6 text-[#5A4C86]">
+            <div className="rounded-3xl border border-mn-purple/20 bg-mn-purple-light p-6 text-mn-purple">
               <p className="font-black">Atendimento particular selecionado</p>
               <p className="mt-2 text-sm leading-6">
                 Os campos de plano de saúde não serão exigidos. A busca poderá

@@ -1,92 +1,56 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  Users, 
-  FileText, 
-  MessageSquare, 
-  TrendingUp, 
-  Settings,
-  LogOut 
-} from "lucide-react";
+import { useState } from "react";
+import { LayoutDashboard, CalendarDays, Users, FileText, Settings, LogOut, Search, Activity, Star, Bell, Clock, Building2, CreditCard, Stethoscope } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "./auth-provider";
+import { getSidebarNavigation, isActivePath, roleLabels } from "../lib/navigation";
+import { getRoleDashboardPath } from "../lib/auth";
 
-const menuItems = [
-  { label: "Início", href: "/medico/dashboard", icon: LayoutDashboard },
-  { label: "Agendamentos", href: "/medico/consultas", icon: CalendarDays },
-  { label: "Pacientes", href: "/medico/solicitacoes", icon: Users },
-  { label: "Documentos", href: "/documentos-medicos", icon: FileText },
-  { label: "Mensagens", href: "/medico/consultas", icon: MessageSquare },
-  { label: "Relatórios", href: "/medico/dashboard", icon: TrendingUp },
-  { label: "Configurações", href: "/medico/perfil", icon: Settings },
-];
-
+function iconFor(href: string) {
+  if (href.endsWith("dashboard")) return LayoutDashboard;
+  if (href.includes("solicitacoes")) return CalendarDays;
+  if (href.includes("disponibilidade")) return Clock;
+  if (href.includes("descobrir")) return Search;
+  if (href.includes("documentos")) return FileText;
+  if (href.includes("historico")) return Activity;
+  if (href.includes("avaliacoes")) return Star;
+  if (href.includes("notificacoes")) return Bell;
+  if (href.includes("publico")) return Building2;
+  if (href.includes("planos")) return CreditCard;
+  if (href.includes("medicos")) return Users;
+  if (href.includes("consultas")) return Stethoscope;
+  return Settings;
+}
 export function DesktopSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push("/login");
-    } catch {
-      router.push("/login");
-    }
-  };
-
-  return (
-    <aside className="hidden lg:flex flex-col w-64 bg-mn-teal text-white min-h-screen p-5 justify-between flex-shrink-0 border-r border-mn-teal/30">
-      <div>
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-3 py-3 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-bold text-lg text-mn-sage border border-mn-sage/20">
-            N
-          </div>
-          <span className="text-xl font-semibold tracking-tight text-white">
-            Medi<span className="text-mn-sage font-normal">Nexus</span>
-          </span>
-        </div>
-
-        {/* Menu Navigation */}
-        <nav className="space-y-1.5">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-white/15 text-white shadow-sm font-semibold"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "text-mn-sage" : "text-white/60"}`} strokeWidth={1.8} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div className="pt-4 border-t border-white/10">
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white w-full transition-colors text-left"
-        >
-          <LogOut className="w-4 h-4 text-white/60" strokeWidth={1.8} />
-          <span>Sair da conta</span>
-        </button>
-        <div className="px-3.5 pt-4 text-[11px] font-mono text-white/40">
-          MediNexus Health OS v1.0
-        </div>
-      </div>
-    </aside>
-  );
+  const pathname = usePathname(), router = useRouter();
+  const { access, loading } = useAuth();
+  const [error, setError] = useState("");
+  async function signOut() {
+    const result = await supabase.auth.signOut();
+    if (result.error) { setError("Não foi possível sair. Tente novamente."); return; }
+    router.replace("/login");
+  }
+  return <aside className="mn-sidebar no-print" aria-label="Menu lateral">
+    <Link href={getRoleDashboardPath(access.role)} className="mn-sidebar-brand" aria-label="MediNexus — início">
+      <Image src="/icon-dark.svg" alt="" width={34} height={34} />
+      <span>Medi<span className="font-normal opacity-80">Nexus</span></span>
+    </Link>
+    <div className="mn-sidebar-caption">{loading ? "Sua conta" : roleLabels[access.role]}</div>
+    <nav aria-label="Navegação da área" className="mn-sidebar-links">
+      {!loading && getSidebarNavigation(access.role).map(item => {
+        const Icon = iconFor(item.href), active = isActivePath(pathname, item.href);
+        return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={active ? "mn-sidebar-link is-active" : "mn-sidebar-link"}>
+          <Icon size={18} strokeWidth={1.7} /><span>{item.label}</span>
+        </Link>;
+      })}
+    </nav>
+    <div className="mn-sidebar-footer">
+      <div className="mn-sidebar-note"><Activity size={20} strokeWidth={1.5} /><p>Conectando pessoas.<br />Integrando saúde.</p></div>
+      {!!access.userId && <button type="button" onClick={() => void signOut()} className="mn-sidebar-link"><LogOut size={17} />Sair da conta</button>}
+      {!!error && <p role="alert" className="px-3 text-xs text-white">{error}</p>}
+    </div>
+  </aside>;
 }

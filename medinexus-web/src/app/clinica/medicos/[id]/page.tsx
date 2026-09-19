@@ -1,10 +1,12 @@
 ﻿"use client";
+import ProfilePhoto from "../../../components/profile-photo";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Alert from "../../../components/alert";
 import { supabase } from "../../../lib/supabase";
+import { getCurrentClinicMember } from "../../../lib/auth";
 
 type Specialty = {
   id: string;
@@ -56,11 +58,6 @@ export default function ClinicaEditarMedicoPage() {
     return Object.fromEntries(specialties.map((item) => [item.id, item.name]));
   }, [specialties]);
 
-  useEffect(() => {
-    if (doctorId) {
-      loadPage();
-    }
-  }, [doctorId]);
 
   async function loadPage() {
     setLoading(true);
@@ -75,14 +72,10 @@ export default function ClinicaEditarMedicoPage() {
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("clinic_id, member_role")
-      .eq("user_id", user.id)
-      .single();
+    const { data: member, error: memberError } = await getCurrentClinicMember();
 
     if (memberError || !member) {
-      setMessage("Você não possui acesso Ã  área da clínica.");
+      setMessage("Você não possui acesso à área da clínica.");
       setMessageType("error");
       setLoading(false);
       return;
@@ -144,6 +137,7 @@ export default function ClinicaEditarMedicoPage() {
     setLoading(false);
   }
 
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
@@ -156,6 +150,7 @@ export default function ClinicaEditarMedicoPage() {
     }));
   }
 
+
   function handleSpecialtyToggle(specialtyId: string) {
     setForm((prev) => ({
       ...prev,
@@ -164,6 +159,7 @@ export default function ClinicaEditarMedicoPage() {
         : [...prev.specialtyIds, specialtyId],
     }));
   }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -245,6 +241,13 @@ export default function ClinicaEditarMedicoPage() {
     setSaving(false);
   }
 
+
+  useEffect(() => {
+    if (!doctorId) return;
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+  }, [doctorId]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -293,7 +296,8 @@ export default function ClinicaEditarMedicoPage() {
         </div>
 
         <div className="app-card p-8">
-          <form onSubmit={handleSubmit} className="grid gap-5">
+          <ProfilePhoto doctorId={doctorId}/>
+        <form onSubmit={handleSubmit} className="grid gap-5">
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">

@@ -68,9 +68,6 @@ export default function ValidarDocumentoPage() {
   const [documentData, setDocumentData] = useState<ValidationRow | null>(null);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    validateDocument();
-  }, [documentId, token]);
 
   async function validateDocument() {
     setLoading(true);
@@ -102,25 +99,34 @@ export default function ValidarDocumentoPage() {
       return;
     }
 
+    if (firstRow.document_status !== "issued") {
+      setMessage(firstRow.document_status === "cancelled" ? "Este documento foi cancelado." : "Documento ainda não emitido. A certificação pode estar pendente."); setDocumentData(null); setLoading(false); return;
+    }
     setDocumentData(firstRow as ValidationRow);
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void validateDocument(), 0);
+    return () => clearTimeout(initialLoad);
+  }, [documentId, token]);
+
   return (
-    <main className="min-h-screen bg-[#FAF6F3] text-[#2E393F]">
-      <section className="relative overflow-hidden border-b border-[#E7DDD7]">
+    <main className="min-h-screen bg-mn-sand text-mn-graphite">
+      <section className="relative overflow-hidden border-b border-mn-border">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(122,157,140,0.25),transparent_30%),radial-gradient(circle_at_86%_16%,rgba(90,76,134,0.20),transparent_32%)]" />
 
         <div className="relative mx-auto max-w-[1100px] px-6 py-20 sm:px-10 lg:px-14">
-          <div className="mb-7 inline-flex rounded-full border border-[#D8CCC5] bg-white/65 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#164957] shadow-sm backdrop-blur-xl">
+          <div className="mb-7 inline-flex rounded-full border border-mn-border bg-white/65 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-mn-teal shadow-sm backdrop-blur-xl">
             Validação MediNexus
           </div>
 
-          <h1 className="max-w-4xl text-[3.2rem] font-semibold leading-[0.96] tracking-[-0.065em] text-[#2E393F] sm:text-[4.6rem]">
+          <h1 className="max-w-4xl text-[3.2rem] font-semibold leading-[0.96] tracking-[-0.065em] text-mn-graphite sm:text-[4.6rem]">
             Verificação de documento médico.
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#2E393F]/68">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-mn-graphite/68">
             Esta página confirma se o documento foi emitido dentro da plataforma
             MediNexus e se o código de validação corresponde ao registro.
           </p>
@@ -129,19 +135,19 @@ export default function ValidarDocumentoPage() {
 
       <section className="mx-auto max-w-[900px] px-6 py-12 sm:px-10">
         {loading ? (
-          <div className="rounded-[2.4rem] border border-[#E7DDD7] bg-white/70 p-8 text-sm text-[#2E393F]/60 shadow-sm">
+          <div className="rounded-2xl border border-mn-border bg-white/70 p-8 text-sm text-mn-graphite/60 shadow-sm">
             Validando documento...
           </div>
         ) : message ? (
-          <div className="rounded-[2.4rem] border border-red-200 bg-red-50 p-8 text-sm text-red-700 shadow-sm">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-sm text-red-700 shadow-sm">
             <h2 className="text-2xl font-semibold tracking-[-0.04em]">
               Documento não validado
             </h2>
             <p className="mt-3 leading-7">{message}</p>
           </div>
         ) : documentData ? (
-          <article className="overflow-hidden rounded-[2.6rem] border border-[#E7DDD7] bg-white shadow-[0_35px_100px_-80px_rgba(46,57,63,0.75)]">
-            <div className="bg-gradient-to-br from-[#164957] via-[#2E393F] to-[#5A4C86] p-8 text-white">
+          <article className="overflow-hidden rounded-[2.6rem] border border-mn-border bg-white shadow-[0_35px_100px_-80px_rgba(46,57,63,0.75)]">
+            <div className="bg-gradient-to-br from-mn-teal via-mn-graphite to-mn-purple p-8 text-white">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/50">
                 Documento validado
               </p>
@@ -157,32 +163,32 @@ export default function ValidarDocumentoPage() {
             </div>
 
             <div className="grid gap-0 md:grid-cols-2">
-              <div className="border-b border-[#E7DDD7] p-7 md:border-r">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+              <div className="border-b border-mn-border p-7 md:border-r">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   Paciente
                 </p>
-                <p className="mt-3 text-lg font-semibold text-[#2E393F]">
+                <p className="mt-3 text-lg font-semibold text-mn-graphite">
                   {documentData.patient_name || "Não informado"}
                 </p>
               </div>
 
-              <div className="border-b border-[#E7DDD7] p-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+              <div className="border-b border-mn-border p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   Emissão
                 </p>
-                <p className="mt-3 text-lg font-semibold text-[#2E393F]">
+                <p className="mt-3 text-lg font-semibold text-mn-graphite">
                   {formatDateTime(documentData.issued_at)}
                 </p>
               </div>
 
-              <div className="border-b border-[#E7DDD7] p-7 md:border-r">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+              <div className="border-b border-mn-border p-7 md:border-r">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   Profissional
                 </p>
-                <p className="mt-3 text-lg font-semibold text-[#2E393F]">
+                <p className="mt-3 text-lg font-semibold text-mn-graphite">
                   {documentData.doctor_name || "Não informado"}
                 </p>
-                <p className="mt-2 text-sm text-[#2E393F]/58">
+                <p className="mt-2 text-sm text-mn-graphite/58">
                   CRM {documentData.doctor_crm || "não informado"}
                   {documentData.doctor_crm_state
                     ? ` / ${documentData.doctor_crm_state}`
@@ -190,32 +196,32 @@ export default function ValidarDocumentoPage() {
                 </p>
               </div>
 
-              <div className="border-b border-[#E7DDD7] p-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+              <div className="border-b border-mn-border p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   Unidade
                 </p>
-                <p className="mt-3 text-lg font-semibold text-[#2E393F]">
+                <p className="mt-3 text-lg font-semibold text-mn-graphite">
                   {documentData.clinic_name || "MediNexus"}
                 </p>
-                <p className="mt-2 text-sm text-[#2E393F]/58">
+                <p className="mt-2 text-sm text-mn-graphite/58">
                   {documentData.clinic_location || "Local não informado"}
                 </p>
               </div>
 
               <div className="p-7 md:border-r">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   Assinatura
                 </p>
-                <p className="mt-3 text-lg font-semibold text-[#2E393F]">
+                <p className="mt-3 text-lg font-semibold text-mn-graphite">
                   {getSignatureLabel(documentData.signature_status)}
                 </p>
-                <p className="mt-2 text-sm text-[#2E393F]/58">
+                <p className="mt-2 text-sm text-mn-graphite/58">
                   Provedor: {documentData.signature_provider || "MediNexus"}
                 </p>
               </div>
 
               <div className="p-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7A9D8C]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-sage">
                   PDF assinado
                 </p>
 
@@ -224,24 +230,24 @@ export default function ValidarDocumentoPage() {
                     href={documentData.signed_pdf_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-3 inline-flex rounded-full bg-[#164957] px-5 py-3 text-sm font-semibold text-white"
+                    className="mt-3 inline-flex rounded-full bg-mn-teal px-5 py-3 text-sm font-semibold text-white"
                   >
                     Abrir PDF assinado
                   </a>
                 ) : (
-                  <p className="mt-3 text-sm leading-7 text-[#2E393F]/58">
+                  <p className="mt-3 text-sm leading-7 text-mn-graphite/58">
                     Documento ainda sem PDF assinado anexado.
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="border-t border-[#E7DDD7] bg-[#FAF6F3] p-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#164957]">
+            <div className="border-t border-mn-border bg-mn-sand p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mn-teal">
                 Importante
               </p>
 
-              <p className="mt-3 text-sm leading-7 text-[#2E393F]/65">
+              <p className="mt-3 text-sm leading-7 text-mn-graphite/65">
                 Esta validação confirma a emissão dentro da MediNexus. Para
                 validade jurídica avançada, o documento deve estar assinado por
                 integração compatível, ICP-Brasil, Atesta CFM ou serviço oficial
@@ -254,7 +260,7 @@ export default function ValidarDocumentoPage() {
         <div className="mt-8">
           <Link
             href="/"
-            className="rounded-full border border-[#D8CCC5] bg-white/70 px-6 py-3 text-sm font-semibold text-[#2E393F] shadow-sm transition hover:bg-white"
+            className="rounded-full border border-mn-border bg-white/70 px-6 py-3 text-sm font-semibold text-mn-graphite shadow-sm transition hover:bg-white"
           >
             Voltar para MediNexus
           </Link>

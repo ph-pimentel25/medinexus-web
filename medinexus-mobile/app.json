@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "MediNexus",
+    "slug": "medinexus",
+    "scheme": "medinexus",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/medinexus.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.medinexus.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.medinexus.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/medinexus.png",
+        "backgroundColor": "#FAF6F3"
+      }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que a MediNexus use sua localização para encontrar atendimento próximo?"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que a MediNexus acesse a foto escolhida para personalizar seu perfil?",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "releaseStatus": "development"
+    }
+  }
+}

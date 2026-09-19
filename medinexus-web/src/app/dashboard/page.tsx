@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { 
-  Calendar, 
-  FileText, 
-  Activity, 
-  Search, 
-  ChevronRight, 
-  Clock, 
-  MapPin, 
-  Sparkles,
-  Bell,
-  ArrowRight
-} from "lucide-react";
+import { Calendar, FileText, Activity, Search, ChevronRight, Clock, MapPin, Bell } from "lucide-react";
+import DashboardOverview from "../components/dashboard-overview";
 import { supabase } from "../lib/supabase";
-import { BottomNav } from "../components/bottom-nav";
 
 type ProfileRow = {
   id: string;
@@ -40,7 +29,9 @@ type DoctorRow = {
 
 type ClinicRow = {
   id: string;
-  name: string | null;
+  trade_name: string | null;
+  address_city: string | null;
+  address_state: string | null;
   city: string | null;
   state: string | null;
 };
@@ -93,9 +84,6 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
 
   async function loadDashboard() {
     setLoading(true);
@@ -154,7 +142,7 @@ export default function DashboardPage() {
     if (clinicIds.length > 0) {
       const { data: clinicsData } = await supabase
         .from("clinics")
-        .select("id, name, city, state")
+        .select("id, trade_name, address_city, address_state, city, state")
         .in("id", clinicIds);
 
       clinicsMap = new Map(
@@ -169,12 +157,12 @@ export default function DashboardPage() {
 
         return {
           ...item,
-          doctor_name: doctor?.name || "Especialista Clínico",
-          clinic_name: clinic?.name || "Clínica MediNexus",
+          doctor_name: doctor?.name || "Profissional não informado",
+          clinic_name: clinic?.trade_name || "Consultório não informado",
           clinic_location:
-            clinic?.city && clinic?.state
-              ? `${clinic.city}, ${clinic.state}`
-              : "Rio de Janeiro, RJ",
+            (clinic?.address_city || clinic?.city) && (clinic?.address_state || clinic?.state)
+              ? `${clinic.address_city || clinic.city}, ${clinic.address_state || clinic.state}`
+              : "Endereço não informado",
         };
       }
     );
@@ -192,6 +180,12 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadDashboard(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
+
   const firstName = getFirstName(profile?.full_name);
 
   const summary = useMemo(() => {
@@ -206,6 +200,7 @@ export default function DashboardPage() {
   const nextAppointment = useMemo(() => {
     const now = new Date();
     return [...appointments]
+      .filter((item) => ["pending", "confirmed"].includes(item.status || ""))
       .filter((item) => {
         const dateStr = getBestAppointmentDate(item);
         return dateStr ? new Date(dateStr) >= now : true;
@@ -217,153 +212,29 @@ export default function DashboardPage() {
       })[0];
   }, [appointments]);
 
-  return (
-    <div className="min-h-screen bg-[#FAF6F3] text-[#2E393F] pb-24 lg:pb-16 font-sans">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        
-        {/* Banner de Demonstração / Aviso caso não logado */}
-        {isLoggedOut && (
-          <div className="bg-[#164957] text-[#FAF6F3] p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div className="text-xs">
-              <span className="font-bold">Modo de visualização rápida:</span> Faça login para carregar seu histórico clínico completo.
-            </div>
-            <Link
-              href="/login"
-              className="bg-[#7A9D8C] hover:bg-[#7A9D8C]/90 text-[#164957] font-bold text-xs px-3.5 py-1.5 rounded-xl transition shadow-sm"
-            >
-              Entrar
-            </Link>
-          </div>
-        )}
-
-        {/* Cabeçalho de Saudação */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#164957] tracking-tight">
-              Olá, {firstName}
-            </h1>
-            <p className="text-xs sm:text-sm text-[#2E393F]/70 mt-0.5">
-              Sua saúde e histórico clínico integrados em um só lugar.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/notificacoes"
-              className="p-2.5 bg-white border border-[#E7E2DD] rounded-xl text-[#2E393F]/70 hover:text-[#164957] shadow-sm relative transition"
-            >
-              <Bell className="w-4 h-4" strokeWidth={1.8} />
-              {summary.unread > 0 && (
-                <span className="w-2 h-2 bg-[#5A4C86] rounded-full absolute top-2 right-2" />
-              )}
-            </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#164957] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-              {firstName.charAt(0).toUpperCase()}
-            </div>
-          </div>
-        </div>
-
-        {/* Grade 2x2 de Ações Rápidas */}
-        <section>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Agendar consulta", icon: Calendar, href: "/busca", color: "text-[#164957]" },
-              { label: "Meus documentos", icon: FileText, href: "/documentos", color: "text-[#164957]" },
-              { label: "Histórico e exames", icon: Activity, href: "/historico-clinico", color: "text-[#164957]" },
-              { label: "Buscar com IA", icon: Search, href: "/busca", color: "text-[#5A4C86]", badge: true },
-            ].map((action, idx) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={idx}
-                  href={action.href}
-                  className="bg-white border border-[#E7E2DD] p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm hover:border-[#164957]/40 transition group aspect-square"
-                >
-                  <div className={`w-11 h-11 rounded-xl bg-[#FAF6F3] ${action.color} flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-5 h-5" strokeWidth={1.8} />
-                  </div>
-                  <span className="text-xs font-semibold text-[#2E393F] leading-tight flex items-center gap-1">
-                    {action.label}
-                    {action.badge && <Sparkles className="w-3 h-3 text-[#5A4C86]" />}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+  return <main className="mn-dashboard min-h-screen bg-mn-sand">
+    <DashboardOverview eyebrow="Seu espaço de cuidado" title={`Olá, ${firstName}.`} description="Cuide de você com mais tranquilidade. Estamos por perto em cada etapa."
+      loading={loading} actions={[{label:"Encontrar atendimento",href:"/descobrir"}]}
+      metrics={[{label:"Consultas confirmadas",value:summary.confirmed,hint:"Seus atendimentos confirmados"},{label:"Consultas recentes",value:summary.total,hint:"Seu histórico de solicitações"},{label:"Aguardando confirmação",value:summary.pending,hint:"Acompanhe o retorno da clínica"},{label:"Avisos não lidos",value:summary.unread,hint:"Entre as últimas atualizações"}]} />
+    <div className="mn-dashboard-content">
+      {isLoggedOut && <p role="alert" className="mn-panel">Entre na sua conta para acessar seus atendimentos.</p>}
+      <div className="mn-quick-actions">{[
+        {label:"Agendar consulta",icon:Calendar,href:"/busca",description:"Escolha seu atendimento"},
+        {label:"Meus documentos",icon:FileText,href:"/documentos",description:"Tudo em um só lugar"},
+        {label:"Histórico clínico",icon:Activity,href:"/historico-clinico",description:"Acompanhe seu cuidado"},
+        {label:"Buscar profissionais",icon:Search,href:"/descobrir",description:"Encontre quem está perto"},
+      ].map(({label,icon:Icon,href,description})=><Link key={href} href={href} className="mn-quick-action"><span className="mn-action-icon"><Icon size={23} strokeWidth={1.6}/></span><strong>{label}</strong><span>{description}</span><ChevronRight size={15} className="mn-action-arrow"/></Link>)}</div>
+      <div className="mn-dashboard-columns">
+        <section className="mn-panel"><div className="mn-panel-heading"><div><h2>Próximas consultas</h2><p>Seu cuidado, com data e hora.</p></div><Link href="/solicitacoes">Ver todas <ChevronRight size={14}/></Link></div>
+          {loading ? <div className="mn-skeleton h-28" role="status" aria-label="Carregando consultas"/> : nextAppointment ? <Link href="/solicitacoes" className="mn-appointment-preview">
+            <span className="mn-person-avatar">{nextAppointment.doctor_name?.slice(0,2).toUpperCase()}</span><div className="min-w-0 flex-1"><h3>{nextAppointment.doctor_name}</h3><p>{nextAppointment.clinic_name}</p><p className="flex items-center gap-1.5"><MapPin size={13}/>{nextAppointment.clinic_location}</p><p className="mn-appointment-time"><Clock size={14}/>{formatShortDate(getBestAppointmentDate(nextAppointment))}</p></div><ChevronRight size={18}/>
+          </Link> : <div className="mn-empty-state"><Calendar size={30} strokeWidth={1.3}/><h3>Sua próxima consulta começa aqui</h3><p>Encontre um profissional e escolha o melhor horário para você.</p><Link href="/descobrir" className="mn-button-secondary">Buscar atendimento</Link></div>}
+          <div className="mn-care-note"><Activity size={19}/><p><strong>Cuidado que acompanha você.</strong><br/>Mantenha seu perfil atualizado para facilitar seus próximos atendimentos.</p><Link href="/perfil" aria-label="Atualizar meu perfil"><ChevronRight size={18}/></Link></div>
         </section>
-
-        {/* Card Destaque: Próxima Consulta */}
-        <section className="bg-white border border-[#E7E2DD] p-5 rounded-2xl shadow-sm">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-[11px] font-mono font-semibold text-[#164957] uppercase tracking-wider">
-              Próxima consulta
-            </span>
-            <Link href="/solicitacoes" className="text-xs font-medium text-[#5A4C86] hover:underline flex items-center gap-0.5">
-              Ver todas <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {nextAppointment ? (
-            <Link
-              href="/solicitacoes"
-              className="flex items-center justify-between p-3.5 rounded-xl bg-[#FAF6F3] hover:bg-[#FAF6F3]/80 border border-[#E7E2DD]/70 transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#164957] text-[#FAF6F3] flex items-center justify-center font-bold text-xs shadow-sm">
-                  {nextAppointment.doctor_name?.substring(0, 2).toUpperCase() || "MD"}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#2E393F]">
-                    {nextAppointment.doctor_name}
-                  </div>
-                  <div className="text-[11px] text-[#2E393F]/70 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3 h-3 text-[#7A9D8C]" />
-                    <span>{nextAppointment.clinic_name} · {nextAppointment.clinic_location}</span>
-                  </div>
-                  <div className="text-[11px] font-mono text-[#164957] flex items-center gap-1 mt-1 font-semibold">
-                    <Clock className="w-3 h-3" />
-                    <span>{formatShortDate(getBestAppointmentDate(nextAppointment))}</span>
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#2E393F]/40" />
-            </Link>
-          ) : (
-            <div className="p-4 rounded-xl bg-[#FAF6F3] border border-dashed border-[#E7E2DD] flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-[#2E393F]">Nenhuma consulta agendada</p>
-                <p className="text-[11px] text-[#2E393F]/60">Busque médicos e clínicas disponíveis na rede.</p>
-              </div>
-              <Link
-                href="/busca"
-                className="bg-[#164957] hover:bg-[#164957]/90 text-white font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-sm"
-              >
-                Agendar
-              </Link>
-            </div>
-          )}
+        <section className="mn-panel"><div className="mn-panel-heading"><div><h2>Últimas atualizações</h2><p>O que há de novo por aqui.</p></div><Link href="/notificacoes" aria-label="Ver todas as notificações"><Bell size={17}/></Link></div>
+          {loading ? <div className="mn-skeleton h-28"/> : notifications.length ? <div className="mn-update-list">{notifications.map(n=><Link key={n.id} href="/notificacoes"><span className="mn-update-icon"><Bell size={15}/></span><div><h3>{n.title||"Atualização do atendimento"}</h3><p>{n.message||"Veja os detalhes na sua central de avisos."}</p><time>{formatShortDate(n.created_at)}</time></div>{!n.is_read&&<span className="mn-unread-dot" aria-label="Não lida"/>}</Link>)}</div> : <div className="mn-empty-state"><Bell size={28} strokeWidth={1.3}/><h3>Tudo em dia</h3><p>Novas informações sobre seus atendimentos aparecem aqui.</p></div>}
         </section>
-
-        {/* Resumo de Indicadores da Conta */}
-        <section className="grid grid-cols-3 gap-3">
-          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
-            <p className="text-[11px] text-[#2E393F]/60 font-medium">Total de Consultas</p>
-            <p className="text-xl font-bold text-[#164957] mt-1">{summary.total}</p>
-          </div>
-          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
-            <p className="text-[11px] text-[#2E393F]/60 font-medium">Confirmadas</p>
-            <p className="text-xl font-bold text-[#7A9D8C] mt-1">{summary.confirmed}</p>
-          </div>
-          <div className="bg-white border border-[#E7E2DD] p-4 rounded-2xl text-center shadow-sm">
-            <p className="text-[11px] text-[#2E393F]/60 font-medium">Pendentes</p>
-            <p className="text-xl font-bold text-[#5A4C86] mt-1">{summary.pending}</p>
-          </div>
-        </section>
-
-      </main>
-
-      {/* Barra de Navegação Inferior para Mobile */}
-      <BottomNav />
+      </div>
     </div>
-  );
+  </main>;
 }

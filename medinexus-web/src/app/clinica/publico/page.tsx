@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Alert from "../../components/alert";
 import { supabase } from "../../lib/supabase";
+import { getCurrentClinicMember } from "../../lib/auth";
 
 type MemberRow = {
   clinic_id: string;
@@ -174,15 +175,6 @@ export default function ClinicaPublicoPage() {
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPublicProfile();
-
-    return () => {
-      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
-      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function loadPublicProfile() {
     setLoading(true);
@@ -199,11 +191,7 @@ export default function ClinicaPublicoPage() {
       return;
     }
 
-    const { data: member, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("clinic_id, member_role")
-      .eq("user_id", user.id)
-      .single<MemberRow>();
+    const { data: member, error: memberError } = await getCurrentClinicMember();
 
     if (
       memberError ||
@@ -262,6 +250,7 @@ export default function ClinicaPublicoPage() {
     setLoading(false);
   }
 
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
@@ -272,6 +261,7 @@ export default function ClinicaPublicoPage() {
       [name]: name === "public_slug" ? slugify(value) : value,
     }));
   }
+
 
   async function persistImageUrl(kind: UploadKind, url: string | null) {
     if (!clinicId) return;
@@ -290,6 +280,7 @@ export default function ClinicaPublicoPage() {
     }
   }
 
+
   function clearPreview(kind: UploadKind) {
     if (kind === "logo") {
       if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
@@ -301,6 +292,7 @@ export default function ClinicaPublicoPage() {
     setCoverPreviewUrl(null);
   }
 
+
   function setPreview(kind: UploadKind, objectUrl: string) {
     clearPreview(kind);
 
@@ -311,6 +303,7 @@ export default function ClinicaPublicoPage() {
     }
   }
 
+
   async function deleteStorageFileIfManaged(url: string | null) {
     const storagePath = getStoragePathFromPublicUrl(url);
 
@@ -318,6 +311,7 @@ export default function ClinicaPublicoPage() {
 
     await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
   }
+
 
   async function handleFileUpload(
     e: React.ChangeEvent<HTMLInputElement>,
@@ -399,7 +393,7 @@ export default function ClinicaPublicoPage() {
 
       try {
         await persistImageUrl(kind, publicUrl);
-      } catch (persistError: any) {
+      } catch (persistError: unknown) {
         await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
         throw persistError;
       }
@@ -438,9 +432,9 @@ export default function ClinicaPublicoPage() {
         `${kind === "logo" ? "Logo" : "Imagem de capa"} enviada com sucesso.`
       );
       setMessageType("success");
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMessage(
-        error?.message || "Não foi possível processar a imagem enviada."
+        (error instanceof Error ? error.message : "") || "Não foi possível processar a imagem enviada."
       );
       setMessageType("error");
     } finally {
@@ -449,6 +443,7 @@ export default function ClinicaPublicoPage() {
       }, 500);
     }
   }
+
 
   async function handleRemoveImage(kind: UploadKind) {
     if (!clinicId) {
@@ -503,8 +498,8 @@ export default function ClinicaPublicoPage() {
         `${kind === "logo" ? "Logo" : "Imagem de capa"} removida com sucesso.`
       );
       setMessageType("success");
-    } catch (error: any) {
-      setMessage(error?.message || "Não foi possível remover a imagem.");
+    } catch (error: unknown) {
+      setMessage((error instanceof Error ? error.message : "") || "Não foi possível remover a imagem.");
       setMessageType("error");
     } finally {
       setTimeout(() => {
@@ -512,6 +507,7 @@ export default function ClinicaPublicoPage() {
       }, 500);
     }
   }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -551,6 +547,18 @@ export default function ClinicaPublicoPage() {
     setMessageType("success");
     setSaving(false);
   }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPublicProfile(), 0);
+
+    return () => {
+      clearTimeout(initialLoad);
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const displayedLogo = logoPreviewUrl || form.logo_url || "";
   const displayedCover = coverPreviewUrl || form.cover_image_url || "";

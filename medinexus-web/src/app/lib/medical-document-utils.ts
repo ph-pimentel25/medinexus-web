@@ -1,4 +1,4 @@
-export type GenericRow = Record<string, any>;
+export type GenericRow = Record<string, unknown>;
 
 export type DetailSection = {
   title: string;
@@ -163,7 +163,7 @@ export function cleanText(value: unknown): string {
   }
 
   if (isPlainObject(parsed)) {
-    const objectValue = parsed as Record<string, any>;
+    const objectValue = parsed as Record<string, unknown>;
 
     return Object.entries(objectValue)
       .map(([key, item]) => {
@@ -245,7 +245,7 @@ export function deepFind(source: unknown, keys: string[]): string {
   }
 
   if (isPlainObject(parsed)) {
-    const objectValue = parsed as Record<string, any>;
+    const objectValue = parsed as Record<string, unknown>;
 
     for (const key of keys) {
       if (objectValue[key] !== null && objectValue[key] !== undefined) {
@@ -302,7 +302,7 @@ export function deepFindByKeyIncludes(source: unknown, terms: string[]): string 
   }
 
   if (isPlainObject(parsed)) {
-    const objectValue = parsed as Record<string, any>;
+    const objectValue = parsed as Record<string, unknown>;
 
     for (const [key, value] of Object.entries(objectValue)) {
       const normalizedCurrentKey = normalizeKey(key);
@@ -505,7 +505,22 @@ export function getClinicLocation(clinic: GenericRow | null, document: GenericRo
   return parts.length > 0 ? parts.join(" • ") : "Local não informado";
 }
 
+export function getPrescriptionItems(document: GenericRow | null) {
+  if (!/prescription|medication|receita/i.test(String(document?.document_type || ""))) return [];
+  const content = getContentObject(document) as GenericRow | null;
+  const items = Array.isArray(content?.medications) ? content.medications : content?.medication_name ? [content] : [];
+  return items.filter(isPlainObject).map(item => {
+    const row = item as GenericRow;
+    return { name: cleanText(row.medication_name || row.name), details: [
+      ["Posologia", row.medication_use || row.posology], ["Dosagem", row.dosage],
+      ["Via", row.route], ["Duração", row.duration], ["Quantidade", row.quantity],
+    ].filter(([,v]) => cleanText(v)).map(([label,v]) => `${label}: ${cleanText(v)}`) };
+  }).filter(item => item.name);
+}
+
 export function getMainText(document: GenericRow | null) {
+  if (getPrescriptionItems(document).length) return cleanText((getContentObject(document) as GenericRow)?.notes);
+  if (document?.plain_text) return cleanText(document.plain_text);
   const direct = getField(
     document,
     [
@@ -523,6 +538,7 @@ export function getMainText(document: GenericRow | null) {
       "anamnesis",
       "base_anamnesis",
       "main_text",
+      "plain_text",
       "content_text",
     ],
     [
@@ -539,6 +555,7 @@ export function getMainText(document: GenericRow | null) {
       "anamnesis",
       "base_anamnesis",
       "main_text",
+      "plain_text",
       "content_text",
     ]
   );
@@ -548,7 +565,7 @@ export function getMainText(document: GenericRow | null) {
   const contentObject = getContentObject(document);
 
   if (isPlainObject(contentObject)) {
-    const objectValue = contentObject as Record<string, any>;
+    const objectValue = contentObject as Record<string, unknown>;
 
     const mainCandidates = [
       objectValue.text,
@@ -738,6 +755,7 @@ export function getDetailSections(document: GenericRow | null): DetailSection[] 
       "notes",
       "instructions",
       "main_text",
+      "plain_text",
       "content_text",
       "certificate_text",
       "declaration_text",
@@ -745,7 +763,7 @@ export function getDetailSections(document: GenericRow | null): DetailSection[] 
       "exam_request",
     ]);
 
-    Object.entries(contentObject as Record<string, any>).forEach(([key, value]) => {
+    Object.entries(contentObject as Record<string, unknown>).forEach(([key, value]) => {
       if (ignoredKeys.has(key)) return;
 
       const label = labelizeKey(key);
@@ -762,7 +780,16 @@ export function getDetailSections(document: GenericRow | null): DetailSection[] 
     });
   }
 
-  return sections.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const certificate = /medical_certificate|sick_note|atestado/i.test(String(document?.document_type || ""));
+  const main = getMainText(document).replace(/\s+/g," ").trim().toLowerCase();
+  const seen = new Set<string>();
+  return sections.filter(section => {
+    if (!certificate && /afastamento|days off|leave|rest days/i.test(section.title)) return false;
+    if (getPrescriptionItems(document).length && /medication|medicamento|dosage|route|duration|quantity|prescri/i.test(section.title)) return false;
+    const value = section.value.replace(/\s+/g," ").trim().toLowerCase();
+    if (!value || seen.has(value) || (value.length > 3 && main.includes(value))) return false;
+    seen.add(value); return true;
+  }).sort((a, b) => (a.priority || 99) - (b.priority || 99));
 }
 
 export function getIssuedAt(document: GenericRow | null) {

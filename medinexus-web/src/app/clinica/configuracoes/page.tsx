@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/alert";
+import AddressLookup from "../../components/address-lookup";
 import { supabase } from "../../lib/supabase";
+import { getCurrentClinicMember } from "../../lib/auth";
+import { refreshAddressCoordinates } from "../../lib/geocode";
 
 type ClinicRow = {
   id: string;
@@ -12,12 +15,15 @@ type ClinicRow = {
   cnpj?: string | null;
   phone?: string | null;
   email?: string | null;
+  latitude: number | null;
+  longitude: number | null;
   city: string | null;
   state: string | null;
   address_city: string | null;
   address_state: string | null;
   address_neighborhood: string | null;
   address_street?: string | null;
+  address_zipcode?: string | null;
   address_number?: string | null;
   address_complement?: string | null;
   description?: string | null;
@@ -61,6 +67,7 @@ export default function ClinicaConfiguracoesPage() {
   const [addressNeighborhood, setAddressNeighborhood] = useState("");
   const [addressCity, setAddressCity] = useState("");
   const [addressState, setAddressState] = useState("");
+  const [addressZipcode, setAddressZipcode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [addressComplement, setAddressComplement] = useState("");
@@ -72,9 +79,6 @@ export default function ClinicaConfiguracoesPage() {
     "info"
   );
 
-  useEffect(() => {
-    loadPage();
-  }, []);
 
   async function getClinicIdForCurrentUser() {
     const {
@@ -88,12 +92,7 @@ export default function ClinicaConfiguracoesPage() {
       };
     }
 
-    const { data: memberData, error: memberError } = await supabase
-      .from("clinic_members")
-      .select("clinic_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .maybeSingle();
+    const { data: memberData, error: memberError } = await getCurrentClinicMember();
 
     if (memberError) {
       return {
@@ -114,6 +113,7 @@ export default function ClinicaConfiguracoesPage() {
       errorMessage: "",
     };
   }
+
 
   async function loadPage() {
     setLoading(true);
@@ -152,6 +152,7 @@ export default function ClinicaConfiguracoesPage() {
     setAddressCity(loadedClinic?.address_city || loadedClinic?.city || "");
     setAddressState(loadedClinic?.address_state || loadedClinic?.state || "");
     setAddressStreet(loadedClinic?.address_street || "");
+    setAddressZipcode(loadedClinic?.address_zipcode || "");
     setAddressNumber(loadedClinic?.address_number || "");
     setAddressComplement(loadedClinic?.address_complement || "");
     setDescription(loadedClinic?.description || "");
@@ -159,6 +160,7 @@ export default function ClinicaConfiguracoesPage() {
 
     setLoading(false);
   }
+
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -178,7 +180,15 @@ export default function ClinicaConfiguracoesPage() {
     setSaving(true);
     setMessage("");
 
+    const coordinates = await refreshAddressCoordinates(
+      { zipcode: addressZipcode, street: addressStreet, number: addressNumber, neighborhood: addressNeighborhood, city: addressCity, state: addressState },
+      { zipcode: clinic.address_zipcode, street: clinic.address_street, number: clinic.address_number, neighborhood: clinic.address_neighborhood, city: clinic.address_city || clinic.city, state: clinic.address_state || clinic.state },
+      { latitude: clinic.latitude ?? null, longitude: clinic.longitude ?? null }
+    );
+
     const payload: Record<string, unknown> = {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
       trade_name: tradeName.trim() || null,
       legal_name: legalName.trim() || null,
       phone: phone.trim() || null,
@@ -189,6 +199,7 @@ export default function ClinicaConfiguracoesPage() {
       city: addressCity.trim() || null,
       state: addressState.trim().toUpperCase() || null,
       address_street: addressStreet.trim() || null,
+      address_zipcode: addressZipcode.replace(/\D/g, "") || null,
       address_number: addressNumber.trim() || null,
       address_complement: addressComplement.trim() || null,
       description: description.trim() || null,
@@ -198,7 +209,7 @@ export default function ClinicaConfiguracoesPage() {
     const { error } = await supabase
       .from("clinics")
       .update(payload)
-      .eq("id", clinic.id);
+      .eq("id", clinic.id).select("id").single();
 
     if (error) {
       setMessage(`Erro ao salvar configurações: ${error.message}`);
@@ -207,11 +218,20 @@ export default function ClinicaConfiguracoesPage() {
       return;
     }
 
-    setMessage("Configurações da clínica atualizadas com sucesso.");
-    setMessageType("success");
-    await loadPage();
+    const located = coordinates.latitude !== null && coordinates.longitude !== null;
+    setMessage(located
+      ? "Configurações da clínica atualizadas com sucesso."
+      : "Configurações salvas, mas não foi possível localizar o endereço. Confira cidade, UF, bairro e rua e salve novamente para aparecer nas buscas por distância.");
+    setMessageType(located ? "success" : "info");
+    setClinic({ ...clinic, ...payload } as ClinicRow);
     setSaving(false);
   }
+
+
+  useEffect(() => {
+    const initialLoad = setTimeout(() => void loadPage(), 0);
+    return () => clearTimeout(initialLoad);
+  }, []);
 
   const completion = useMemo(() => {
     const fields = [
@@ -229,11 +249,11 @@ export default function ClinicaConfiguracoesPage() {
   }, [tradeName, legalName, phone, email, addressCity, addressState, description]);
 
   return (
-    <main className="min-h-screen bg-[#FAF6F3]">
-      <section className="border-b border-[#E7DDD7] bg-white">
+    <main className="min-h-screen bg-mn-sand">
+      <section className="border-b border-mn-border bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
-            <span className="inline-flex rounded-full border border-[#D8CCC5] bg-[#FAF6F3] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#164957]">
+            <span className="inline-flex rounded-full border border-mn-border bg-mn-sand px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-mn-teal">
               Configurações
             </span>
 
@@ -250,14 +270,14 @@ export default function ClinicaConfiguracoesPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/clinica/dashboard"
-              className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+              className="rounded-2xl border border-mn-border bg-white px-5 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
             >
               Dashboard
             </Link>
 
             <Link
               href="/clinica/medicos"
-              className="rounded-2xl bg-[#164957] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+              className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
             >
               Médicos
             </Link>
@@ -273,15 +293,15 @@ export default function ClinicaConfiguracoesPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
             Carregando configurações da clínica...
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.2fr]">
             <aside className="space-y-6">
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#164957] to-[#5A4C86] text-xl font-bold text-white">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-mn-teal to-mn-purple text-xl font-bold text-white">
                     {getClinicName(clinic).slice(0, 2).toUpperCase()}
                   </div>
 
@@ -306,26 +326,26 @@ export default function ClinicaConfiguracoesPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-[#F7F9FD] p-4">
+                <div className="mt-6 rounded-2xl bg-mn-sand p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-slate-700">
                       Completude do cadastro
                     </p>
-                    <p className="text-sm font-bold text-[#164957]">
+                    <p className="text-sm font-bold text-mn-teal">
                       {completion}%
                     </p>
                   </div>
 
                   <div className="mt-3 h-3 overflow-hidden rounded-full bg-white">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#164957] to-[#5A4C86]"
+                      className="h-full rounded-full bg-gradient-to-r from-mn-teal to-mn-purple"
                       style={{ width: `${completion}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-6 grid gap-3">
-                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
+                  <div className="rounded-2xl border border-mn-border p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Razão social
                     </p>
@@ -334,7 +354,7 @@ export default function ClinicaConfiguracoesPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E7DDD7] p-4">
+                  <div className="rounded-2xl border border-mn-border p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Criada em
                     </p>
@@ -345,27 +365,27 @@ export default function ClinicaConfiguracoesPage() {
                 </div>
               </section>
 
-              <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-950">Atalhos</h2>
 
                 <div className="mt-5 grid gap-3">
                   <Link
                     href="/clinica/dashboard"
-                    className="rounded-2xl bg-[#164957] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                    className="rounded-2xl bg-mn-teal px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#123B46]"
                   >
                     Abrir dashboard
                   </Link>
 
                   <Link
                     href="/clinica/solicitacoes"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-5 py-4 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Ver solicitações
                   </Link>
 
                   <Link
                     href="/clinica/medicos"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-5 py-4 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-5 py-4 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Gerenciar médicos
                   </Link>
@@ -373,7 +393,7 @@ export default function ClinicaConfiguracoesPage() {
               </section>
             </aside>
 
-            <section className="rounded-[28px] border border-[#E7DDD7] bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">
                 Editar informações
               </h2>
@@ -393,7 +413,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={tradeName}
                       onChange={(event) => setTradeName(event.target.value)}
                       placeholder="Ex.: Clínica Vida"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -405,7 +425,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={legalName}
                       onChange={(event) => setLegalName(event.target.value)}
                       placeholder="Ex.: Clínica Vida LTDA"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
                 </div>
@@ -419,7 +439,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={phone}
                       onChange={(event) => setPhone(event.target.value)}
                       placeholder="Ex.: (21) 99999-9999"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -431,13 +451,15 @@ export default function ClinicaConfiguracoesPage() {
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="Ex.: contato@clinica.com"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-5 sm:grid-cols-[1.2fr_0.45fr_0.45fr]">
-                  <div>
+                  <label className="text-sm font-semibold">CEP<input className="mn-input mt-2" value={addressZipcode} maxLength={9} inputMode="numeric" onChange={e => setAddressZipcode(e.target.value)} /></label>
+                  <div className="sm:col-span-2"><AddressLookup onAddress={a => { setAddressStreet(a.street); setAddressZipcode(a.zipcode); setAddressNeighborhood(a.neighborhood); setAddressCity(a.city); setAddressState(a.state); setAddressNumber(a.number || ""); }} /></div>
+                    <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Rua
                     </label>
@@ -445,7 +467,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={addressStreet}
                       onChange={(event) => setAddressStreet(event.target.value)}
                       placeholder="Ex.: Rua das Flores"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -457,7 +479,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={addressNumber}
                       onChange={(event) => setAddressNumber(event.target.value)}
                       placeholder="120"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -470,7 +492,7 @@ export default function ClinicaConfiguracoesPage() {
                       maxLength={2}
                       onChange={(event) => setAddressState(event.target.value)}
                       placeholder="RJ"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm uppercase text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm uppercase text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
                 </div>
@@ -486,7 +508,7 @@ export default function ClinicaConfiguracoesPage() {
                         setAddressNeighborhood(event.target.value)
                       }
                       placeholder="Ex.: Centro"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -498,7 +520,7 @@ export default function ClinicaConfiguracoesPage() {
                       value={addressCity}
                       onChange={(event) => setAddressCity(event.target.value)}
                       placeholder="Ex.: Rio de Janeiro"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
 
@@ -512,7 +534,7 @@ export default function ClinicaConfiguracoesPage() {
                         setAddressComplement(event.target.value)
                       }
                       placeholder="Ex.: Sala 304"
-                      className="w-full rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                      className="w-full rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                     />
                   </div>
                 </div>
@@ -526,11 +548,11 @@ export default function ClinicaConfiguracoesPage() {
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Descreva a clínica, estrutura, especialidades atendidas e diferenciais."
                     rows={7}
-                    className="w-full resize-none rounded-2xl border border-[#D8CCC5] bg-[#FAF6F3] px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#A7B5E5] focus:bg-white"
+                    className="w-full resize-none rounded-2xl border border-mn-border bg-mn-sand px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-mn-purple focus:bg-white"
                   />
                 </div>
 
-                <div className="rounded-2xl border border-[#E7DDD7] bg-[#FAF6F3] p-4">
+                <div className="rounded-2xl border border-mn-border bg-mn-sand p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-bold text-slate-950">
@@ -555,18 +577,18 @@ export default function ClinicaConfiguracoesPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3 border-t border-[#E7DDD7] pt-5">
+                <div className="flex flex-wrap gap-3 border-t border-mn-border pt-5">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-2xl bg-[#164957] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
+                    className="rounded-2xl bg-mn-teal px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46] disabled:opacity-50"
                   >
                     {saving ? "Salvando..." : "Salvar configurações"}
                   </button>
 
                   <Link
                     href="/clinica/dashboard"
-                    className="rounded-2xl border border-[#D8CCC5] bg-white px-6 py-3 text-sm font-semibold text-[#5A4C86] transition hover:bg-[#FAF6F3]"
+                    className="rounded-2xl border border-mn-border bg-white px-6 py-3 text-sm font-semibold text-mn-purple transition hover:bg-mn-sand"
                   >
                     Cancelar
                   </Link>

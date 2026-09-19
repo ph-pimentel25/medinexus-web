@@ -1,11 +1,16 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "./components/navbar";
+import AppFrame from "./components/app-frame";
+import "@fontsource-variable/inter";
+import { AuthProvider } from "./components/auth-provider";
 
 export const metadata: Metadata = {
   title: "MediNexus | Conectando pessoas. Integrando saúde.",
   description: "Encontre e solicite sua consulta com menos burocracia.",
+  applicationName: "MediNexus",
+  appleWebApp: { capable: true, title: "MediNexus", statusBarStyle: "default" },
   icons: {
+    apple: [{ url: "/icons/apple-touch-icon.png?v=4", sizes: "180x180", type: "image/png" }],
     icon: [
       {
         url: "/icon-light.svg?v=3",
@@ -21,6 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#164957" };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen bg-[#FAF6F3] text-[#2E393F] antialiased">
-        <Navbar />
-        {children}
+      <body className="min-h-screen bg-mn-sand text-mn-graphite antialiased">
+        <AuthProvider>
+          <AppFrame>{children}</AppFrame>
+        </AuthProvider>
       </body>
     </html>
   );
