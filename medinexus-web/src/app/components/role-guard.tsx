@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,43 +11,39 @@ type RoleGuardProps = {
   children: React.ReactNode;
 };
 
-async function getUserAccessArea(userId: string) {
-  const { data: doctorMember } = await supabase
-    .from("clinic_members")
-    .select("id, member_role, doctor_id")
+async function getUserAccessArea(userId: string): Promise<AllowedArea> {
+  // Fonte principal para médico: vínculo direto em doctors.user_id.
+  // Médicos não precisam ser membros de uma clínica para acessar a área médica.
+  const { data: doctorData, error: doctorError } = await supabase
+    .from("doctors")
+    .select("id")
     .eq("user_id", userId)
-    .eq("member_role", "doctor")
     .maybeSingle();
 
-  if (doctorMember?.doctor_id) {
+  if (!doctorError && doctorData?.id) {
     return "doctor";
   }
 
-  const { data: clinicMember } = await supabase
+  // Fonte principal para clínica: vínculo do usuário em clinic_members.
+  // Owner/admin acessam a área administrativa da clínica.
+  const { data: clinicMemberData, error: clinicMemberError } = await supabase
     .from("clinic_members")
-    .select("id, member_role")
+    .select("clinic_id, member_role")
     .eq("user_id", userId)
     .in("member_role", ["owner", "admin"])
+    .limit(1)
     .maybeSingle();
 
-  if (clinicMember) {
+  if (!clinicMemberError && clinicMemberData?.clinic_id) {
     return "clinic";
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("user_role")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (profile?.user_role === "clinic") {
-    return "clinic";
-  }
-
+  // Qualquer usuário autenticado sem vínculo médico ou administrativo de clínica
+  // permanece na experiência de paciente.
   return "patient";
 }
 
-function getRedirectPath(area: string | null) {
+function getRedirectPath(area: AllowedArea) {
   if (area === "doctor") return "/medico/dashboard";
   if (area === "clinic") return "/clinica/dashboard";
   return "/dashboard";
@@ -63,6 +59,7 @@ export default function RoleGuard({ area, children }: RoleGuardProps) {
 
     async function checkAccess() {
       setChecking(true);
+      setAllowed(false);
 
       const {
         data: { user },
@@ -111,5 +108,3 @@ export default function RoleGuard({ area, children }: RoleGuardProps) {
 
   return <>{children}</>;
 }
-
-
