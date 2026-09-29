@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { getRoleDashboardPath, getRoleProfilePath } from "../lib/auth";
 import { useAuth } from "./auth-provider";
 import { supabase } from "../lib/supabase";
+import VerificationNotice from "./verification-notice";
 
 export default function RoleGuard({ area, children }: {
   area: "patient" | "doctor" | "clinic";
@@ -44,5 +45,5 @@ export default function RoleGuard({ area, children }: {
   if (loading || !allowed) {
     return <div className="flex min-h-[65vh] items-center justify-center gap-3 text-sm text-mn-teal" role="status"><span className="h-5 w-5 animate-spin rounded-full border-2 border-mn-border border-t-mn-teal" />Verificando seu acesso...</div>;
   }
-  return <>{children}</>;
+  return <>{area!=="patient"&&access.id&&<VerificationNotice area={area} id={access.id}/>} {children}</>;
 }

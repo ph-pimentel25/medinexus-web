@@ -41,6 +41,6 @@ export function getSidebarNavigation(role: UserRole) {
   return [...primary.slice(0, -1), ...extra, { label: "Notificações", href: "/notificacoes" }, primary[primary.length - 1]];
 }
 export function isWorkspacePath(path: string) {
-  return !["/", "/sobre", "/especialidades", "/clinicas", "/profissionais", "/pacotes", "/login"].includes(path)
+  return !["/", "/sobre", "/especialidades", "/clinicas", "/profissionais", "/pacotes", "/login", "/recuperar-conta"].includes(path)
     && !path.includes("/cadastro") && !path.startsWith("/clinicas/") && !path.startsWith("/validar-documentos/");
 }

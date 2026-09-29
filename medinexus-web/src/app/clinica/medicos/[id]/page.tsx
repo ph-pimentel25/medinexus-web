@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import ProfilePhoto from "../../../components/profile-photo";
 
 import Link from "next/link";
@@ -264,7 +264,7 @@ export default function ClinicaEditarMedicoPage() {
             href="/clinica/medicos"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para médicos
+            ← Voltar para médicos
           </Link>
         </div>
 

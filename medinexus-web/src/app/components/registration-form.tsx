@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -9,6 +9,8 @@ import AddressLookup from "./address-lookup";
 import { supabase } from "../lib/supabase";
 import { completeRegistration, type Registration } from "../lib/registration";
 import { useAuth } from "./auth-provider";
+import { isValidCnpj, formatCnpj } from "../lib/cnpj";
+import { MIN_PASSWORD_LENGTH, isValidNewPassword } from "../lib/password-policy";
 import { getRoleDashboardPath } from "../lib/auth";
 
 type AccountType = "patient" | "doctor" | "clinic";
@@ -37,11 +39,11 @@ const accountTypes: {
 
 export default function RegistrationForm({ initialAccountType = "patient" }: { initialAccountType?: AccountType }) {
   const router = useRouter();
-  const { access, refresh } = useAuth();
+  const { access, refresh, loading: authLoading, error: authError } = useAuth();
   const completing = !!access.userId;
 
   const [selectedType, setAccountType] = useState<AccountType>(initialAccountType);
-  const accountType = completing && !access.id && access.role !== "public" ? access.role : selectedType;
+  const accountType = completing && access.role !== "public" ? access.role : selectedType;
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,6 +56,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
 
   const [clinicTradeName, setClinicTradeName] = useState("");
   const [clinicLegalName, setClinicLegalName] = useState("");
+  const [clinicCnpj, setClinicCnpj] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
   const [clinicCity, setClinicCity] = useState("");
   const [clinicState, setClinicState] = useState("RJ");
@@ -78,8 +81,8 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
       return "Informe seu e-mail.";
     }
 
-    if (!completing && password.length < 6) {
-      return "A senha precisa ter pelo menos 6 caracteres.";
+    if (!completing && !isValidNewPassword(password)) {
+      return "A senha precisa ter pelo menos 8 caracteres.";
     }
 
     if (accountType === "doctor") {
@@ -89,6 +92,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
     }
 
     if (accountType === "clinic") {
+      if (!isValidCnpj(clinicCnpj)) return "Informe um CNPJ válido com 14 dígitos.";
       if (!clinicTradeName.trim()) return "Informe o nome fantasia da clínica.";
       if (!clinicCity.trim()) return "Informe a cidade da clínica.";
       if (!clinicState.trim()) return "Informe o estado da clínica.";
@@ -99,14 +103,14 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) return;
+    if (loading || authLoading || authError || access.registrationComplete) return;
     const validationError = validateBaseFields();
     if (validationError) { setMessage(validationError); setMessageType("error"); return; }
     setLoading(true);
     setMessage("");
     const registration: Registration = {
       version: 1, accountType, fullName, crm, crmState, doctorBio, specialtyIds,
-      clinicTradeName, clinicLegalName, clinicPhone, clinicCity, clinicState,
+      clinicTradeName, clinicLegalName, clinicCnpj, clinicPhone, clinicCity, clinicState,
       clinicNeighborhood, clinicDescription, clinicStreet, clinicNumber, clinicZipcode,
     };
     try {
@@ -147,6 +151,9 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
     }
   }
 
+  if (authLoading) return <main className="app-shell py-12" role="status">Verificando sua conta…</main>;
+  if (authError) return <main className="app-shell py-12"><Alert variant="error">{authError}</Alert><button className="mn-button" onClick={()=>void refresh()}>Tentar novamente</button></main>;
+  if (access.registrationComplete) return <main className="app-shell py-12"><section className="mn-panel"><h1 className="text-2xl font-semibold">Sua conta já está cadastrada</h1><p className="my-4">O tipo desta conta não pode ser alterado pelo cadastro.</p><Link className="mn-button" href={getRoleDashboardPath(access.role)}>Ir para minha conta</Link></section></main>;
   return (
     <main className="min-h-screen bg-mn-sand text-mn-graphite">
       <section className="relative min-h-[calc(100vh-104px)] overflow-hidden">
@@ -203,8 +210,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
                   </h2>
 
                   <p className="mt-3 text-sm leading-7 text-mn-graphite/64">
-                    Escolha seu perfil e preencha os dados para entrar na
-                    plataforma MediNexus.
+                    {completing ? "Conclua os dados do perfil originalmente escolhido." : "Escolha seu perfil e preencha os dados para entrar na plataforma MediNexus."}
                   </p>
                 </div>
 
@@ -216,7 +222,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
 
                 {completing && <div className="mt-5 rounded-xl bg-mn-sage-light p-4 text-sm">Você está conectado como {access.email}. <button type="button" onClick={() => void supabase.auth.signOut()} className="font-semibold underline">Sair para criar outra conta</button></div>}
                 <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                  {accountTypes.map((item) => (
+                  {accountTypes.filter(item => !completing || item.value === accountType).map((item) => (
                     <button
                       key={item.value}
                       type="button"
@@ -271,10 +277,10 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
                         Senha
                       </label>
                       <input
-                        type="password" autoComplete="new-password" minLength={6} required
+                        type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} required
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Mínimo de 6 caracteres"
+                        placeholder="Mínimo de 8 caracteres"
                         className="w-full rounded-2xl border border-mn-border bg-white px-4 py-4 text-sm text-mn-graphite outline-none transition placeholder:text-mn-graphite/35 focus:border-mn-teal"
                       />
                     </div>
@@ -365,6 +371,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
                         </div>
                       </div>
 
+                      <label className="mt-5 block text-sm font-semibold">CNPJ<input required inputMode="numeric" autoComplete="off" maxLength={18} value={clinicCnpj} onChange={e=>setClinicCnpj(formatCnpj(e.target.value))} placeholder="00.000.000/0000-00" className="mn-input mt-2"/><span className="mt-1 block text-xs font-normal">Conferência de formato e dígitos verificadores; não é validação na Receita Federal.</span></label>
                       <div className="my-5"><AddressLookup onAddress={a => { setClinicCity(a.city); setClinicState(a.state); setClinicNeighborhood(a.neighborhood); setClinicStreet(a.street); setClinicNumber(a.number || ""); setClinicZipcode(a.zipcode); }} /></div>
                       <div className="my-4 grid gap-3 sm:grid-cols-[1fr_100px]"><label className="text-sm font-semibold">Logradouro<input className="mn-input mt-2" value={clinicStreet} onChange={e=>setClinicStreet(e.target.value)}/></label><label className="text-sm font-semibold">Número<input className="mn-input mt-2" value={clinicNumber} onChange={e=>setClinicNumber(e.target.value)}/></label></div>
                       <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_1fr_90px]">
@@ -444,7 +451,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
                     disabled={loading}
                     className="mt-2 rounded-full bg-mn-teal px-8 py-4 text-sm font-semibold text-white shadow-[0_24px_80px_-42px_rgba(22,73,87,0.85)] transition hover:-translate-y-0.5 hover:bg-[#123B46] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? "Criando conta..." : "Criar conta"}
+                    {loading ? "Salvando..." : completing ? "Concluir cadastro" : "Criar conta"}
                   </button>
                 </form>
 
@@ -463,7 +470,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
             </div>
 
             <div className="mt-5 text-center text-xs leading-6 text-mn-graphite/45">
-              Cadastro médico e clínica agora criam acesso completo na plataforma.
+              Novos cadastros de médicos e clínicas ficam com verificação pendente.
             </div>
           </div>
         </div>

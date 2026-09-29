@@ -43,6 +43,15 @@ test("existing patient details are never reset on login", async () => {
   const db = database({ profiles: { full_name: "Nome atualizado", role: "patient" }, patients: { id: user.id } });
   assert.equal((await loadAccount(user, db)).name, "Nome atualizado"); assert.equal(db.writes.length, 0);
 });
+test("patient role cannot be replaced by editable signup metadata",async()=>{
+ const db=database({profiles:{role:"patient"},patients:{id:user.id}});
+ const account=await loadAccount({...user,user_metadata:{role:"doctor"}},db);
+ assert.equal(account.role,"patient");assert.equal(db.writes.length,0);
+});
+test("incomplete professional remains pinned to server account type",async()=>{
+ const db=database({profiles:{role:"patient"},account_registration_locks:{account_type:"clinic"}});
+ const account=await loadAccount(user,db);assert.equal(account.role,"clinic");assert.equal(db.writes.length,0);
+});
 for (const [label, rows, role] of [
   ["autonomous physician", { doctors: { id: "doctor-one" } }, "doctor"],
   ["legacy physician membership", { clinic_members: [{ role: "doctor", doctor_id: "doctor-one" }] }, "doctor"],

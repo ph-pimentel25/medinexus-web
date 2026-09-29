@@ -77,3 +77,17 @@ for (const [role, dashboard, profile] of [
 test("public clinic listing is not confused with the clinic portal", () => {
   assert.equal(navigation.isActivePath("/clinicas", "/clinica"), false);
 });
+
+test("recovery is a public auth route, even for a logged-in user",()=>{
+  assert.equal(navigation.isWorkspacePath("/recuperar-conta"),false);
+  assert.equal(navigation.isWorkspacePath("/medico/perfil"),true);
+});
+test("completed patient ignores mutable professional signup metadata",async()=>{
+  const result=await auth.resolveUserRole({...user,user_metadata:{role:"doctor",medinexus_registration:{accountType:"clinic"}}},client({patients:{id:user.id},profiles:{role:"patient"}}));
+  assert.equal(result.role,"patient");assert.equal(result.registrationComplete,true);
+});
+for(const role of ["patient","doctor","clinic"])test(`incomplete ${role} stays pinned to the server registration lock`,async()=>{
+ const result=await auth.resolveUserRole({...user,user_metadata:{role:"clinic_admin"}},client({account_registration_locks:{account_type:role},profiles:{role:"patient"}}));
+ assert.equal(result.role,role);assert.equal(result.registrationComplete,false);
+ if(role!=="patient")assert.equal(result.id,null);
+});

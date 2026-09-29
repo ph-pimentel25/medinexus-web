@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/alert";
+import { formatCnpj, isValidCnpj, normalizeCnpj } from "../../lib/cnpj";
 import AddressLookup from "../../components/address-lookup";
 import { supabase } from "../../lib/supabase";
 import { getCurrentClinicMember } from "../../lib/auth";
@@ -62,6 +63,7 @@ export default function ClinicaConfiguracoesPage() {
 
   const [tradeName, setTradeName] = useState("");
   const [legalName, setLegalName] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [addressNeighborhood, setAddressNeighborhood] = useState("");
@@ -146,6 +148,7 @@ export default function ClinicaConfiguracoesPage() {
     setClinic(loadedClinic);
     setTradeName(loadedClinic?.trade_name || "");
     setLegalName(loadedClinic?.legal_name || "");
+    setCnpj(formatCnpj(loadedClinic?.cnpj || ""));
     setPhone(loadedClinic?.phone || "");
     setEmail(loadedClinic?.email || "");
     setAddressNeighborhood(loadedClinic?.address_neighborhood || "");
@@ -177,6 +180,10 @@ export default function ClinicaConfiguracoesPage() {
       return;
     }
 
+    const cnpjChanged = normalizeCnpj(cnpj) !== normalizeCnpj(clinic.cnpj || "");
+    if (cnpjChanged && !isValidCnpj(cnpj)) {
+      setMessage("Informe um CNPJ válido com 14 dígitos. A conferência é apenas estrutural.");setMessageType("error");return;
+    }
     setSaving(true);
     setMessage("");
 
@@ -187,6 +194,7 @@ export default function ClinicaConfiguracoesPage() {
     );
 
     const payload: Record<string, unknown> = {
+      ...(cnpjChanged ? { cnpj: normalizeCnpj(cnpj) } : {}),
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       trade_name: tradeName.trim() || null,
@@ -404,6 +412,7 @@ export default function ClinicaConfiguracoesPage() {
               </p>
 
               <form onSubmit={handleSave} className="mt-6 grid gap-5">
+                <label className="text-sm font-semibold">CNPJ<input className="mn-input mt-2" inputMode="numeric" maxLength={18} value={cnpj} onChange={e=>setCnpj(formatCnpj(e.target.value))} placeholder="00.000.000/0000-00"/><span className="mt-1 block text-xs font-normal">Validação apenas estrutural. Cadastros antigos podem completar este dado sem perder acesso às demais configurações.</span></label>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">

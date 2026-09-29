@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { resolveUserRole } from "./auth";
+import { isValidCnpj, normalizeCnpj } from "./cnpj";
 
 export type Registration = {
   version: 1;
@@ -12,6 +13,7 @@ export type Registration = {
   specialtyIds?: string[];
   clinicTradeName?: string;
   clinicLegalName?: string;
+  clinicCnpj?: string;
   clinicPhone?: string;
   clinicCity?: string;
   clinicState?: string;
@@ -28,6 +30,10 @@ function check(error: { message: string } | null) {
 
 export async function completeRegistration(user: User, input: Registration) {
   const access = await resolveUserRole(user);
+  if (access.role !== input.accountType) throw new Error("O tipo desta conta não pode ser alterado. Conclua o cadastro originalmente escolhido.");
+  if (access.registrationComplete) return;
+  // Validate before any profile write so failed input never changes account type.
+  if (input.accountType === "clinic" && !isValidCnpj(input.clinicCnpj || "")) throw new Error("Informe um CNPJ válido com 14 dígitos. A conferência é apenas estrutural.");
   if (access.id && access.role !== "patient") {
     if (access.role !== input.accountType) throw new Error("Esta conta já está vinculada a outro tipo de perfil. Saia para criar uma nova conta.");
     if (access.clinicId) {
@@ -109,6 +115,7 @@ export async function completeRegistration(user: User, input: Registration) {
         id: clinicId, user_id: user.id, created_by: user.id,
         trade_name: input.clinicTradeName.trim(),
         legal_name: input.clinicLegalName?.trim() || input.clinicTradeName.trim(),
+        cnpj: normalizeCnpj(input.clinicCnpj || ""),
         phone: input.clinicPhone?.trim() || null, email: user.email,
         contact_name: input.fullName.trim(), contact_email: user.email,
         contact_phone: input.clinicPhone?.trim() || null,

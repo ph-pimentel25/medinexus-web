@@ -7,12 +7,15 @@ const normalizeRole = (role: unknown): AccountRole | null => role === "doctor" ?
 // Keep the same relationship precedence as medinexus-web/src/app/lib/auth.ts.
 // Metadata only chooses the completion screen; database RLS grants actual access.
 export async function loadAccount(user: User, client: SupabaseClient) {
-  const [profile, doctor, clinic, memberships] = await Promise.all([
+  const [profile, doctor, clinic, memberships, registration, patient] = await Promise.all([
     client.from("profiles").select("full_name,role,address_city,profile_completed").eq("id", user.id).maybeSingle(),
     client.from("doctors").select("id").eq("user_id", user.id).order("id").limit(1).maybeSingle(),
     client.from("clinics").select("id").or(`user_id.eq.${user.id},created_by.eq.${user.id}`).order("id").limit(1).maybeSingle(),
     client.from("clinic_members").select("clinic_id,doctor_id,member_role,role").eq("user_id", user.id).order("clinic_id"),
+    client.from("account_registration_locks").select("account_type").eq("user_id",user.id).maybeSingle(),
+    client.from("patients").select("id").eq("id",user.id).maybeSingle(),
   ]);
+  if(registration.error&&!["42P01","PGRST205"].includes(registration.error.code))throw new Error("Não foi possível verificar o tipo original da conta.");
   const members = memberships.data || [];
   const doctorMember = members.find(m => (m.member_role || m.role) === "doctor" && m.doctor_id);
   const clinicMember = members.find(m => ["owner", "admin"].includes(m.member_role || m.role) && m.clinic_id);
@@ -21,11 +24,10 @@ export async function loadAccount(user: User, client: SupabaseClient) {
     throw new Error("Não foi possível verificar seu cadastro. Tente novamente.");
   }
   const stored = normalizeRole(profile.data?.role);
-  const role = proven || (stored && stored !== "patient" ? stored : normalizeRole(user.user_metadata?.role) || stored || "patient");
+  const role = normalizeRole(registration.data?.account_type) || proven || (patient.data?.id ? "patient" : stored && stored !== "patient" ? stored : normalizeRole(user.user_metadata?.medinexus_registration?.accountType) || normalizeRole(user.user_metadata?.role) || stored || "patient");
   const name = profile.data?.full_name || user.user_metadata?.full_name || "";
   let incompletePatient = false;
   if (role === "patient") {
-    const patient = await client.from("patients").select("id").eq("id", user.id).maybeSingle();
     if (patient.error) throw new Error("Não foi possível carregar o cadastro de paciente.");
     incompletePatient = !patient.data || profile.data?.profile_completed === false;
     // Resume an email-confirmed signup without changing an existing account's role or data.

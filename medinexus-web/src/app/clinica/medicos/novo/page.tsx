@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -222,7 +222,7 @@ export default function ClinicaNovoMedicoPage() {
             href="/clinica/medicos"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para médicos
+            ← Voltar para médicos
           </Link>
         </div>
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { markDocumentPreview } from "../../../lib/document-preview";
 import Link from "next/link";
@@ -404,7 +404,7 @@ export default function MedicoReceituarioPage() {
               href={`/medico/consultas/${appointment.id}`}
               className="text-sm font-medium text-sky-700 hover:underline"
             >
-              â† Voltar para o prontuário
+              ← Voltar para o prontuário
             </Link>
 
             <p className="mt-6 text-sm uppercase tracking-[0.2em] text-sky-700">

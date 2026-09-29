@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -151,7 +151,7 @@ export default function ClinicaPlanosPage() {
             href="/clinica/dashboard"
             className="text-sm font-medium text-sky-700 hover:underline"
           >
-            â† Voltar para o dashboard da clínica
+            ← Voltar para o dashboard da clínica
           </Link>
         </div>
 

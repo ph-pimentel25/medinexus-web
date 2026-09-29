@@ -24,12 +24,18 @@ test('both incremental SQL packages apply together over the previous release wit
  create table prescriptions(id uuid primary key,appointment_id uuid,patient_id uuid,doctor_id uuid,title text,content text,guidance text);
  insert into prescriptions(id,content) values('00000000-0000-4000-8000-000000000001','Legacy original');`);
  for(const file of ['ATUALIZACAO_20260917.sql','ATUALIZACAO_20260918.sql'])await db.exec(fs.readFileSync('supabase/'+file,'utf8'));
+ // Apply the additive stabilization to the combined previous release as well.
+ await db.exec(`alter table auth.users add raw_user_meta_data jsonb default '{}';
+ alter table profiles add role text;
+ alter table clinics add cnpj text;
+ alter table clinic_members add doctor_id uuid;`);
+ await db.exec(fs.readFileSync('supabase/migrations/20260919010000_account_stabilization.sql','utf8'));
  assert.equal((await db.query('select content from prescriptions')).rows[0].content,'Legacy original');
  assert.equal((await db.query('select commission_enabled from platform_commercial_policy')).rows[0].commission_enabled,false);
  assert.equal((await db.query('select count(*)::int n from health_plans')).rows[0].n,15);
  await assert.rejects(db.query("update prescriptions set content='overwrite'"));
  // Private external contacts cannot be read or modified by another patient.
- await db.exec(`insert into auth.users values('00000000-0000-4000-8000-000000000002'),('00000000-0000-4000-8000-000000000003');
+ await db.exec(`insert into auth.users(id) values('00000000-0000-4000-8000-000000000002'),('00000000-0000-4000-8000-000000000003');
  insert into patients(id) select id from auth.users;grant usage on schema auth to authenticated;grant select on patients to authenticated;`);
  await db.query("select set_config('test.uid',$1,false)",['00000000-0000-4000-8000-000000000002']);await db.exec('set role authenticated');
  await db.query("insert into external_care_contacts(name,phone) values('Meu contato','21999999999')");
