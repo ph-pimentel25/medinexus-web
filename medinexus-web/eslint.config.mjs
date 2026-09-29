@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Local audit evidence and isolated build copies are not application source.
+    "artifacts/**",
     "next-env.d.ts",
   ]),
 ]);
