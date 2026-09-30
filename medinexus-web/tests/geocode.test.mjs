@@ -52,3 +52,22 @@ test("invalid coordinates from upstream never enter a patient profile", async()=
  const result=await loadGeocoder(async()=>({ok:true,json:async()=>[{lat:"not-a-number",lon:"-43.1"}]})).geocodeBrazilAddress(address);
  assert.equal(result.latitude,null);
 });
+
+test('saving contact details preserves a confirmed location without calling the geocoder', async()=>{
+ const api=loadGeocoder(()=>{throw new Error('Must not replace GPS');});
+ const actual=await api.coordinatesForProfileSave(address,address,oldCoordinates,{latitude:null,longitude:null});
+ assert.equal(actual.latitude,oldCoordinates.latitude);
+});
+test('confirmed device point takes precedence and changed unknown address loses old coordinates',async()=>{
+ const api=loadGeocoder(failed);
+ const point={latitude:-22.91,longitude:-43.11};
+ assert.equal((await api.coordinatesForProfileSave(address,previous,oldCoordinates,point)).latitude,point.latitude);
+ assert.equal((await api.coordinatesForProfileSave({...address,street:'Rua nova'},previous,oldCoordinates,{latitude:null,longitude:null})).latitude,null);
+});
+test('wrong state, city, number and missing street detail cannot be used as a precise address',async()=>{
+ const input={...address,street:'Rua Exemplo',number:'10'};
+ for(const a of [{road:'Rua Exemplo',city:'Niterói'},{road:'Rua Exemplo','ISO3166-2-lvl4':'BR-SP'},{road:'Rua Exemplo',house_number:'99'},{}]) {
+   const api=loadGeocoder(async()=>({ok:true,json:async()=>[{lat:'-22.9',lon:'-43.1',address:a}]}));
+   assert.equal((await api.geocodeBrazilAddress(input)).latitude,null);
+ }
+});

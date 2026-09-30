@@ -5,6 +5,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Alert from "../components/alert";
 import { supabase } from "../lib/supabase";
+import { availabilityInputError, brazilToday } from "../lib/availability-input";
+import { hasCoordinates } from "../lib/geocode";
 
 type Specialty = {
   id: string;
@@ -21,6 +23,11 @@ type ClinicMini = {
 };
 
 type ProfileRow = {
+  address_street: string | null;
+  address_number: string | null;
+  address_neighborhood: string | null;
+  address_city: string | null;
+  address_state: string | null;
   latitude: number | null;
   longitude: number | null;
   profile_completed: boolean | null;
@@ -83,7 +90,7 @@ function BuscaPageContent() {
 
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([
     {
-      weekday: String(new Date().getDay()),
+      weekday: String(new Date(`${brazilToday()}T12:00:00Z`).getUTCDay()),
       startTime: "08:00",
       endTime: "12:00",
     },
@@ -118,7 +125,7 @@ function BuscaPageContent() {
 
       supabase
         .from("profiles")
-        .select("latitude, longitude, profile_completed")
+        .select("latitude, longitude, profile_completed, address_street, address_number, address_neighborhood, address_city, address_state")
         .eq("id", user.id)
         .maybeSingle<ProfileRow>(),
 
@@ -236,6 +243,11 @@ function BuscaPageContent() {
     setSubmitting(true);
     setMessage("");
 
+    const inputError = availabilityInputError(preferredStartDate, preferredEndDate, timeWindows);
+    if (inputError) { setMessage(inputError); setMessageType("error"); setSubmitting(false); return; }
+
+    try {
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -256,7 +268,7 @@ function BuscaPageContent() {
 
     if (!hasPreciseLocation && !selectedClinic?.id) {
       setMessage(
-        "Para buscar por raio, atualize seu perfil e use a localização atual do dispositivo."
+        "Confirme seu endereço no perfil e salve uma localização antes de buscar por distância."
       );
       setMessageType("error");
       setSubmitting(false);
@@ -290,13 +302,7 @@ function BuscaPageContent() {
       return;
     }
 
-    const validWindows = timeWindows.filter(
-      (window) =>
-        window.weekday !== "" &&
-        window.startTime &&
-        window.endTime &&
-        window.startTime < window.endTime
-    );
+    const validWindows = timeWindows;
 
     if (validWindows.length === 0) {
       setMessage("Informe pelo menos uma faixa de horário válida.");
@@ -371,6 +377,10 @@ function BuscaPageContent() {
     setTimeout(() => {
       router.push(`/resultados?searchId=${searchPreference.id}`);
     }, 700);
+    } catch {
+      setMessage("Não foi possível concluir a busca. Confira sua conexão e tente novamente.");
+      setMessageType("error");
+    } finally { setSubmitting(false); }
   }
 
 
@@ -385,7 +395,7 @@ function BuscaPageContent() {
     [selectedClinic]
   );
 
-  const hasPreciseLocation = profile?.latitude != null && profile?.longitude != null;
+  const hasPreciseLocation = !!profile && hasCoordinates(profile);
 
   const hasHealthPlanData = Boolean(
       patient?.health_plan_operator ||
@@ -429,10 +439,9 @@ function BuscaPageContent() {
 
         {!hasPreciseLocation && !selectedClinic?.id && (
           <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-800">
-            <p className="font-bold">Localização precisa não encontrada</p>
+            <p className="font-bold">Localização ainda não confirmada</p>
             <p className="mt-1 text-sm">
-              Para usar busca por raio, abra seu perfil e clique em{" "}
-              <span className="font-semibold">Usar minha localização atual</span>.
+              Para usar a distância, confira e salve seu endereço no perfil. Use o GPS apenas se estiver no local desejado.
             </p>
             <div className="mt-4">
               <Link href="/perfil" className="app-button-secondary">
@@ -506,6 +515,8 @@ function BuscaPageContent() {
                 </label>
                 <input
                   type="date"
+                  aria-label="Data inicial preferida"
+                  min={brazilToday()}
                   value={preferredStartDate}
                   onChange={(e) => setPreferredStartDate(e.target.value)}
                   className="app-input"
@@ -518,6 +529,8 @@ function BuscaPageContent() {
                 </label>
                 <input
                   type="date"
+                  aria-label="Data final preferida"
+                  min={preferredStartDate || brazilToday()}
                   value={preferredEndDate}
                   onChange={(e) => setPreferredEndDate(e.target.value)}
                   className="app-input"
@@ -593,8 +606,16 @@ function BuscaPageContent() {
                 Raio de busca
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                O raio usa a localização precisa salva no seu perfil.
+                O raio usa as coordenadas salvas no seu perfil, não a localização atual automaticamente. A distância é em linha reta; o trajeto pode ser maior.
               </p>
+              <div className="mt-4 rounded-2xl bg-mn-sand p-4 text-sm">
+                <p className="font-semibold">Origem da busca</p>
+                <p className="mt-1">{[profile?.address_street, profile?.address_number, profile?.address_neighborhood, profile?.address_city, profile?.address_state].filter(Boolean).join(", ") || "Endereço não informado"}</p>
+                <div className="mt-3 flex flex-wrap gap-4">
+                  <Link href="/perfil" className="font-semibold text-mn-teal underline">Corrigir endereço ou localização</Link>
+                  {hasPreciseLocation && <a href={`https://www.google.com/maps/search/?api=1&query=${profile?.latitude},${profile?.longitude}`} target="_blank" rel="noreferrer" className="font-semibold text-mn-teal underline">Conferir ponto no mapa</a>}
+                </div>
+              </div>
 
               <div className="mt-6 max-w-md">
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -623,7 +644,7 @@ function BuscaPageContent() {
                   Faixas de horário desejadas
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  O sistema vai tentar encaixar a consulta dentro dessas janelas.
+                  Escolha os dias que ocorrem entre as datas acima. Sem datas, buscamos nos próximos 21 dias. Horários no fuso de Brasília.
                 </p>
               </div>
 

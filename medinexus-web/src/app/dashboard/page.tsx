@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, FileText, Activity, Search, ChevronRight, Clock, MapPin, Bell } from "lucide-react";
+import { CalendarSearch, Stethoscope, FileText, Activity, ChevronRight, Clock, MapPin, Bell } from "lucide-react";
 import DashboardOverview from "../components/dashboard-overview";
 import { supabase } from "../lib/supabase";
 
@@ -214,21 +214,21 @@ export default function DashboardPage() {
 
   return <main className="mn-dashboard min-h-screen bg-mn-sand">
     <DashboardOverview eyebrow="Seu espaço de cuidado" title={`Olá, ${firstName}.`} description="Cuide de você com mais tranquilidade. Estamos por perto em cada etapa."
-      loading={loading} actions={[{label:"Encontrar atendimento",href:"/descobrir"}]}
+      loading={loading} actions={[{label:"Encontrar atendimento",href:"/busca"}]}
       metrics={[{label:"Consultas confirmadas",value:summary.confirmed,hint:"Seus atendimentos confirmados"},{label:"Consultas recentes",value:summary.total,hint:"Seu histórico de solicitações"},{label:"Aguardando confirmação",value:summary.pending,hint:"Acompanhe o retorno da clínica"},{label:"Avisos não lidos",value:summary.unread,hint:"Entre as últimas atualizações"}]} />
     <div className="mn-dashboard-content">
       {isLoggedOut && <p role="alert" className="mn-panel">Entre na sua conta para acessar seus atendimentos.</p>}
       <div className="mn-quick-actions">{[
-        {label:"Agendar consulta",icon:Calendar,href:"/busca",description:"Escolha seu atendimento"},
+        {label:"Buscar por disponibilidade",icon:CalendarSearch,href:"/busca",description:"Informe quando você pode ir"},
         {label:"Meus documentos",icon:FileText,href:"/documentos",description:"Tudo em um só lugar"},
         {label:"Histórico clínico",icon:Activity,href:"/historico-clinico",description:"Acompanhe seu cuidado"},
-        {label:"Buscar profissionais",icon:Search,href:"/descobrir",description:"Encontre quem está perto"},
+        {label:"Rede cadastrada",icon:Stethoscope,href:"/profissionais",description:"Conheça médicos e clínicas"},
       ].map(({label,icon:Icon,href,description})=><Link key={href} href={href} className="mn-quick-action"><span className="mn-action-icon"><Icon size={23} strokeWidth={1.6}/></span><strong>{label}</strong><span>{description}</span><ChevronRight size={15} className="mn-action-arrow"/></Link>)}</div>
       <div className="mn-dashboard-columns">
         <section className="mn-panel"><div className="mn-panel-heading"><div><h2>Próximas consultas</h2><p>Seu cuidado, com data e hora.</p></div><Link href="/solicitacoes">Ver todas <ChevronRight size={14}/></Link></div>
           {loading ? <div className="mn-skeleton h-28" role="status" aria-label="Carregando consultas"/> : nextAppointment ? <Link href="/solicitacoes" className="mn-appointment-preview">
             <span className="mn-person-avatar">{nextAppointment.doctor_name?.slice(0,2).toUpperCase()}</span><div className="min-w-0 flex-1"><h3>{nextAppointment.doctor_name}</h3><p>{nextAppointment.clinic_name}</p><p className="flex items-center gap-1.5"><MapPin size={13}/>{nextAppointment.clinic_location}</p><p className="mn-appointment-time"><Clock size={14}/>{formatShortDate(getBestAppointmentDate(nextAppointment))}</p></div><ChevronRight size={18}/>
-          </Link> : <div className="mn-empty-state"><Calendar size={30} strokeWidth={1.3}/><h3>Sua próxima consulta começa aqui</h3><p>Encontre um profissional e escolha o melhor horário para você.</p><Link href="/descobrir" className="mn-button-secondary">Buscar atendimento</Link></div>}
+          </Link> : <div className="mn-empty-state"><CalendarSearch size={30} strokeWidth={1.3}/><h3>Sua próxima consulta começa aqui</h3><p>Encontre um profissional e escolha o melhor horário para você.</p><Link href="/busca" className="mn-button-secondary">Buscar por disponibilidade</Link></div>}
           <div className="mn-care-note"><Activity size={19}/><p><strong>Cuidado que acompanha você.</strong><br/>Mantenha seu perfil atualizado para facilitar seus próximos atendimentos.</p><Link href="/perfil" aria-label="Atualizar meu perfil"><ChevronRight size={18}/></Link></div>
         </section>
         <section className="mn-panel"><div className="mn-panel-heading"><div><h2>Últimas atualizações</h2><p>O que há de novo por aqui.</p></div><Link href="/notificacoes" aria-label="Ver todas as notificações"><Bell size={17}/></Link></div>

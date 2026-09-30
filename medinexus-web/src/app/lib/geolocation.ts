@@ -1,4 +1,32 @@
 export type ParsedAddress = { street: string; number: string; neighborhood: string; city: string; state: string; postalCode: string; formatted: string };
+export function captureBestLocation(geolocation: Geolocation): Promise<GeolocationCoordinates> {
+  return new Promise((resolve, reject) => {
+    let best: GeolocationCoordinates | undefined;
+    let finished = false;
+    const watch: { id?: number } = {};
+    const finish = (error?: Error) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      if (watch.id !== undefined) geolocation.clearWatch(watch.id);
+      if (error) { reject(error); return; }
+      if (!best) { reject(new Error("Não foi possível obter sua localização. Verifique as permissões ou use seu endereço.")); return; }
+      try { assertUsableGps(best); resolve(best); } catch (cause) { reject(cause); }
+    };
+    const timer = setTimeout(() => finish(), 15000);
+    watch.id = geolocation.watchPosition(position => {
+      const c = position.coords;
+      if (!Number.isFinite(c.accuracy) || c.accuracy < 0) return;
+      if (!best || c.accuracy < best.accuracy) best = c;
+      if (c.accuracy <= 50) finish();
+    }, error => { if (error.code === 1) finish(new Error("Permita o acesso à localização no navegador, ou use seu endereço.")); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+    if (finished) geolocation.clearWatch(watch.id);
+  });
+}
+export function assertUsableGps(coords: Pick<GeolocationCoordinates, "latitude" | "longitude" | "accuracy">) {
+  if (!Number.isFinite(coords.latitude) || !Number.isFinite(coords.longitude) || Math.abs(coords.latitude) > 90 || Math.abs(coords.longitude) > 180 || !Number.isFinite(coords.accuracy) || coords.accuracy < 0) throw new Error("O dispositivo retornou uma localização inválida. Tente novamente.");
+  if (coords.accuracy > 200) throw new Error(`A localização tem margem de erro de aproximadamente ${Math.round(coords.accuracy)} m e não foi utilizada. Ative a localização precisa no celular e tente novamente, ou informe seu endereço pelo CEP.`);
+}
 export const BRAZIL_STATES: Record<string, string> = {
   Acre: "AC", Alagoas: "AL", Amapá: "AP", Amazonas: "AM", Bahia: "BA", Ceará: "CE", "Distrito Federal": "DF", "Espírito Santo": "ES", Goiás: "GO", Maranhão: "MA", "Mato Grosso": "MT", "Mato Grosso do Sul": "MS", "Minas Gerais": "MG", Pará: "PA", Paraíba: "PB", Paraná: "PR", Pernambuco: "PE", Piauí: "PI", "Rio de Janeiro": "RJ", "Rio Grande do Norte": "RN", "Rio Grande do Sul": "RS", Rondônia: "RO", Roraima: "RR", "Santa Catarina": "SC", "São Paulo": "SP", Sergipe: "SE", Tocantins: "TO",
 };

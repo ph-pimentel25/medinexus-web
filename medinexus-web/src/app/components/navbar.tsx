@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Menu, X } from "lucide-react";
+import { CalendarSearch, Stethoscope, ChevronDown, LogOut, Menu, X } from "lucide-react";
 import NotificationBell from "./notification-bell";
 import WorkspaceSearch from "./workspace-search";
 import { useAuth } from "./auth-provider";
@@ -81,8 +81,8 @@ export default function Navbar({ workspace = false }: { workspace?: boolean }) {
       {(error || logoutError) && <p role="alert" className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">{logoutError || error}</p>}
       {mobileOpen && <nav id="mobile-menu" aria-label="Menu do celular" className={`max-h-[calc(100dvh-76px)] overflow-y-auto border-t border-mn-border bg-white px-4 py-4 shadow-lg ${workspace ? "lg:hidden" : "xl:hidden"}`}>
         {signedIn && <div className="mb-3 rounded-xl bg-mn-sand p-3"><p className="truncate text-sm font-bold text-mn-teal">{name}</p><p className="text-xs text-mn-graphite/65">{roleLabels[access.role]}</p></div>}
-        <div className="grid grid-cols-2 gap-2">{links.map(item => <Link key={item.href} onClick={closeMenus} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined} className={`rounded-xl p-3 text-sm font-semibold ${isActivePath(pathname, item.href) ? "bg-mn-teal text-white" : "bg-mn-sand text-mn-teal"}`}>{item.label}</Link>)}</div>
-        {access.role === "patient" && <Link onClick={closeMenus} href="/busca" className="mt-2 block rounded-xl bg-mn-sage-light p-3 text-sm font-semibold text-mn-teal">Buscar por convênio e distância</Link>}
+        <div className="grid grid-cols-2 gap-2">{links.map(item => <Link key={item.href} onClick={closeMenus} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined} className={`rounded-xl p-3 text-sm font-semibold ${isActivePath(pathname, item.href) ? "bg-mn-teal text-white" : "bg-mn-sand text-mn-teal"}`}>{item.href === "/busca" ? <CalendarSearch className="mb-2" size={20} aria-hidden="true"/> : item.href === "/profissionais" ? <Stethoscope className="mb-2" size={20} aria-hidden="true"/> : null}{item.label}</Link>)}</div>
+        {access.role === "patient" && <Link onClick={closeMenus} href="/busca" className="mt-2 block rounded-xl bg-mn-sage-light p-3 text-sm font-semibold text-mn-teal">Buscar por disponibilidade</Link>}
         {!workspace && access.role === "clinic" && <div className="mt-2 grid grid-cols-2 gap-2"><Link onClick={closeMenus} href="/clinica/publico" className="rounded-xl bg-mn-sand p-3 text-sm">Página pública</Link><Link onClick={closeMenus} href="/clinica/planos" className="rounded-xl bg-mn-sand p-3 text-sm">Convênios</Link></div>}
         {signedIn ? <button onClick={() => void logout()} className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-semibold text-red-700"><LogOut size={16} />Sair da conta</button> : <div className="mt-3 flex gap-2"><Link onClick={closeMenus} href="/login" className="app-button-primary flex-1">Entrar</Link><Link onClick={closeMenus} href="/cadastro" className="app-button-secondary flex-1">Criar conta</Link></div>}
       </nav>}

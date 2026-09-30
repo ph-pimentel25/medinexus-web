@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   useEffect,
-  useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -12,8 +12,8 @@ import Alert from "../components/alert";
 import NotificationPreferences from "../components/notification-preferences";
 import HealthPlanPicker, {type CatalogPlan} from "../components/health-plan-picker";
 import ProfilePhoto from "../components/profile-photo";
-import { geocodeBrazilAddress } from "../lib/geocode";
-import { reverseGeocode } from "../lib/geolocation";
+import { coordinatesForProfileSave, geocodeBrazilAddress, hasCoordinates, type AddressParams } from "../lib/geocode";
+import { captureBestLocation, reverseGeocode, type ParsedAddress } from "../lib/geolocation";
 import { supabase } from "../lib/supabase";
 
 type ProfileRow = {
@@ -77,6 +77,10 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [capturingLocation, setCapturingLocation] = useState(false);
+  const addressRevision = useRef(0);
+  const [locationProposal, setLocationProposal] = useState<{ latitude: number; longitude: number; accuracy?: number; address?: ParsedAddress; streetOnly?: boolean } | null>(null);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [savedAddress, setSavedAddress] = useState<AddressParams>({});
 
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("");
 
@@ -126,12 +130,15 @@ export default function PerfilPage() {
 
 
   async function fetchAddressByZipcode(zipcode: string) {
+    const revision = ++addressRevision.current;
+    setLocationProposal(null);
     setLoadingCep(true);
 
     try {
       const response = await fetch(`https://viacep.com.br/ws/${zipcode}/json/`);
       const data = await response.json();
 
+      if (revision !== addressRevision.current) return;
       if (data?.erro) {
         setMessage("CEP não encontrado. Preencha o endereço manualmente.");
         setMessageType("error");
@@ -158,63 +165,43 @@ export default function PerfilPage() {
   }
 
 
-  function handleUseCurrentLocation() {
-    if (!navigator.geolocation) {
-      setMessage("Seu navegador não permite capturar localização.");
-      setMessageType("error");
-      return;
-    }
-
-    setCapturingLocation(true);
-    setMessage("Capturando localização e identificando endereço...");
-    setMessageType("info");
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-
-        try {
-          const loc = await reverseGeocode(latitude, longitude);
-          setDeviceCoordinates({ latitude, longitude });
-
-          setForm((prev) => ({
-            ...prev,
-            address_street: loc.street,
-            address_number: loc.number,
-            address_neighborhood: loc.neighborhood,
-            address_city: loc.city,
-            address_state: loc.state,
-            address_zipcode: loc.postalCode,
-          }));
-
-          setMessage("Localização e endereço identificados com sucesso!");
-          setMessageType("success");
-        } catch (err) {
-          setDeviceCoordinates({ latitude: null, longitude: null });
-          console.error("Erro ao resolver endereço pelo GPS:", err);
-          setMessage("Não foi possível identificar o endereço pelo GPS. Preencha seu endereço manualmente ou use o CEP.");
-          setMessageType("info");
-        } finally {
-          setCapturingLocation(false);
-        }
-      },
-      (error) => {
-        console.error("Erro no GPS:", error.message);
-        setMessage(
-          "Não foi possível capturar sua localização. Verifique as permissões de GPS no navegador."
-        );
-        setMessageType("error");
-        setCapturingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
-    );
+  async function handleUseCurrentLocation() {
+    if (!navigator.geolocation) { setMessage("GPS indisponível. Use o endereço informado."); setMessageType("info"); return; }
+    const revision = ++addressRevision.current;
+    setLocationProposal(null); setCapturingLocation(true); setMessage("Refinando a localização do dispositivo…"); setMessageType("info");
+    try {
+      const coords = await captureBestLocation(navigator.geolocation);
+      const address = await reverseGeocode(coords.latitude, coords.longitude);
+      if (revision !== addressRevision.current) return;
+      setLocationProposal({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, address });
+      setMessage("Confira o ponto e o endereço abaixo. Seu endereço ainda não foi alterado.");
+    } catch (error) {
+      if (revision === addressRevision.current) setMessage(error instanceof Error ? error.message : "Não foi possível localizar. Use seu endereço.");
+    } finally { setCapturingLocation(false); }
   }
 
+  async function locateEnteredAddress() {
+    if (!form.address_street || !form.address_number || !form.address_city || !form.address_state) { setMessage("Informe rua, número, cidade e UF antes de localizar o endereço."); setMessageType("info"); return; }
+    const revision = ++addressRevision.current;
+    setLocationProposal(null); setCapturingLocation(true); setMessage("Localizando o endereço informado…"); setMessageType("info");
+    try {
+      const result = await geocodeBrazilAddress({ zipcode: form.address_zipcode, street: form.address_street, number: form.address_number, neighborhood: form.address_neighborhood, city: form.address_city, state: form.address_state });
+      if (revision !== addressRevision.current) return;
+      if (!hasCoordinates(result) || result.precision === "approximate") throw new Error("Não encontramos um ponto confiável para esse endereço. Confira os campos ou tente o GPS no local desejado.");
+      setLocationProposal({ latitude: result.latitude!, longitude: result.longitude!, streetOnly: result.precision === "street" });
+      setMessage("Confira o ponto no mapa antes de usar este endereço na busca.");
+    } catch (error) { if (revision === addressRevision.current) setMessage(error instanceof Error ? error.message : "Consulta de endereço indisponível."); }
+    finally { setCapturingLocation(false); }
+  }
+
+  function confirmLocation() {
+    if (!locationProposal) return;
+    const { latitude, longitude, address, accuracy } = locationProposal;
+    ++addressRevision.current;
+    if (address) setForm(prev => ({ ...prev, address_street: address.street, address_number: address.number, address_neighborhood: address.neighborhood, address_city: address.city, address_state: address.state, address_zipcode: address.postalCode, address_complement: "" }));
+    setDeviceCoordinates({ latitude, longitude }); setGpsAccuracy(accuracy ?? null); setLocationProposal(null);
+    setMessage("Ponto confirmado. Confira os campos e salve o perfil para usá-lo na busca."); setMessageType("info");
+  }
 
   async function loadPage() {
     setLoading(true);
@@ -320,6 +307,7 @@ export default function PerfilPage() {
       setPaymentMode("");
     }
 
+    setSavedAddress({ zipcode: profile?.address_zipcode, street: profile?.address_street, number: profile?.address_number, neighborhood: profile?.address_neighborhood, city: profile?.address_city, state: profile?.address_state });
     setSavedCoordinates({
       latitude: profile?.latitude ?? null,
       longitude: profile?.longitude ?? null,
@@ -368,7 +356,7 @@ export default function PerfilPage() {
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value, type } = e.target;
-    if (name.startsWith("address_")) setDeviceCoordinates({ latitude: null, longitude: null });
+    if (name.startsWith("address_") && name !== "address_complement") { ++addressRevision.current; setLocationProposal(null); setDeviceCoordinates({ latitude: null, longitude: null }); }
 
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
@@ -445,20 +433,17 @@ export default function PerfilPage() {
     const isPrivate = paymentMode === "private";
     const hasHealthPlan = paymentMode === "health_plan";
 
-    const fallbackCoordinates = await geocodeBrazilAddress({
+    const address = {
       zipcode: form.address_zipcode,
       street: form.address_street,
       number: form.address_number,
       neighborhood: form.address_neighborhood,
       city: form.address_city,
       state: form.address_state,
-    });
-
-    const finalLatitude =
-      deviceCoordinates.latitude ?? fallbackCoordinates.latitude;
-
-    const finalLongitude =
-      deviceCoordinates.longitude ?? fallbackCoordinates.longitude;
+    };
+    const coordinates = await coordinatesForProfileSave(address, savedAddress, savedCoordinates, deviceCoordinates);
+    const finalLatitude = coordinates.latitude;
+    const finalLongitude = coordinates.longitude;
 
     const { error: profileError } = await supabase
       .from("profiles")
@@ -540,7 +525,8 @@ export default function PerfilPage() {
       longitude: finalLongitude,
     });
 
-    setMessage("Perfil atualizado com sucesso.");
+    setSavedAddress(address);
+    setMessage(finalLatitude === null ? "Perfil salvo, mas o endereço não pôde ser localizado. Confirme um ponto antes de buscar por distância." : "Perfil atualizado com sucesso.");
     setMessageType("success");
     setSaving(false);
   }
@@ -550,19 +536,6 @@ export default function PerfilPage() {
     const initialLoad = setTimeout(() => void loadPage(), 0);
     return () => clearTimeout(initialLoad);
   }, []);
-
-  useEffect(() => {
-    const zip = onlyDigits(form.address_zipcode);
-
-    if (zip.length !== 8) return;
-
-    const timeout = window.setTimeout(() => {
-      fetchAddressByZipcode(zip);
-    }, 500);
-
-    return () => window.clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.address_zipcode]);
 
   const requiredMissing = (() => {
     const requiredFields = [
@@ -741,8 +714,7 @@ export default function PerfilPage() {
                   Endereço e localização
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  O CEP preenche o endereço. Para busca por raio com precisão,
-                  use a localização atual do dispositivo.
+                  O CEP ajuda a preencher o endereço. Localize o endereço informado ou use o GPS se estiver no local desejado, e confira o ponto antes de salvar.
                 </p>
               </div>
 
@@ -757,7 +729,7 @@ export default function PerfilPage() {
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                disabled={capturingLocation}
+                disabled={capturingLocation || loadingCep}
                 className="rounded-2xl border border-mn-teal/20 bg-mn-sand px-5 py-3 text-sm font-bold text-mn-teal transition hover:bg-mn-sage-light disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {capturingLocation
@@ -765,9 +737,10 @@ export default function PerfilPage() {
                   : "Usar minha localização atual"}
               </button>
 
+              <button type="button" disabled={capturingLocation || loadingCep} onClick={() => void locateEnteredAddress()} className="app-button-secondary">Localizar endereço informado</button>
               {deviceCoordinates.latitude !== null && deviceCoordinates.longitude !== null ? (
                 <p className="text-sm font-semibold text-mn-teal">
-                  Localização precisa e endereço capturados.
+                  Ponto confirmado{gpsAccuracy !== null ? ` · margem de erro do GPS: aproximadamente ${Math.round(gpsAccuracy)} m` : " no mapa"}. Salve o perfil para usá-lo na busca.
                 </p>
               ) : savedCoordinates.latitude !== null && savedCoordinates.longitude !== null ? (
                 <p className="text-sm text-slate-500">
@@ -776,27 +749,38 @@ export default function PerfilPage() {
                 </p>
               ) : (
                 <p className="text-sm text-slate-500">
-                  Nenhuma localização precisa salva ainda.
+                  Nenhuma coordenada salva para a busca por distância.
                 </p>
               )}
             </div>
 
+            {locationProposal && <div role="status" className="mt-4 rounded-2xl border border-mn-border bg-mn-sand p-5">
+              <p className="font-semibold">Confira antes de usar esta localização</p>
+              <p className="mt-2 text-sm">{locationProposal.address ? [locationProposal.address.street, locationProposal.address.number, locationProposal.address.neighborhood, locationProposal.address.city, locationProposal.address.state].filter(Boolean).join(", ") : [form.address_street, form.address_number, form.address_city, form.address_state].filter(Boolean).join(", ")}</p>
+              <p className="mt-2 text-sm">{locationProposal.accuracy !== undefined ? `Margem de erro informada pelo GPS: aproximadamente ${Math.round(locationProposal.accuracy)} m. O local atual pode ser diferente da sua residência.` : locationProposal.streetOnly ? "O mapa identificou a rua, mas não confirmou o número. O ponto é aproximado: confira se atende à sua busca." : "Confira se o ponto corresponde ao número e à rua informados."}</p>
+              <div className="mt-3 flex flex-wrap gap-3"><a target="_blank" rel="noreferrer" className="app-button-secondary" href={`https://www.google.com/maps/search/?api=1&query=${locationProposal.latitude},${locationProposal.longitude}`}>Conferir ponto no mapa</a><button type="button" onClick={confirmLocation} className="app-button-primary">Confirmar este ponto</button><button type="button" onClick={() => setLocationProposal(null)} className="app-button-secondary">Descartar</button></div>
+            </div>}
+            <p className="mt-3 text-sm text-slate-600">Você pode usar seu endereço sem ativar o GPS. Confira o ponto antes de salvar. Endereços: ViaCEP e OpenStreetMap.</p>
             <div className="mt-6 grid gap-5 md:grid-cols-3">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   CEP *
                 </label>
                 <input
+                  aria-label="CEP"
                   name="address_zipcode"
                   value={form.address_zipcode}
                   onChange={handleChange}
                   className="app-input"
+                  inputMode="numeric"
+                  maxLength={9}
                   placeholder="Ex: 25000000"
                   required
                 />
               </div>
 
               <div className="md:col-span-2">
+                <button type="button" disabled={loadingCep || capturingLocation || onlyDigits(form.address_zipcode).length !== 8} onClick={() => void fetchAddressByZipcode(onlyDigits(form.address_zipcode))} className="app-button-secondary mb-3">Preencher endereço pelo CEP</button>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Rua *
                 </label>

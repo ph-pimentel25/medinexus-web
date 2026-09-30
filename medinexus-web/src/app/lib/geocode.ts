@@ -4,7 +4,7 @@
   precision?: "address" | "street" | "approximate";
 };
 
-type AddressParams = {
+export type AddressParams = {
   zipcode?: string | null;
   street?: string | null;
   number?: string | null;
@@ -12,6 +12,23 @@ type AddressParams = {
   city?: string | null;
   state?: string | null;
 };
+
+export function hasCoordinates(value: GeocodeResult) {
+  return value.latitude !== null && value.longitude !== null && Number.isFinite(value.latitude) && Number.isFinite(value.longitude) && Math.abs(value.latitude) <= 90 && Math.abs(value.longitude) <= 180;
+}
+
+export function sameAddress(a: AddressParams, b: AddressParams) {
+  return (["zipcode", "street", "number", "neighborhood", "city", "state"] as const).every(key => clean(a[key]).toLocaleLowerCase("pt-BR") === clean(b[key]).toLocaleLowerCase("pt-BR"));
+}
+
+// Saving contact/plan details must not replace a GPS fix with a street centroid.
+export async function coordinatesForProfileSave(address: AddressParams, previous: AddressParams, saved: GeocodeResult, device: GeocodeResult): Promise<GeocodeResult> {
+  if (hasCoordinates(device)) return device;
+  if (sameAddress(address, previous) && hasCoordinates(saved)) return saved;
+  if (!clean(address.street)) return { latitude: null, longitude: null };
+  const result = await geocodeBrazilAddress(address);
+  return result.precision === "approximate" ? { latitude: null, longitude: null } : result;
+}
 
 function clean(value?: string | null) {
   return String(value || "").trim();
@@ -28,7 +45,7 @@ function buildQuery(parts: Array<string | null | undefined>) {
     .join(", ");
 }
 
-async function tryNominatim(query: string, requireStreet: boolean): Promise<GeocodeResult> {
+async function tryNominatim(query: string, requireStreet: boolean, expected: AddressParams): Promise<GeocodeResult> {
   if (!query.trim()) {
     return {
       latitude: null,
@@ -56,6 +73,13 @@ async function tryNominatim(query: string, requireStreet: boolean): Promise<Geoc
 
     const data = await response.json();
     const first = Array.isArray(data) ? data[0] : null;
+
+    const returnedState = first?.address?.["ISO3166-2-lvl4"]?.replace(/^BR-/, "");
+    if ((returnedState && returnedState !== clean(expected.state).toUpperCase()) || (first?.address?.country_code && first.address.country_code !== "br") || (requireStreet && !first?.address?.road && !first?.address?.pedestrian && !first?.address?.street)) return { latitude: null, longitude: null };
+    const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    const cities = [first?.address?.city, first?.address?.town, first?.address?.municipality, first?.address?.village].filter(Boolean) as string[];
+    if (cities.length && !cities.some(city => normalize(city) === normalize(clean(expected.city)))) return { latitude: null, longitude: null };
+    if (expected.number && first?.address?.house_number && normalize(first.address.house_number) !== normalize(clean(expected.number))) return { latitude: null, longitude: null };
 
     if (!first?.lat || !first?.lon || !Number.isFinite(Number(first.lat)) || !Number.isFinite(Number(first.lon)) || Math.abs(Number(first.lat)) > 90 || Math.abs(Number(first.lon)) > 180 || (requireStreet && first.addresstype && ["city", "town", "village", "municipality", "state", "postcode", "suburb", "neighbourhood"].includes(first.addresstype))) {
       return {
@@ -91,7 +115,7 @@ export async function geocodeBrazilAddress(
 
   // One explicit lookup: never silently replace an unknown street with a city center.
   const query = buildQuery([street, number, neighborhood, city, state, zipcode, "Brasil"]);
-  const result = await tryNominatim(query, Boolean(street));
+  const result = await tryNominatim(query, Boolean(street), params);
   if (result.latitude !== null && result.longitude !== null) return result;
 
   return {

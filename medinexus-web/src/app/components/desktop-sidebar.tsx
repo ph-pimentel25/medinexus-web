@@ -3,13 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, CalendarDays, Users, FileText, Settings, LogOut, Search, Activity, Star, Bell, Clock, Building2, CreditCard, Stethoscope } from "lucide-react";
+import { LayoutDashboard, CalendarDays, CalendarSearch, Users, FileText, Settings, LogOut, Search, Activity, Star, Bell, Clock, Building2, CreditCard, Stethoscope } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./auth-provider";
 import { getSidebarNavigation, isActivePath, roleLabels } from "../lib/navigation";
 import { getRoleDashboardPath } from "../lib/auth";
 
 function iconFor(href: string) {
+  if (href === "/busca") return CalendarSearch;
+  if (href === "/profissionais") return Stethoscope;
   if (href.endsWith("dashboard")) return LayoutDashboard;
   if (href.includes("solicitacoes")) return CalendarDays;
   if (href.includes("disponibilidade")) return Clock;
