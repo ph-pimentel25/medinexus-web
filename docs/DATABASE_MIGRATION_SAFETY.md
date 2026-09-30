@@ -69,7 +69,7 @@ Se já existir total ou parcialmente, compare o que foi aplicado antes de contin
 4. Cole e execute o arquivo completo, incluindo `begin` e `commit`. O retorno esperado é `Success. No rows returned`. Se ocorrer erro, a transação deve ser revertida; investigue a mensagem sem remover objetos.
 5. Valide os status com `select verification_status,count(*) from public.doctors group by 1;` e a consulta equivalente para `clinics`.
 6. Teste com usuários fictícios distintos: paciente não cria médico/clínica, profissional não muda seu papel nem sua verificação, cadastro confirmado por e-mail conclui apenas o tipo original, clínica nova exige CNPJ e clínica antiga continua editável.
-7. Depois da homologação, aplique a mesma migration no projeto de produção e publique o código correspondente. **A migration não foi executada remotamente nesta sprint.**
+7. Depois da homologação, aplique a mesma migration no projeto de produção e publique o código correspondente. **No projeto de produção identificado acima, essa aplicação já foi concluída em 30/09; não repetir.**
 
 Mudanças de verificação ficam restritas à administração via SQL Editor/servidor confiável; não há aprovação automática nem painel novo de administração. Registre a evidência e o responsável pela verificação antes de alterar um status real.
 

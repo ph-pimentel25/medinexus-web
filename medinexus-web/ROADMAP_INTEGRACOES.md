@@ -1,6 +1,6 @@
 # MediNexus — integrações, homologação e providências
 
-Revisão: **29/09/2026**. Roadmap atualizado após inspeção do código web/mobile, migrations, adapters e registros de testes. A publicação de 18/09 está documentada em [EVOLUCAO_PRODUCAO.md](EVOLUCAO_PRODUCAO.md); as correções locais posteriores não devem ser tratadas como publicadas. Esta revisão não fez push, deploy, aplicação de SQL, contratação ou ativação de serviços.
+Revisão: **30/09/2026**. Push e deploy concluídos após autorização de Pedro; versão publicada em **https://www.medinexus.com.br**. A migration de estabilização foi aplicada e verificada no Supabase. Registro completo: [publicação de 30/09](../docs/RELEASE_2026-09-30.md). As integrações externas pendentes não foram ativadas por esta publicação.
 
 **Leitura do estado:** “implementado” significa presente no código; “validado localmente” significa testes locais; “concluído por Pedro” registra sua confirmação; “homologado em produção” exige evidência do fluxo com as contas e fornecedores daquele ambiente. As tarifas das seções técnicas são referências da pesquisa anterior, não foram todas recotadas nesta revisão. Conferir a proposta vigente antes de contratar.
 
@@ -11,8 +11,8 @@ O produto já possui os fluxos centrais e uma base técnica testada. O próximo 
 | Área | O que já está feito | O que ainda falta |
 | --- | --- | --- |
 | Domínio e e-mail | Domínio próprio/Vercel, contato@medinexus.com.br, Resend SMTP, cinco passos de configuração/teste e templates concluídos por Pedro | Confirmar operação contínua dos avisos de consulta; cron e callbacks não ficam comprovados só pela configuração SMTP |
-| Segurança e contas | Sprint preservada em `e305631`; Next/eslint 16.3.6 e audit zerado na conferência de 29/09 em `38970de`; React mantido | Publicar de forma controlada após homologação; aplicar a migration de estabilização apenas quando autorizado e após conferir histórico/triggers |
-| Disponibilidade e localização | Matching no banco; alternativas com aceite; correções locais do CTA, ícones, validação de datas, GPS/CEP e preservação de coordenadas | Publicar as correções, testar endereços reais e reserva concorrente com contas separadas; comprovar oferta suficiente na região piloto |
+| Segurança e contas | Sprint preservada em `e305631`; Next/eslint 16.3.6 e audit zerado na conferência de 29/09 em `38970de`; React mantido | Publicação e migration concluídas em 30/09; continuar homologação com contas reais e configurar backup/restauração integral |
+| Disponibilidade e localização | Matching no banco; alternativas com aceite; correções do CTA, ícones, validação de datas, GPS/CEP e preservação de coordenadas publicadas em 30/09 | Testar endereços reais e reserva concorrente com contas separadas; comprovar oferta suficiente na região piloto |
 | Qualidade local | Última rodada: 81 testes web/backend, build e TypeScript aprovados; lint sem erros/16 avisos; jornada de GPS e agendamento validada com fixtures | Esses resultados não comprovam cadastro real, entrega de mensagens ou atendimento concluído em produção |
 | Profissionais/convênios | Foto obrigatória, catálogo inicial, plano específico/Outro e estrutura de status profissional | Processo de verificação, aprovação com acesso restrito e uso desse status no agendamento; lista de planos confirmada por cada clínica |
 | Documentos | Layout, emissão em rascunho, assinatura visual autorizada e contrato de integração | Provider ICP real, PDF definitivo, validação criptográfica, armazenamento/entrega do original assinado |
@@ -20,7 +20,7 @@ O produto já possui os fluxos centrais e uma base técnica testada. O próximo 
 | IA clínica | Fila, consentimento, resumo separado do original e revisão médica no código | Avaliação com médicos, tratamento contratual de dados e homologação; ativação não confirmada e não recomendada antes desses critérios |
 | App móvel | Projeto Expo Android/iOS e testes locais | Aparelhos reais, requisitos de conta/privacidade, builds assinados, push e lojas |
 
-Evidências: [segurança](../docs/DEPENDENCY_SECURITY_2026-09-29.md), [busca/localização](../docs/AVAILABILITY_LOCATION_2026-09-29.md), [segurança de migrations](../docs/DATABASE_MIGRATION_SAFETY.md). As alterações de busca e documentação continuam no diretório de trabalho, além dos dois commits locais. Os arquivos que Pedro está ajustando para os e-mails não foram reescritos nesta revisão.
+Evidências: [segurança](../docs/DEPENDENCY_SECURITY_2026-09-29.md), [busca/localização](../docs/AVAILABILITY_LOCATION_2026-09-29.md), [segurança de migrations](../docs/DATABASE_MIGRATION_SAFETY.md). Os commits de estabilização, segurança e busca foram enviados ao GitHub; a aplicação foi publicada. O CI remoto passou. Os arquivos que Pedro está ajustando para os e-mails não foram reescritos nesta revisão.
 
 **Decisão comercial vigente:** paciente usa todos os recursos gratuitamente. Comissão MediNexus desativada. Não há cobrança de assinatura profissional ativa. Não definir agora a monetização das consultas. Taxas do processador de pagamento são custos de terceiros e não desaparecem com comissão zero; a responsabilidade por elas deve constar do contrato antes da operação real.
 
@@ -29,7 +29,7 @@ Evidências: [segurança](../docs/DEPENDENCY_SECURITY_2026-09-29.md), [busca/loc
 - Pedro informou: domínio próprio **medinexus.com.br**, cadastrado na Vercel; e-mail institucional **contato@medinexus.com.br**; Resend SMTP configurado no Supabase.
 - Conferência pública somente leitura: A do domínio `216.198.79.1`; CNAME de `www` para `f8975a7efccf1dc9.vercel-dns-017.com`; MX do Zoho com prioridades 10/20/50. HTTPS do domínio raiz retorna **308 para https://www.medinexus.com.br/**; `www` retorna **200**. Portanto, a URL canônica observada é **https://www.medinexus.com.br**.
 - A captura de DNS mostra SPF/DKIM do Zoho, DKIM do Resend e subdomínios de envio. Preservar os MX do Zoho. A conferência do status Verified e os testes dos cinco passos foram depois informados como concluídos por Pedro; não pedir para recriar conta/domínio ou repetir a configuração sem um problema concreto.
-- Nenhuma alteração de DNS, Vercel, Supabase, secrets ou envio de mensagem foi feita nesta conferência. A atualização local de segurança não foi publicada. CNPJ e conta empresarial continuam sem confirmação.
+- A conferência inicial de DNS foi somente leitura. Em 30/09, o código atualizado foi publicado na Vercel e a migration de estabilização foi aplicada ao Supabase; não foram alterados DNS/secrets nem enviados avisos de consulta nesta publicação. CNPJ e conta empresarial continuam sem confirmação.
 
 ### Configuração concluída por Pedro — registro dos cinco passos
 
@@ -41,7 +41,7 @@ Pedro informou que concluiu **todos os cinco passos abaixo**, incluindo as confi
 4. Para o próximo deploy autorizado, conferir **Vercel → projeto medinexus-web → Environment Variables → Production**: `NEXT_PUBLIC_APP_URL=https://www.medinexus.com.br`. A URL precisa coincidir com a canônica. Não houve deploy nesta etapa.
 5. Avisos de consulta usam a **API do Resend**, separada do SMTP. Configuração informada como concluída: `RESEND_API_KEY` e `RESEND_FROM_EMAIL=MediNexus <contato@medinexus.com.br>` no servidor. Só ativar o processamento após revisar a fila e testar com destinatário consentido. Não habilitar cron apenas por ter configurado SMTP.
 
-Esta atualização documental permanece fora dos dois commits locais de estabilização/segurança, para não misturar integrações no commit exclusivo de dependências.
+A documentação foi registrada em commits separados dos commits de estabilização e segurança. A separação foi preservada no push.
 
 ## Começar hoje, Pedro
 
@@ -57,7 +57,7 @@ Depois, informe no chat **apenas**: nome do fornecedor escolhido, ambiente sandb
 
 | Integração / providência | Classificação | Situação no projeto |
 | --- | --- | --- |
-| Publicação controlada, disponibilidade e localização | **1. CRÍTICA AGORA** | Correções locais prontas; validar fluxo completo com a rede piloto e reconciliar banco/código antes de publicar |
+| Publicação controlada, disponibilidade e localização | **1. CRÍTICA AGORA** | Código e migration publicados em 30/09; validar o fluxo completo com a rede piloto e acompanhar erros |
 | ICP-Brasil, PDF assinado, verificação de identidade e emissão médica | **1. CRÍTICA AGORA** | Rascunhos protegidos no banco; contrato de adapter; fornecedor e verificação criptográfica pendentes |
 | PIX/cartão e desenho de recebimento/repasse | **1. CRÍTICA AGORA** | Checkout Asaas sandbox e webhook preparados; dinheiro presencial; produção e repasses pendentes |
 | Domínio, e-mail transacional, autenticação e recuperação | **1. CRÍTICA AGORA** para validar a versão nova | Configuração inicial e templates concluídos por Pedro; manter os testes de acesso após publicar e fechar operação dos avisos de consulta |
@@ -260,14 +260,14 @@ As janelas abaixo indicam ordem de trabalho, não datas garantidas de homologaç
 ### Fazer hoje
 
 - Definir com Pedro a região, as especialidades e os participantes do piloto; levantar quem manterá a agenda e responderá às solicitações.
-- Preparar a revisão/publicação das correções locais, sem realizar push/deploy/SQL até autorização. Conferir a migration de estabilização pelo guia; não reaplicar pacotes antigos.
+- Acompanhar a versão publicada em 30/09 e testar o fluxo com a rede piloto. A migration de estabilização já foi aplicada; não reaplicar o arquivo nem pacotes antigos.
 - **⚠️ PROVIDENCIAR IMEDIATAMENTE:** solicitar homologação/documentação/proposta ICP e abrir sandbox Asaas, explicando consultas médicas, recebedores e comissão zero.
 - **⚠️ PROVIDENCIAR IMEDIATAMENTE:** iniciar ou confirmar formalização com contador, CNPJ/conta empresarial e contratos com participantes. Não há confirmação de conclusão desses itens.
 - Registrar responsável por suporte em contato@medinexus.com.br. Domínio, Resend, redirects e templates já foram informados como concluídos; não refazer a configuração.
 
 ### Fazer esta semana
 
-- Homologar disponibilidade, localização, planos e reserva concorrente com contas separadas e dados de teste; depois, publicar quando autorizado e repetir os cenários no ambiente correto.
+- Homologar disponibilidade, localização, planos e reserva concorrente com contas separadas e dados de teste na versão publicada; registrar diferenças entre testes locais e uso real.
 - Completar o cadastro dos profissionais reais do piloto: agenda, foto, endereço, valores e planos; conferir CRM/identidade e desenhar aprovação no backend.
 - Fechar operação da clínica: confirmação, remarcação, cancelamento, ausência, conclusão e prazo de resposta.
 - Conferir cron/filas de consultas já existentes antes de ativar outro; implementar callbacks Resend e acompanhamento de falhas. Os templates do Supabase não personalizam automaticamente o texto enviado pelo worker de consultas.
@@ -308,7 +308,7 @@ As janelas abaixo indicam ordem de trabalho, não datas garantidas de homologaç
 - [ ] Responsável LGPD, política/termos, canal dos titulares e revisão dos contratos de dados.
 - [ ] Confirmar ambiente de homologação isolado, responsáveis por alertas/incidentes e objetivos de backup/restauração de banco e arquivos.
 - [ ] Definir clínicas/médicos participantes, região/especialidades, responsável pela agenda e prazo de resposta ao paciente.
-- [ ] Autorizar a publicação/migration somente após revisão e homologação; nada foi aplicado por esta revisão de roadmap.
+- [x] Autorizar e concluir push, deploy e migration de estabilização em 30/09, com verificações registradas no relatório de publicação.
 - [ ] Antes de incluir IA clínica: aprovar tratamento de dados, avaliação médica, modelo e limites de custo; não é pendência para o piloto recomendado apenas de agendamento.
 - [ ] Contas Expo/Apple/Google e informações para as lojas quando chegar essa fase.
 
@@ -316,4 +316,4 @@ As janelas abaixo indicam ordem de trabalho, não datas garantidas de homologaç
 
 ## Próxima sprint recomendada
 
-**Confiabilidade do agendamento e operação do piloto:** fechar publicação controlada das correções, validar origem/raio e agendas dos participantes, melhorar diagnóstico de busca vazia, ligar verificação profissional à elegibilidade e completar o acompanhamento das mensagens. Cada entrega termina em teste com papéis separados e cenário concreto. ICP/Asaas seguem em homologação paralela, sem ativar emissão ou cobrança reais antes de prontos.
+**Confiabilidade do agendamento e operação do piloto:** acompanhar as correções publicadas, validar origem/raio e agendas dos participantes, melhorar diagnóstico de busca vazia, ligar verificação profissional à elegibilidade e completar o acompanhamento das mensagens. Cada entrega termina em teste com papéis separados e cenário concreto. ICP/Asaas seguem em homologação paralela, sem ativar emissão ou cobrança reais antes de prontos.
