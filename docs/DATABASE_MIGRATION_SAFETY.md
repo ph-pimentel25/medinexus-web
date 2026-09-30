@@ -1,5 +1,17 @@
 # Segurança das migrations MediNexus
 
+## Aplicação confirmada em 30/09/2026
+
+A migration `20260919010000_account_stabilization.sql` foi aplicada ao projeto `xutxgnbbhtnxzijmsdfv` (MediNexus Data Base), após autorização de Pedro. Não reaplicar nesse projeto. Os pacotes anteriores não foram executados novamente e o histórico não foi marcado indiscriminadamente como aplicado.
+
+Antes da aplicação, foram conferidos os pré-requisitos e os triggers reais. Um ensaio transacional com `ROLLBACK` passou; a aplicação definitiva repetiu as verificações antes do `COMMIT`. Impressões digitais dos registros comprovaram preservação dos dados anteriores, desconsiderando apenas o novo status e o `updated_at` dos profissionais. Conferência posterior: quatro contas com quatro travas, nove triggers esperados, sem permissão de escrita do cliente nas travas nem execução da função interna.
+
+SHA-256 do arquivo aplicado: `979AEA26BEB43EE81780D24B99D0DECA40803419396BE3FDAF3937DAA8978B45`.
+
+A cópia preventiva local foi limitada a IDs, timestamps, `is_active`, contagens e definições afetadas, em `medinexus-web/artifacts/release-20260930/`, ignorado pelo Git e pelo deploy. Não é um backup completo nem comprova restauração de desastre. A API não retornou backups disponíveis; o backup amplo foi rejeitado pela revisão automática por envolver dados clínicos e de autenticação além do escopo. Nenhum objeto do Storage foi alterado. Backup integral e restauração continuam pendentes no roadmap operacional.
+
+As instruções abaixo ficam como referência para outros ambientes. Apenas um projeto remoto foi identificado; o ensaio foi feito com rollback no esquema real, além dos testes locais, e não em um segundo projeto de homologação.
+
 ## Histórico remoto antes de `supabase db push`
 
 Os pacotes SQL de 16/09, 17/09 e 18/09 podem ter sido executados manualmente pelo SQL Editor. Isso cria os objetos, mas não necessariamente registra cada arquivo em `supabase_migrations.schema_migrations`. **Não rode `supabase db push` assumindo que o histórico local corresponde ao remoto.**
