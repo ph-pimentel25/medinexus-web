@@ -108,8 +108,11 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
     if (validationError) { setMessage(validationError); setMessageType("error"); return; }
     setLoading(true);
     setMessage("");
+    const normalizedFullName = fullName.trim().replace(/\s+/g, " ");
+    const firstName = normalizedFullName.split(" ")[0];
+    const normalizedEmail = email.trim().toLowerCase();
     const registration: Registration = {
-      version: 1, accountType, fullName, crm, crmState, doctorBio, specialtyIds,
+      version: 1, accountType, fullName: normalizedFullName, crm, crmState, doctorBio, specialtyIds,
       clinicTradeName, clinicLegalName, clinicCnpj, clinicPhone, clinicCity, clinicState,
       clinicNeighborhood, clinicDescription, clinicStreet, clinicNumber, clinicZipcode,
     };
@@ -118,11 +121,12 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
       let user = current.data.user;
       if (!user) {
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(), password,
+          email: normalizedEmail, password,
           options: {
             emailRedirectTo: window.location.origin + "/login",
             data: {
-              full_name: fullName.trim(),
+              full_name: normalizedFullName,
+              first_name: firstName,
               role: accountType === "clinic" ? "clinic_admin" : accountType,
               medinexus_registration: registration,
             },
