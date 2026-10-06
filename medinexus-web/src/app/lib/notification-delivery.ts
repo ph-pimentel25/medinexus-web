@@ -24,6 +24,7 @@ export async function deliverMessage(input: { channel: "email" | "whatsapp"; kin
       if(!sid || !token || !from) return {status:"queued",detail:"WhatsApp aguarda configuração do Twilio."};
       const to=normalizeBrazilPhone(input.recipient);if(!to)return {status:"failed",detail:"Telefone inválido para WhatsApp."};
       const date=input.date?new Date(input.date).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"}):"a definir";
+      const params=new URLSearchParams({From:from,To:`whatsapp:${to}`});
       const cleanTemplate=clean(template);
       if(cleanTemplate){
         params.set("ContentSid",cleanTemplate);
