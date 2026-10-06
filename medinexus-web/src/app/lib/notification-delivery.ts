@@ -24,9 +24,9 @@ export async function deliverMessage(input: { channel: "email" | "whatsapp"; kin
       if(!sid || !token || !from) return {status:"queued",detail:"WhatsApp aguarda configuração do Twilio."};
       const to=normalizeBrazilPhone(input.recipient);if(!to)return {status:"failed",detail:"Telefone inválido para WhatsApp."};
       const date=input.date?new Date(input.date).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"}):"a definir";
-      const params=new URLSearchParams({From:from,To:`whatsapp:${to}`});
-      if(template){
-        params.set("ContentSid",clean(template));
+      const cleanTemplate=clean(template);
+      if(cleanTemplate){
+        params.set("ContentSid",cleanTemplate);
         params.set("ContentVariables",JSON.stringify({"1":date,"2":`${appUrl}/solicitacoes`}));
       } else {
         params.set("Body",notificationText(input.kind,input.date,appUrl));
