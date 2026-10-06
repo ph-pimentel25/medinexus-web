@@ -23,12 +23,14 @@ export async function deliverMessage(input: { channel: "email" | "whatsapp"; kin
       const template=process.env[`TWILIO_TEMPLATE_${input.kind.toUpperCase()}`];
       if(!sid || !token || !from) return {status:"queued",detail:"WhatsApp aguarda configuração do Twilio."};
       const to=normalizeBrazilPhone(input.recipient);if(!to)return {status:"failed",detail:"Telefone inválido para WhatsApp."};
-      const date=input.date?new Date(input.date).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"}):"a definir";
+      const d=input.date?new Date(input.date):null;
+      const datePart=d?d.toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}):"a definir";
+      const timePart=d?d.toLocaleTimeString("pt-BR",{timeZone:"America/Sao_Paulo",hour:"2-digit",minute:"2-digit"}):"a definir";
       const params=new URLSearchParams({From:from,To:`whatsapp:${to}`});
       const cleanTemplate=clean(template);
       if(cleanTemplate){
         params.set("ContentSid",cleanTemplate);
-        params.set("ContentVariables",JSON.stringify({"1":date,"2":`${appUrl}/solicitacoes`}));
+        params.set("ContentVariables",JSON.stringify({"1":datePart,"2":`${timePart} (confira em ${appUrl}/solicitacoes)`}));
       } else {
         params.set("Body",notificationText(input.kind,input.date,appUrl));
       }
