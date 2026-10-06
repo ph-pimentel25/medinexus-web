@@ -18,10 +18,17 @@ export async function deliverMessage(input: { channel: "email" | "whatsapp"; kin
     } else {
       const {TWILIO_ACCOUNT_SID:sid,TWILIO_AUTH_TOKEN:token,TWILIO_WHATSAPP_FROM:from}=process.env;
       const template=process.env[`TWILIO_TEMPLATE_${input.kind.toUpperCase()}`];
-      if(!sid || !token || !from || !template) return {status:"queued",detail:"WhatsApp aguarda configuração de remetente e modelo aprovado."};
+      if(!sid || !token || !from) return {status:"queued",detail:"WhatsApp aguarda configuração do Twilio."};
       const to=normalizeBrazilPhone(input.recipient);if(!to)return {status:"failed",detail:"Telefone inválido para WhatsApp."};
       const date=input.date?new Date(input.date).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo"}):"a definir";
-      response=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:"POST",signal:AbortSignal.timeout(12000),headers:{Authorization:`Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({From:from,To:`whatsapp:${to}`,ContentSid:template,ContentVariables:JSON.stringify({"1":date,"2":`${appUrl}/solicitacoes`})})});
+      const params=new URLSearchParams({From:from,To:`whatsapp:${to}`});
+      if(template){
+        params.set("ContentSid",template);
+        params.set("ContentVariables",JSON.stringify({"1":date,"2":`${appUrl}/solicitacoes`}));
+      } else {
+        params.set("Body",notificationText(input.kind,input.date,appUrl));
+      }
+      response=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:"POST",signal:AbortSignal.timeout(12000),headers:{Authorization:`Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,"Content-Type":"application/x-www-form-urlencoded"},body:params});
     }
   } catch { return {status:"unknown",detail:"Resultado do envio desconhecido. Conferir no provedor antes de reenviar."}; }
   if(!response.ok)return {status:response.status===429?"queued":"failed",detail:`Provedor recusou o envio (HTTP ${response.status}).`};
