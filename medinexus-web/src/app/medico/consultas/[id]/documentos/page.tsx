@@ -1,10 +1,12 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ShieldAlert } from "lucide-react";
 import Alert from "../../../../components/alert";
 import { supabase } from "../../../../lib/supabase";
+import { checkDrugInteractions, type InteractionAlert } from "../../../../lib/drug-interactions";
 
 type AppointmentRow = {
   id: string;
@@ -253,6 +255,7 @@ export default function ConsultaDocumentosPage() {
 
   const [appointment, setAppointment] = useState<AppointmentRow | null>(null);
   const [documents, setDocuments] = useState<MedicalDocumentRow[]>([]);
+  const [continuousMeds, setContinuousMeds] = useState<string[]>([]);
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">(
@@ -328,6 +331,22 @@ export default function ConsultaDocumentosPage() {
       return;
     }
 
+    if (appointmentData.patient_id) {
+      const { data: recData } = await supabase
+        .from("medical_records")
+        .select("continuous_medications")
+        .eq("patient_id", appointmentData.patient_id)
+        .maybeSingle();
+
+      if (recData?.continuous_medications) {
+        const parsed = String(recData.continuous_medications)
+          .split(/[\n,;]+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        setContinuousMeds(parsed);
+      }
+    }
+
     const { data: documentsData, error: documentsError } = await supabase
       .from("medical_documents")
       .select(
@@ -355,6 +374,11 @@ export default function ConsultaDocumentosPage() {
     setDocuments((documentsData || []) as MedicalDocumentRow[]);
     setLoading(false);
   }
+
+  const drugAlerts = useMemo(() => {
+    if (form.documentType !== "prescription" || !form.medicationName.trim()) return [];
+    return checkDrugInteractions(form.medicationName, continuousMeds);
+  }, [form.documentType, form.medicationName, continuousMeds]);
 
 
   function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -622,7 +646,7 @@ export default function ConsultaDocumentosPage() {
 
               {form.documentType === "prescription" && (
                 <>
-<div>
+                  <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Medicamento
                     </label>
@@ -634,6 +658,30 @@ export default function ConsultaDocumentosPage() {
                       className="w-full rounded-2xl border border-mn-purple-light bg-mn-sand px-5 py-4 text-sm font-semibold text-slate-700 outline-none focus:border-mn-purple focus:bg-white"
                       placeholder="Ex: Dipirona 500mg"
                     />
+
+                    {/* Alerta Inteligente de Interação Medicamentosa */}
+                    {drugAlerts.length > 0 && (
+                      <div className="mt-3 space-y-3 rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950">
+                        {drugAlerts.map((alt, idx) => (
+                          <div key={idx} className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <AlertTriangle className="text-amber-600 shrink-0" size={18} />
+                              <strong className="text-sm font-bold text-amber-900">
+                                ⚠️ ALERTA DE INTERAÇÃO: {alt.matchedDrugA} + {alt.matchedDrugB}
+                              </strong>
+                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">
+                                Severidade: {alt.severity}
+                              </span>
+                            </div>
+                            <p className="text-xs font-semibold text-amber-900">{alt.riskTitle}</p>
+                            <p className="text-xs leading-relaxed text-amber-800">{alt.description}</p>
+                            <div className="mt-2 rounded-xl bg-amber-100/80 p-2.5 text-xs text-amber-950">
+                              <strong>Conduta clínica recomendada:</strong> {alt.clinicalRecommendation}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div>

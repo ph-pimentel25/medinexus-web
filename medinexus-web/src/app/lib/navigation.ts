@@ -34,9 +34,13 @@ export function getSidebarNavigation(role: UserRole) {
     { label: "Histórico clínico", href: "/historico-clinico" },
   ] : role === "doctor" ? [
     { label: "Documentos emitidos", href: "/documentos-medicos" },
+    { label: "Honorários", href: "/medico/financeiro" },
   ] : [
     { label: "Página da clínica", href: "/clinica/publico" },
     { label: "Convênios", href: "/clinica/planos" },
+    { label: "Painel TV", href: "/clinica/painel-tv" },
+    { label: "Salas & Equipamentos", href: "/clinica/salas" },
+    { label: "Relatórios de Ocupação", href: "/clinica/relatorios" },
   ];
   return [...primary.slice(0, -1), ...extra, { label: "Notificações", href: "/notificacoes" }, primary[primary.length - 1]];
 }

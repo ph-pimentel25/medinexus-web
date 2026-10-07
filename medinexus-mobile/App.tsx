@@ -25,6 +25,10 @@ import {
   AlertCircle,
   ShieldCheck,
   ChevronDown,
+  Video,
+  Heart,
+  Users,
+  Syringe,
 } from "lucide-react-native";
 import { colors, shadows } from "./src/theme";
 import { useCallback, useEffect, useState } from "react";
@@ -55,6 +59,10 @@ import AvailabilitySearch, { type RecentDoctor } from "./src/AvailabilitySearch"
 import PatientProfile from "./src/PatientProfile";
 import { Button, Toggle, Badge, EmptyState, type BadgeVariant } from "./src/ui";
 import { showDirections } from "./src/directions";
+import FamilySwitcher, { type FamilyMember, INITIAL_DEPENDENTS } from "./src/FamilySwitcher";
+import VaccineWallet from "./src/VaccineWallet";
+import TelemedicineModal from "./src/TelemedicineModal";
+import HealthMetricsModal from "./src/HealthMetricsModal";
 
 type Row = Record<string, unknown>;
 type Appointment = {
@@ -392,12 +400,23 @@ function Main() {
 
   // Sub-abas, Modais e Filtros
   const [medTab, setMedTab] = useState<"meus" | "farmacia">("meus");
-  const [docFilter, setDocFilter] = useState<"todos" | "exames" | "receitas" | "atestados" | "declaracoes">("todos");
+  const [docFilter, setDocFilter] = useState<"todos" | "exames" | "receitas" | "atestados" | "declaracoes" | "vacinas">("todos");
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasSeenNotifications, setHasSeenNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [notifFilter, setNotifFilter] = useState<"todas" | "remedios" | "consultas" | "exames">("todas");
   const [medications, setMedications] = useState<Medication[]>([]);
+
+  // Gestão Familiar e Dependentes
+  const [familyDependents, setFamilyDependents] = useState<FamilyMember[]>(INITIAL_DEPENDENTS);
+  const [activeDependentId, setActiveDependentId] = useState<string>("self");
+
+  // Telemedicina 1-Clique Nativa
+  const [telemedicineCallActive, setTelemedicineCallActive] = useState(false);
+  const [telemedicineAppointment, setTelemedicineAppointment] = useState<Appointment | null>(null);
+
+  // Saúde Conectada Apple Health / Google Fit
+  const [showHealthMetricsModal, setShowHealthMetricsModal] = useState(false);
 
   // Central de Vídeos Educativos e Auto-cuidado
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
@@ -1014,6 +1033,14 @@ function Main() {
           </View>
         ) : (
           <>
+            {/* Gestão Familiar e Troca de Perfil de Dependentes */}
+            <FamilySwitcher
+              activeId={activeDependentId}
+              onSelect={setActiveDependentId}
+              dependents={familyDependents}
+              onAdd={(m) => setFamilyDependents((prev) => [...prev, m])}
+            />
+
             {/* ======================================================== */}
             {/* 1. TAB INÍCIO */}
             {/* ======================================================== */}
@@ -1039,6 +1066,40 @@ function Main() {
                     <Text style={styles.metricLabel}>Remédios ativos</Text>
                   </Pressable>
                 </View>
+
+                {/* Saúde Conectada Apple Health / Google Fit */}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setShowHealthMetricsModal(true)}
+                  style={[styles.card, shadows.sm, { backgroundColor: colors.sandDark }]}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFE4E6", alignItems: "center", justifyContent: "center" }}>
+                        <Heart size={18} color="#E11D48" />
+                      </View>
+                      <View>
+                        <Text style={styles.cardTitle}>Apple Health & Google Fit</Text>
+                        <Text style={[styles.copy, { fontSize: 11 }]}>Métricas preventivas e biometria</Text>
+                      </View>
+                    </View>
+                    <ChevronRight size={18} color={colors.teal} />
+                  </View>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+                    <View>
+                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Passos no Mês</Text>
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: colors.graphite }}>218.400</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pico FC</Text>
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#E11D48" }}>142 bpm (24/Set)</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pressão</Text>
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: colors.success }}>120/78</Text>
+                    </View>
+                  </View>
+                </Pressable>
 
                 {/* Avaliação Pendente Pós-Consulta (se houver consulta concluída recente) */}
                 {unreviewedCompletedAppt && (
@@ -1355,6 +1416,14 @@ function Main() {
 
                       {a.status === "confirmed" && (
                         <View style={{ gap: 8, marginTop: 4 }}>
+                          <Button
+                            title="Telemedicina (1-Clique)"
+                            icon={Video}
+                            onPress={() => {
+                              setTelemedicineAppointment(a);
+                              setTelemedicineCallActive(true);
+                            }}
+                          />
                           <Button secondary title="Como chegar" icon={MapPin} onPress={() => directions(a)} />
                           {a.patient_confirmation_status === "awaiting_confirmation" && (
                             <Button
@@ -1580,6 +1649,7 @@ function Main() {
                       ["todos", "Todos"],
                       ["exames", "Exames"],
                       ["receitas", "Receitas"],
+                      ["vacinas", "Vacinas"],
                       ["atestados", "Atestados"],
                       ["declaracoes", "Declarações"],
                     ] as const
@@ -1597,90 +1667,96 @@ function Main() {
                   })}
                 </ScrollView>
 
-                {/* Cartão de Ação Rápida para Conectar com Laboratórios Credenciados */}
-                {(docFilter === "exames" || docFilter === "todos") && (
-                  <View style={[styles.examBannerCard, shadows.sm]}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                      <View style={styles.examBannerIconBox}>
-                        <FlaskConical size={22} color={colors.teal} />
-                      </View>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={styles.examBannerTitle}>Rede de Laboratórios Parceiros</Text>
-                        <Text style={styles.examBannerDesc}>
-                          Agende exames laboratoriais e de imagem com descontos exclusivos e atendimento prioritário.
-                        </Text>
-                      </View>
-                    </View>
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => handleOpenExamBooking()}
-                      style={({ pressed }) => [
-                        styles.examBannerBtn,
-                        shadows.sm,
-                        { opacity: pressed ? 0.9 : 1 },
-                      ]}
-                    >
-                      <FlaskConical size={18} color="white" />
-                      <Text style={styles.examBannerBtnText}>Agendar Exame em Laboratório Parceiro</Text>
-                    </Pressable>
-                  </View>
-                )}
-
-                {!filteredDocuments.length ? (
-                  <EmptyState
-                    icon={FileText}
-                    title="Nenhum documento encontrado"
-                    description={`Não há documentos na categoria "${docFilter}".`}
-                  />
+                {docFilter === "vacinas" ? (
+                  <VaccineWallet activeDependentId={activeDependentId} patientName={name || "Você"} />
                 ) : (
-                  filteredDocuments.map(d => {
-                    const isSigned = d.signature_status === "signed";
-                    const isExam = String(d.document_type || "").includes("exam") || String(d.title || "").toLowerCase().includes("exame");
-                    return (
-                      <View style={[styles.card, shadows.sm]} key={String(d.id)}>
-                        <View style={styles.cardHeaderRow}>
-                          <Badge
-                            label={
-                              isExam
-                                ? "SOLICITAÇÃO DE EXAME"
-                                : isSigned
-                                ? "ASSINADO DIGITALMENTE"
-                                : "REGISTRO MEDINEXUS"
-                            }
-                            variant={isExam ? "external" : isSigned ? "confirmed" : "brand"}
-                          />
-                          <Text style={styles.date}>{when(String(d.issued_at || ""))}</Text>
+                  <>
+                    {/* Cartão de Ação Rápida para Conectar com Laboratórios Credenciados */}
+                    {(docFilter === "exames" || docFilter === "todos") && (
+                      <View style={[styles.examBannerCard, shadows.sm]}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                          <View style={styles.examBannerIconBox}>
+                            <FlaskConical size={22} color={colors.teal} />
+                          </View>
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <Text style={styles.examBannerTitle}>Rede de Laboratórios Parceiros</Text>
+                            <Text style={styles.examBannerDesc}>
+                              Agende exames laboratoriais e de imagem com descontos exclusivos e atendimento prioritário.
+                            </Text>
+                          </View>
                         </View>
-
-                        <Text style={styles.cardTitle}>{String(d.title || "Documento médico")}</Text>
-
-                        {/* Botão dedicado para agendar o exame em laboratório parceiro */}
-                        {isExam && (
-                          <Pressable
-                            accessibilityRole="button"
-                            onPress={() => handleOpenExamBooking(String(d.title || "Exame Solicitado"))}
-                            style={styles.itemExamActionBtn}
-                          >
-                            <FlaskConical size={16} color={colors.tealDark} />
-                            <Text style={styles.itemExamActionText}>Agendar este exame com desconto</Text>
-                            <ChevronRight size={16} color={colors.teal} />
-                          </Pressable>
-                        )}
-
-                        <Button
-                          secondary
-                          title="Visualizar documento em PDF"
-                          onPress={() =>
-                            void open(
-                              isSigned && typeof d.signed_pdf_url === "string"
-                                ? d.signed_pdf_url
-                                : appUrl + `/documentos-medicos/${d.id}`
-                            )
-                          }
-                        />
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => handleOpenExamBooking()}
+                          style={({ pressed }) => [
+                            styles.examBannerBtn,
+                            shadows.sm,
+                            { opacity: pressed ? 0.9 : 1 },
+                          ]}
+                        >
+                          <FlaskConical size={18} color="white" />
+                          <Text style={styles.examBannerBtnText}>Agendar Exame em Laboratório Parceiro</Text>
+                        </Pressable>
                       </View>
-                    );
-                  })
+                    )}
+
+                    {!filteredDocuments.length ? (
+                      <EmptyState
+                        icon={FileText}
+                        title="Nenhum documento encontrado"
+                        description={`Não há documentos na categoria "${docFilter}".`}
+                      />
+                    ) : (
+                      filteredDocuments.map(d => {
+                        const isSigned = d.signature_status === "signed";
+                        const isExam = String(d.document_type || "").includes("exam") || String(d.title || "").toLowerCase().includes("exame");
+                        return (
+                          <View style={[styles.card, shadows.sm]} key={String(d.id)}>
+                            <View style={styles.cardHeaderRow}>
+                              <Badge
+                                label={
+                                  isExam
+                                    ? "SOLICITAÇÃO DE EXAME"
+                                    : isSigned
+                                    ? "ASSINADO DIGITALMENTE"
+                                    : "REGISTRO MEDINEXUS"
+                                }
+                                variant={isExam ? "external" : isSigned ? "confirmed" : "brand"}
+                              />
+                              <Text style={styles.date}>{when(String(d.issued_at || ""))}</Text>
+                            </View>
+
+                            <Text style={styles.cardTitle}>{String(d.title || "Documento médico")}</Text>
+
+                            {/* Botão dedicado para agendar o exame em laboratório parceiro */}
+                            {isExam && (
+                              <Pressable
+                                accessibilityRole="button"
+                                onPress={() => handleOpenExamBooking(String(d.title || "Exame Solicitado"))}
+                                style={styles.itemExamActionBtn}
+                              >
+                                <FlaskConical size={16} color={colors.tealDark} />
+                                <Text style={styles.itemExamActionText}>Agendar este exame com desconto</Text>
+                                <ChevronRight size={16} color={colors.teal} />
+                              </Pressable>
+                            )}
+
+                            <Button
+                              secondary
+                              title="Visualizar documento em PDF"
+                              onPress={() =>
+                                void open(
+                                  isSigned && typeof d.signed_pdf_url === "string"
+                                    ? d.signed_pdf_url
+                                    : appUrl + `/documentos-medicos/${d.id}`
+                                )
+                              }
+                            />
+                          </View>
+                        );
+                      })
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -2292,6 +2368,20 @@ function Main() {
           </View>
         </View>
       </Modal>
+
+      {/* Telemedicina 1-Clique Nativa */}
+      <TelemedicineModal
+        visible={telemedicineCallActive}
+        appointment={telemedicineAppointment as unknown as Record<string, unknown>}
+        onClose={() => setTelemedicineCallActive(false)}
+      />
+
+      {/* Apple Health / Google Fit - Métricas Preventivas */}
+      <HealthMetricsModal
+        visible={showHealthMetricsModal}
+        patientName={name || "Você"}
+        onClose={() => setShowHealthMetricsModal(false)}
+      />
 
       {/* ======================================================== */}
       {/* BARRA DE NAVEGAÇÃO INFERIOR (BOTTOM TABS) */}

@@ -1,7 +1,10 @@
-﻿"use client";
+"use client";
 
 import ClinicalAISummary from "../../../components/clinical-ai-summary";
 import AuthorizedClinicalHistory from "../../../components/authorized-clinical-history";
+import HealthMetricsTracker from "../../../components/health-metrics-tracker";
+import { ANAMNESIS_TEMPLATES } from "../../../lib/anamnesis-templates";
+import { Video } from "lucide-react";
 import { markDocumentPreview } from "../../../lib/document-preview";
 import Link from "next/link";
 import { Reviews, ReviewForm } from "../../../components/reviews";
@@ -895,6 +898,14 @@ export default function MedicoConsultaPage() {
                 Emitir documentos
               </Link>
 
+              <Link
+                href={`/telemedicina/${appointmentId}`}
+                className="inline-flex items-center gap-2 justify-center rounded-2xl bg-[#0E3D4A] px-6 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-mn-teal"
+              >
+                <Video size={16} />
+                <span>Telemedicina (1-Clique)</span>
+              </Link>
+
               {!isClosed && (
                 <button
                   type="button"
@@ -1060,7 +1071,12 @@ export default function MedicoConsultaPage() {
           </section>
         </div>
 
-        {appointment.patient_id&&<AuthorizedClinicalHistory patientId={appointment.patient_id}/>}
+        {appointment.patient_id && (
+          <div className="space-y-6">
+            <AuthorizedClinicalHistory patientId={appointment.patient_id} />
+            <HealthMetricsTracker readOnly patientName={patientName} />
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-2">
           <section className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
@@ -1176,6 +1192,39 @@ export default function MedicoConsultaPage() {
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
               Registro do atendimento atual
             </h2>
+
+            {/* Modelos Customizados de Anamnese por Especialidade */}
+            {!isClosed && (
+              <div className="mt-4 rounded-2xl border border-mn-teal/20 bg-mn-sage-light/40 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-mn-teal">
+                    ⚡ Modelos Customizados de Anamnese por Especialidade:
+                  </p>
+                  <span className="text-[11px] text-slate-500">Economize tempo em 1 clique</span>
+                </div>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {ANAMNESIS_TEMPLATES.map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => {
+                        setNotesForm((prev) => ({
+                          ...prev,
+                          subjective: tmpl.subjective,
+                          objective: tmpl.objective,
+                          assessment: tmpl.assessment,
+                          plan: tmpl.plan,
+                          summary: `Atendimento de ${tmpl.specialty}. ${tmpl.assessment.slice(0, 100)}...`,
+                        }));
+                      }}
+                      className="rounded-xl border border-mn-teal/30 bg-white px-3 py-1.5 text-xs font-semibold text-mn-teal shadow-xs transition hover:bg-mn-teal hover:text-white"
+                    >
+                      {tmpl.specialty}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 grid gap-4">
               <textarea

@@ -1,12 +1,14 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import DoctorAvatar from "../components/doctor-avatar";
 import { useEffect, useMemo, useState } from "react";
+import { Video } from "lucide-react";
 import Alert from "../components/alert";
 import { ReviewForm } from "../components/reviews";
 import AppointmentPayment from "../components/appointment-payment";
 import AppointmentDirections from "../components/appointment-directions";
+import FamilyProfileSwitcher from "../components/family-profile-switcher";
 import { supabase } from "../lib/supabase";
 
 type AppointmentRow = {
@@ -457,6 +459,8 @@ export default function SolicitacoesPage() {
           </div>
         )}
 
+        <FamilyProfileSwitcher className="mb-6" />
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "Total", value: stats.total, tone: "text-slate-950" },
@@ -638,6 +642,15 @@ export default function SolicitacoesPage() {
                       {item.status === "completed" && <><ReviewForm appointmentId={item.id} kind="doctor" />{item.clinic_id && <ReviewForm appointmentId={item.id} kind="clinic" />}</>}
                       {item.status === "confirmed" && item.appointment_mode === "private" && <AppointmentPayment appointmentId={item.id} />}
                       {item.status === "confirmed" && <AppointmentDirections clinicId={item.clinic_id} doctorId={item.doctor_id} />}
+                      {item.status === "confirmed" && (
+                        <Link
+                          href={`/telemedicina/${item.id}`}
+                          className="flex items-center gap-1.5 rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                        >
+                          <Video size={16} />
+                          <span>Telemedicina (1-Clique)</span>
+                        </Link>
+                      )}
                       {item.status === "confirmed" &&
                         item.patient_confirmation_status === "confirmed" && (
                           <Link

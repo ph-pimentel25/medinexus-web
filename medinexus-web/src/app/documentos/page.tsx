@@ -1,8 +1,10 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import FamilyProfileSwitcher from "../components/family-profile-switcher";
+import VaccineWallet from "../components/vaccine-wallet";
 
 type MedicalDocumentRow = {
   id: string;
@@ -22,7 +24,7 @@ type MedicalDocumentRow = {
   [key: string]: unknown;
 };
 
-type FilterType = "all" | "receita" | "exame" | "atestado" | "declaracao";
+type FilterType = "all" | "receita" | "exame" | "atestado" | "declaracao" | "vacinas";
 
 function normalize(value: string) {
   return value
@@ -220,6 +222,8 @@ export default function DocumentosPage() {
           </div>
         )}
 
+        <FamilyProfileSwitcher className="mb-6" />
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "Total", value: summary.total, tone: "text-slate-950" },
@@ -263,6 +267,7 @@ export default function DocumentosPage() {
                 { key: "exame", label: "Exames" },
                 { key: "atestado", label: "Atestados" },
                 { key: "declaracao", label: "Declarações" },
+                { key: "vacinas", label: "💉 Vacinas" },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -281,7 +286,12 @@ export default function DocumentosPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4">
+        {filter === "vacinas" ? (
+          <div className="mt-6">
+            <VaccineWallet />
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4">
           {loading ? (
             <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
               Carregando documentos...
@@ -335,6 +345,7 @@ export default function DocumentosPage() {
             ))
           )}
         </div>
+        )}
       </section>
     </main>
   );
