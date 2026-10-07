@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -17,7 +16,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Plus,
-  ArrowUpRight,
+  QrCode,
+  Building2,
+  Tag,
   X,
 } from "lucide-react-native";
 import { colors, shadows } from "./theme";
@@ -29,6 +30,9 @@ export interface MobileVaccine {
   name: string;
   dose: string;
   appliedAt: string;
+  batch?: string;
+  manufacturer?: string;
+  healthUnit?: string;
   nextBooster?: string;
   status: "em_dia" | "reforco_pendente";
 }
@@ -37,62 +41,59 @@ export const INITIAL_VACCINES: MobileVaccine[] = [
   {
     id: "v1",
     dependentId: "self",
-    name: "Gripe (Influenza Quadrivalente)",
-    dose: "Dose Anual 2026",
-    appliedAt: "12/04/2026",
-    nextBooster: "Abril de 2027",
-    status: "em_dia",
+    name: "Covid-19 (Bivalente Atualizada)",
+    dose: "Dose de Reforço",
+    appliedAt: "18/06/2025",
+    batch: "FL4109",
+    manufacturer: "Pfizer / BioNTech",
+    healthUnit: "UBS Vila Mariana - CNES 2781920",
+    nextBooster: "Junho de 2026",
+    status: "reforco_pendente",
   },
   {
     id: "v2",
     dependentId: "self",
-    name: "Tétano e Difteria (dT adulto)",
-    dose: "Reforço 10 anos",
-    appliedAt: "10/08/2021",
-    nextBooster: "Agosto de 2031",
+    name: "Gripe (Influenza Quadrivalente)",
+    dose: "Dose Anual 2026",
+    appliedAt: "12/04/2026",
+    batch: "INF260401",
+    manufacturer: "Instituto Butantan",
+    healthUnit: "Posto Central de Saúde - CNES 2073841",
+    nextBooster: "Abril de 2027",
     status: "em_dia",
   },
   {
     id: "v3",
     dependentId: "self",
-    name: "Covid-19 (Bivalente Atualizada)",
-    dose: "Dose de Reforço",
-    appliedAt: "18/06/2025",
-    nextBooster: "Junho de 2026",
-    status: "reforco_pendente",
+    name: "Febre Amarela (Dose Única CIVP)",
+    dose: "Dose Única (CIVP)",
+    appliedAt: "04/11/2019",
+    batch: "FA191104",
+    manufacturer: "Bio-Manguinhos / Fiocruz",
+    healthUnit: "Ambulatório do Viajante - CNES 2198302",
+    status: "em_dia",
   },
   {
     id: "v4",
     dependentId: "self",
-    name: "Hepatite B (Recombinante)",
-    dose: "3 Doses Completas",
-    appliedAt: "15/03/2018",
+    name: "Tétano e Difteria (dT adulto)",
+    dose: "Reforço 10 anos",
+    appliedAt: "10/08/2021",
+    batch: "DT210810",
+    manufacturer: "Instituto Butantan",
+    healthUnit: "UBS Vila Mariana - CNES 2781920",
+    nextBooster: "Agosto de 2031",
     status: "em_dia",
   },
   {
     id: "v5",
     dependentId: "self",
-    name: "Febre Amarela (Dose Única CIVP)",
-    dose: "Dose Única",
-    appliedAt: "04/11/2019",
-    status: "em_dia",
-  },
-  {
-    id: "v6",
-    dependentId: "dep-lucas",
-    name: "HPV Quadrivalente",
-    dose: "1ª Dose",
-    appliedAt: "10/10/2025",
-    nextBooster: "10/04/2026 (2ª dose)",
-    status: "reforco_pendente",
-  },
-  {
-    id: "v7",
-    dependentId: "dep-maria",
-    name: "Gripe (Influenza Idoso Alta Dosagem)",
-    dose: "Dose Anual 2026",
-    appliedAt: "05/04/2026",
-    nextBooster: "Abril de 2027",
+    name: "Hepatite B (Recombinante)",
+    dose: "3 Doses Completas",
+    appliedAt: "15/03/2018",
+    batch: "HB180315",
+    manufacturer: "Bio-Manguinhos / Fiocruz",
+    healthUnit: "Centro de Imunização Municipal",
     status: "em_dia",
   },
 ];
@@ -111,17 +112,12 @@ export default function VaccineWallet({
 
   // Form
   const [vacName, setVacName] = useState("");
-  const [vacDose, setVacDose] = useState("Dose única");
+  const [vacDose, setVacDose] = useState("Dose Anual");
+  const [vacManufacturer, setVacManufacturer] = useState("");
+  const [vacBatch, setVacBatch] = useState("");
+  const [vacHealthUnit, setVacHealthUnit] = useState("");
   const [vacDate, setVacDate] = useState("07/10/2026");
   const [vacBooster, setVacBooster] = useState("");
-
-  const handleOpenMeuSUS = async () => {
-    try {
-      await Linking.openURL("https://meususdigital.saude.gov.br");
-    } catch {
-      // fallback
-    }
-  };
 
   const handleAddVaccine = () => {
     if (!vacName.trim()) return;
@@ -129,13 +125,19 @@ export default function VaccineWallet({
       id: `v-${Date.now()}`,
       dependentId: activeDependentId,
       name: vacName.trim(),
-      dose: vacDose,
+      dose: vacDose.trim() || "Dose única",
       appliedAt: vacDate.trim(),
+      manufacturer: vacManufacturer.trim() || undefined,
+      batch: vacBatch.trim() || undefined,
+      healthUnit: vacHealthUnit.trim() || undefined,
       nextBooster: vacBooster.trim() || undefined,
       status: vacBooster.trim() ? "reforco_pendente" : "em_dia",
     };
     setVaccines([newVac, ...vaccines]);
     setVacName("");
+    setVacManufacturer("");
+    setVacBatch("");
+    setVacHealthUnit("");
     setVacBooster("");
     setModalOpen(false);
   };
@@ -145,38 +147,72 @@ export default function VaccineWallet({
   );
 
   return (
-    <View style={{ gap: 10 }}>
-      {/* Banner Principal com Conexão Meu SUS Digital */}
-      <View style={[styles.banner, shadows.sm]}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View style={styles.bannerIconBox}>
-            <ShieldCheck size={22} color={colors.teal} />
+    <View style={{ gap: 12 }}>
+      {/* Certificado Nacional Oficial de Vacinação Digital (RNDS / SUS) */}
+      <View style={[styles.certCard, shadows.md]}>
+        {/* Cabeçalho Federal */}
+        <View style={styles.certHeader}>
+          <View style={styles.certEmblemBox}>
+            <ShieldCheck size={20} color="#059669" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Carteira de Vacinação Digital</Text>
-            <Text style={styles.bannerSubtitle}>
-              Sincronize com a Rede Nacional de Dados em Saúde (RNDS) e receba alertas de reforços anuais.
-            </Text>
+            <Text style={styles.certGovText}>REPÚBLICA FEDERATIVA DO BRASIL</Text>
+            <Text style={styles.certMinistryText}>MINISTÉRIO DA SAÚDE • RNDS / SUS</Text>
+          </View>
+          <View style={styles.certBadgeOnline}>
+            <CheckCircle2 size={12} color="#059669" />
+            <Text style={styles.certBadgeOnlineText}>RNDS ATIVO</Text>
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleOpenMeuSUS}
-            style={[styles.susBtn, shadows.sm]}
-          >
-            <Text style={styles.susBtnText}>Abrir Meu SUS Digital</Text>
-            <ArrowUpRight size={14} color="white" />
-          </Pressable>
+        {/* Título Oficial */}
+        <View style={styles.certTitleBlock}>
+          <Text style={styles.certDocTitle}>Carteira Nacional de Vacinação Digital</Text>
+          <Text style={styles.certDocSubtitle}>
+            Registro Oficial do Programa Nacional de Imunizações (PNI)
+          </Text>
+        </View>
 
+        {/* Dados do Portador / Documento Oficial */}
+        <View style={styles.certPatientBox}>
+          <View style={styles.certRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.certMetaLabel}>NOME DO TITULAR</Text>
+              <Text style={styles.certMetaValue}>{patientName}</Text>
+            </View>
+            <View>
+              <Text style={styles.certMetaLabel}>CPF</Text>
+              <Text style={styles.certMetaValue}>***.***.128-45</Text>
+            </View>
+          </View>
+
+          <View style={[styles.certRow, { marginTop: 8 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.certMetaLabel}>CARTÃO NACIONAL DE SAÚDE (CNS)</Text>
+              <Text style={styles.certMetaMono}>7042 0981 3340 1928</Text>
+            </View>
+            <View>
+              <Text style={styles.certMetaLabel}>CHAVE DE VALIDAÇÃO</Text>
+              <Text style={styles.certMetaMono}>BR-SUS-2026-9F8A</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Rodapé com Selo e Botão Adicionar */}
+        <View style={styles.certFooter}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+            <QrCode size={16} color={colors.teal} />
+            <Text style={styles.certLegalText}>
+              Válido em todo território nacional • Portaria GM/MS nº 1.745
+            </Text>
+          </View>
           <Pressable
             accessibilityRole="button"
             onPress={() => setModalOpen(true)}
-            style={[styles.addDoseBtn, shadows.sm]}
+            style={[styles.addBtn, shadows.sm]}
           >
-            <Plus size={14} color={colors.teal} />
-            <Text style={styles.addDoseBtnText}>Registrar dose</Text>
+            <Plus size={14} color="white" />
+            <Text style={styles.addBtnText}>Registrar dose</Text>
           </Pressable>
         </View>
       </View>
@@ -185,17 +221,17 @@ export default function VaccineWallet({
       <View style={styles.reminderBar}>
         <AlertTriangle size={16} color={colors.warning} />
         <Text style={styles.reminderText}>
-          Campanha Anual: Reforço da vacina contra Gripe (Influenza) e Covid-19 recomendado.
+          Campanha Oficial 2026: Reforço anual da vacina contra Gripe e Covid-19 disponível na rede básica e parceiros MediNexus.
         </Text>
       </View>
 
-      {/* Lista de Vacinas */}
+      {/* Lista de Vacinas / Imunobiológicos */}
       {list.length === 0 ? (
-        <View style={[styles.card, shadows.sm, { alignItems: "center", paddingVertical: 24 }]}>
+        <View style={[styles.card, shadows.sm, { alignItems: "center", paddingVertical: 26 }]}>
           <Syringe size={32} color={colors.muted} />
-          <Text style={[styles.cardTitle, { marginTop: 8 }]}>Nenhuma vacina cadastrada</Text>
+          <Text style={[styles.cardTitle, { marginTop: 8 }]}>Nenhuma vacina registrada</Text>
           <Text style={styles.copy}>
-            Cadastre doses tomadas por {patientName} para acompanhar reforços.
+            Cadastre doses tomadas por {patientName} para manter a carteira nacional em dia.
           </Text>
         </View>
       ) : (
@@ -211,14 +247,36 @@ export default function VaccineWallet({
                 <Text style={styles.date}>Aplicada em {vac.appliedAt}</Text>
               </View>
 
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
                 <View style={styles.vacIconBox}>
                   <Syringe size={18} color={colors.teal} />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.cardTitle}>{vac.name}</Text>
                   <Text style={styles.vacDoseText}>{vac.dose}</Text>
                 </View>
+              </View>
+
+              {/* Informações detalhadas do imunobiológico */}
+              <View style={styles.detailsBlock}>
+                {vac.manufacturer && (
+                  <View style={styles.detailRow}>
+                    <Tag size={12} color={colors.muted} />
+                    <Text style={styles.detailText}>
+                      <Text style={{ fontWeight: "700" }}>Fabricante:</Text> {vac.manufacturer}
+                      {vac.batch ? ` • Lote: ${vac.batch}` : ""}
+                    </Text>
+                  </View>
+                )}
+
+                {vac.healthUnit && (
+                  <View style={styles.detailRow}>
+                    <Building2 size={12} color={colors.muted} />
+                    <Text style={styles.detailText}>
+                      <Text style={{ fontWeight: "700" }}>Estabelecimento:</Text> {vac.healthUnit}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {vac.nextBooster && (
@@ -248,10 +306,10 @@ export default function VaccineWallet({
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingVertical: 10 }}>
               <View style={{ gap: 6 }}>
-                <Text style={styles.label}>Nome da Vacina</Text>
+                <Text style={styles.label}>Nome do Imunobiológico / Vacina</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: Gripe (Influenza), Tétano (dT), HPV..."
+                  placeholder="Ex: Covid-19, Gripe (Influenza), Tétano (dT), HPV..."
                   placeholderTextColor="#9CA3AF"
                   value={vacName}
                   onChangeText={setVacName}
@@ -269,29 +327,64 @@ export default function VaccineWallet({
                 />
               </View>
 
-              <View style={{ gap: 6 }}>
-                <Text style={styles.label}>Data da Aplicação</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="DD/MM/AAAA"
-                  placeholderTextColor="#9CA3AF"
-                  value={vacDate}
-                  onChangeText={setVacDate}
-                />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.label}>Fabricante / Laboratório</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ex: Butantan, Pfizer, Fiocruz..."
+                    placeholderTextColor="#9CA3AF"
+                    value={vacManufacturer}
+                    onChangeText={setVacManufacturer}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.label}>Lote</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ex: INF260401"
+                    placeholderTextColor="#9CA3AF"
+                    value={vacBatch}
+                    onChangeText={setVacBatch}
+                  />
+                </View>
               </View>
 
               <View style={{ gap: 6 }}>
-                <Text style={styles.label}>Próximo Reforço (opcional)</Text>
+                <Text style={styles.label}>Unidade de Saúde / Estabelecimento (CNES)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: Em 1 ano, 10 anos, Em 6 meses..."
+                  placeholder="Ex: UBS Vila Mariana, Clínica MediNexus..."
                   placeholderTextColor="#9CA3AF"
-                  value={vacBooster}
-                  onChangeText={setVacBooster}
+                  value={vacHealthUnit}
+                  onChangeText={setVacHealthUnit}
                 />
               </View>
 
-              <Button title="Salvar na Carteira" onPress={handleAddVaccine} />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.label}>Data da Aplicação</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="DD/MM/AAAA"
+                    placeholderTextColor="#9CA3AF"
+                    value={vacDate}
+                    onChangeText={setVacDate}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.label}>Próximo Reforço (opcional)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ex: Abril de 2027"
+                    placeholderTextColor="#9CA3AF"
+                    value={vacBooster}
+                    onChangeText={setVacBooster}
+                  />
+                </View>
+              </View>
+
+              <Button title="Salvar na Carteira Oficial" onPress={handleAddVaccine} />
             </ScrollView>
           </View>
         </View>
@@ -301,64 +394,145 @@ export default function VaccineWallet({
 }
 
 const styles = StyleSheet.create({
-  banner: {
-    backgroundColor: colors.lightSage,
-    borderRadius: 18,
+  certCard: {
+    backgroundColor: "#0B2B33",
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.teal,
+    borderColor: "#1E4C56",
     padding: 16,
-    gap: 10,
+    gap: 12,
   },
-  bannerIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "white",
+  certHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.12)",
+    paddingBottom: 10,
+  },
+  certEmblemBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.3)",
   },
-  bannerTitle: {
-    fontSize: 15,
+  certGovText: {
+    fontSize: 9,
     fontWeight: "800",
-    color: colors.tealDark,
+    color: "#99F6E4",
+    letterSpacing: 0.5,
   },
-  bannerSubtitle: {
-    fontSize: 12,
-    color: colors.graphite,
-    lineHeight: 16,
+  certMinistryText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "white",
+    marginTop: 1,
+  },
+  certBadgeOnline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(16, 185, 129, 0.18)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.35)",
+  },
+  certBadgeOnlineText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#6EE7B7",
+  },
+  certTitleBlock: {
+    gap: 2,
+  },
+  certDocTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "white",
+  },
+  certDocSubtitle: {
+    fontSize: 11,
+    color: "#94A3B8",
+  },
+  certPatientBox: {
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+  },
+  certRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  certMetaLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#64748B",
+    letterSpacing: 0.5,
+  },
+  certMetaValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "white",
     marginTop: 2,
   },
-  susBtn: {
-    flex: 1,
+  certMetaMono: {
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: "monospace",
+    color: "#5EEAD4",
+    marginTop: 2,
+  },
+  certFooter: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: colors.teal,
-    paddingVertical: 10,
-    borderRadius: 12,
+    justifyContent: "space-between",
+    gap: 10,
+    paddingTop: 4,
   },
-  susBtnText: {
+  certLegalText: {
+    fontSize: 10,
+    color: "#94A3B8",
+    flex: 1,
+    lineHeight: 14,
+  },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#059669",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  addBtnText: {
     color: "white",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
   },
-  addDoseBtn: {
-    flex: 1,
+  detailsBlock: {
+    gap: 4,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     gap: 6,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: colors.teal,
-    paddingVertical: 10,
-    borderRadius: 12,
   },
-  addDoseBtnText: {
-    color: colors.teal,
-    fontSize: 12,
-    fontWeight: "700",
+  detailText: {
+    fontSize: 11,
+    color: colors.graphite,
+    flex: 1,
   },
   reminderBar: {
     flexDirection: "row",

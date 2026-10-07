@@ -21,24 +21,7 @@ export interface FamilyMember {
   healthPlan?: string;
 }
 
-export const INITIAL_DEPENDENTS: FamilyMember[] = [
-  {
-    id: "dep-lucas",
-    name: "Lucas Pimentel",
-    relationship: "Filho",
-    birthDate: "14/05/2018",
-    cpf: "045.***.***-12",
-    healthPlan: "Unimed Pleno",
-  },
-  {
-    id: "dep-maria",
-    name: "Maria Helena",
-    relationship: "Mãe",
-    birthDate: "20/11/1954",
-    cpf: "189.***.***-34",
-    healthPlan: "Bradesco Saúde",
-  },
-];
+export const INITIAL_DEPENDENTS: FamilyMember[] = [];
 
 interface FamilySwitcherProps {
   activeId: string;

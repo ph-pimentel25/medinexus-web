@@ -67,6 +67,7 @@ import TelemedicineModal from "./src/TelemedicineModal";
 import HealthMetricsModal from "./src/HealthMetricsModal";
 import TriageModal from "./src/TriageModal";
 import PostConsultationChatModal from "./src/PostConsultationChatModal";
+import * as SecureStore from "expo-secure-store";
 import {
   requestNotificationPermission,
   scheduleMedicationReminder,
@@ -425,8 +426,18 @@ function Main() {
   const [telemedicineCallActive, setTelemedicineCallActive] = useState(false);
   const [telemedicineAppointment, setTelemedicineAppointment] = useState<Appointment | null>(null);
 
-  // Saúde Conectada Apple Health / Google Fit
+  // MediNexus Saúde Conectada
   const [showHealthMetricsModal, setShowHealthMetricsModal] = useState(false);
+  const [isHealthConnected, setIsHealthConnected] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await SecureStore.getItemAsync("medinexus_health_connected");
+        if (stored === "true") setIsHealthConnected(true);
+      } catch {}
+    })();
+  }, []);
 
   // Triagem Pré-Consulta com IA
   const [showTriageModal, setShowTriageModal] = useState(false);
@@ -1096,7 +1107,7 @@ function Main() {
                   </Pressable>
                 </View>
 
-                {/* Saúde Conectada Apple Health / Google Fit */}
+                {/* MediNexus Saúde Conectada */}
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => setShowHealthMetricsModal(true)}
@@ -1104,30 +1115,43 @@ function Main() {
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFE4E6", alignItems: "center", justifyContent: "center" }}>
-                        <Heart size={18} color="#E11D48" />
+                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isHealthConnected ? "#FFE4E6" : colors.lightSage, alignItems: "center", justifyContent: "center" }}>
+                        <Heart size={18} color={isHealthConnected ? "#E11D48" : colors.teal} />
                       </View>
                       <View>
-                        <Text style={styles.cardTitle}>Apple Health & Google Fit</Text>
-                        <Text style={[styles.copy, { fontSize: 11 }]}>Métricas preventivas e biometria</Text>
+                        <Text style={styles.cardTitle}>MediNexus Saúde Conectada</Text>
+                        <Text style={[styles.copy, { fontSize: 11 }]}>
+                          {isHealthConnected ? "Sincronizado via Apple Saúde (HealthKit)" : "Toque para conectar sensores de biometria"}
+                        </Text>
                       </View>
                     </View>
                     <ChevronRight size={18} color={colors.teal} />
                   </View>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-                    <View>
-                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Passos no Mês</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "700", color: colors.graphite }}>218.400</Text>
+                  {isHealthConnected ? (
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <View>
+                        <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Passos no Mês</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.graphite }}>218.400</Text>
+                      </View>
+                      <View>
+                        <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pico FC</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: "#E11D48" }}>142 bpm (24/Set)</Text>
+                      </View>
+                      <View>
+                        <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pressão</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.success }}>120/78</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pico FC</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#E11D48" }}>142 bpm (24/Set)</Text>
+                  ) : (
+                    <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600" }}>
+                        Monitore passos, FC e pressão com seu médico
+                      </Text>
+                      <View style={{ backgroundColor: colors.teal, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                        <Text style={{ fontSize: 10, color: "white", fontWeight: "700" }}>Conectar</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pressão</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "700", color: colors.success }}>120/78</Text>
-                    </View>
-                  </View>
+                  )}
                 </Pressable>
 
                 {/* Avaliação Pendente Pós-Consulta (se houver consulta concluída recente) */}
@@ -2471,10 +2495,12 @@ function Main() {
         onClose={() => setTelemedicineCallActive(false)}
       />
 
-      {/* Apple Health / Google Fit - Métricas Preventivas */}
+      {/* MediNexus Saúde Conectada - Métricas Preventivas */}
       <HealthMetricsModal
         visible={showHealthMetricsModal}
         patientName={name || "Você"}
+        isConnected={isHealthConnected}
+        onConnectionChange={setIsHealthConnected}
         onClose={() => setShowHealthMetricsModal(false)}
       />
 

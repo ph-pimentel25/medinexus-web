@@ -10,36 +10,24 @@ export interface FamilyDependent {
 const STORAGE_KEY = "medinexus_family_dependents";
 const ACTIVE_KEY = "medinexus_active_dependent_id";
 
-export const DEFAULT_DEPENDENTS: FamilyDependent[] = [
-  {
-    id: "dep-lucas",
-    name: "Lucas Pimentel",
-    relationship: "Filho(a)",
-    birthDate: "2018-05-14",
-    cpf: "045.***.***-12",
-    healthPlan: "Unimed Pleno"
-  },
-  {
-    id: "dep-maria",
-    name: "Maria Helena Pimentel",
-    relationship: "Pai/Mãe",
-    birthDate: "1954-11-20",
-    cpf: "189.***.***-34",
-    healthPlan: "Bradesco Saúde Top"
-  }
-];
+export const DEFAULT_DEPENDENTS: FamilyDependent[] = [];
 
 export function getFamilyDependents(): FamilyDependent[] {
   if (typeof window === "undefined") return DEFAULT_DEPENDENTS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DEPENDENTS));
-      return DEFAULT_DEPENDENTS;
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed: FamilyDependent[] = JSON.parse(raw);
+    // Remove quaisquer dependentes de teste legado para não poluir a conta do usuário
+    const cleaned = parsed.filter(d => d.id !== "dep-lucas" && d.id !== "dep-maria");
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
-    return DEFAULT_DEPENDENTS;
+    return [];
   }
 }
 

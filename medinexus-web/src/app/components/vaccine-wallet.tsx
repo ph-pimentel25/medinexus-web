@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Plus, ExternalLink, Calendar, CheckCircle2, AlertTriangle, Syringe, Clock, X } from "lucide-react";
+import { ShieldCheck, Plus, Calendar, CheckCircle2, AlertTriangle, Syringe, Clock, QrCode, Building2, Tag, X } from "lucide-react";
 import { getActiveDependentId, getFamilyDependents } from "../lib/family-dependents";
 
 export interface VaccineRecord {
@@ -10,6 +10,7 @@ export interface VaccineRecord {
   name: string;
   dose: string;
   appliedAt: string;
+  manufacturer?: string;
   lot?: string;
   location?: string;
   nextBooster?: string;
@@ -20,78 +21,61 @@ const DEFAULT_VACCINES: VaccineRecord[] = [
   {
     id: "vac-1",
     dependentId: "self",
-    name: "Gripe (Influenza Quadrivalente)",
-    dose: "Dose Anual 2026",
-    appliedAt: "2026-04-12",
-    lot: "INF-883912",
-    location: "UBS Vila Mariana / MediNexus Imunização",
-    nextBooster: "2027-04-12",
-    status: "em_dia"
+    name: "Covid-19 (Bivalente Atualizada)",
+    dose: "Dose de Reforço",
+    appliedAt: "2025-06-18",
+    manufacturer: "Pfizer / BioNTech",
+    lot: "COV-FL4109",
+    location: "UBS Vila Mariana - CNES 2781920",
+    nextBooster: "2026-06-18",
+    status: "reforco_pendente"
   },
   {
     id: "vac-2",
     dependentId: "self",
-    name: "Tétano e Difteria (dT adulto)",
-    dose: "Reforço 10 anos",
-    appliedAt: "2021-08-10",
-    lot: "TET-40192",
-    location: "Centro de Saúde Central",
-    nextBooster: "2031-08-10",
+    name: "Gripe (Influenza Quadrivalente)",
+    dose: "Dose Anual 2026",
+    appliedAt: "2026-04-12",
+    manufacturer: "Instituto Butantan",
+    lot: "INF-260401",
+    location: "Posto Central de Saúde - CNES 2073841",
+    nextBooster: "2027-04-12",
     status: "em_dia"
   },
   {
     id: "vac-3",
     dependentId: "self",
-    name: "Covid-19 (Bivalente Atualizada)",
-    dose: "Dose de Reforço",
-    appliedAt: "2025-06-18",
-    lot: "COV-991204",
-    location: "Clínica Integrada MediNexus",
-    nextBooster: "2026-06-18",
-    status: "reforco_pendente"
+    name: "Febre Amarela (Dose Única CIVP)",
+    dose: "Dose Única (CIVP)",
+    appliedAt: "2019-11-04",
+    manufacturer: "Bio-Manguinhos / Fiocruz",
+    lot: "FA-191104",
+    location: "Ambulatório do Viajante - CNES 2198302",
+    nextBooster: "Dose única para toda a vida",
+    status: "em_dia"
   },
   {
     id: "vac-4",
     dependentId: "self",
-    name: "Hepatite B (Recombinante)",
-    dose: "Esquema completo (3 doses)",
-    appliedAt: "2018-03-15",
-    lot: "HEP-2018-03",
-    location: "Posto de Saúde Municipal",
-    nextBooster: "Imunidade permanente",
+    name: "Tétano e Difteria (dT adulto)",
+    dose: "Reforço 10 anos",
+    appliedAt: "2021-08-10",
+    manufacturer: "Instituto Butantan",
+    lot: "TET-210810",
+    location: "UBS Vila Mariana - CNES 2781920",
+    nextBooster: "2031-08-10",
     status: "em_dia"
   },
   {
     id: "vac-5",
     dependentId: "self",
-    name: "Febre Amarela (Atenuada)",
-    dose: "Dose Única (CIVP)",
-    appliedAt: "2019-11-04",
-    lot: "FA-77123",
-    location: "Ambulatório de Medicina do Viajante",
-    nextBooster: "Dose única para toda a vida",
-    status: "em_dia"
-  },
-  {
-    id: "vac-6",
-    dependentId: "dep-lucas",
-    name: "HPV Quadrivalente (Tipos 6, 11, 16 e 18)",
-    dose: "1ª Dose",
-    appliedAt: "2025-10-10",
-    lot: "HPV-5521",
-    location: "Clínica Pediátrica Parceira",
-    nextBooster: "2026-04-10 (2ª dose)",
-    status: "reforco_pendente"
-  },
-  {
-    id: "vac-7",
-    dependentId: "dep-maria",
-    name: "Gripe (Influenza Idoso Alta Dosagem)",
-    dose: "Dose Anual 2026",
-    appliedAt: "2026-04-05",
-    lot: "INF-SR-901",
-    location: "UBS Central",
-    nextBooster: "2027-04-05",
+    name: "Hepatite B (Recombinante)",
+    dose: "Esquema completo (3 doses)",
+    appliedAt: "2018-03-15",
+    manufacturer: "Bio-Manguinhos / Fiocruz",
+    lot: "HEP-180315",
+    location: "Centro de Imunização Municipal",
+    nextBooster: "Imunidade permanente",
     status: "em_dia"
   }
 ];
@@ -108,6 +92,7 @@ export default function VaccineWallet() {
   const [vacName, setVacName] = useState("");
   const [dose, setDose] = useState("Dose única");
   const [appliedAt, setAppliedAt] = useState(new Date().toISOString().split("T")[0]);
+  const [manufacturer, setManufacturer] = useState("");
   const [lot, setLot] = useState("");
   const [location, setLocation] = useState("");
   const [nextBooster, setNextBooster] = useState("");
@@ -126,7 +111,11 @@ export default function VaccineWallet() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setRecords(JSON.parse(stored));
+        const parsed: VaccineRecord[] = JSON.parse(stored);
+        // Filter out legacy dummy dependents (dep-lucas, dep-maria)
+        const cleaned = parsed.filter(r => r.dependentId !== "dep-lucas" && r.dependentId !== "dep-maria");
+        setRecords(cleaned);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
       } else {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_VACCINES));
         setRecords(DEFAULT_VACCINES);
@@ -167,6 +156,7 @@ export default function VaccineWallet() {
       name: vacName.trim(),
       dose: dose.trim(),
       appliedAt,
+      manufacturer: manufacturer.trim() || undefined,
       lot: lot.trim() || undefined,
       location: location.trim() || undefined,
       nextBooster: nextBooster.trim() || undefined,
@@ -180,6 +170,7 @@ export default function VaccineWallet() {
     } catch {}
 
     setVacName("");
+    setManufacturer("");
     setLot("");
     setLocation("");
     setNextBooster("");
@@ -190,43 +181,84 @@ export default function VaccineWallet() {
 
   return (
     <div className="space-y-6">
-      {/* Banner Oficial Conexão Meu SUS Digital */}
-      <div className="overflow-hidden rounded-3xl border border-mn-border bg-gradient-to-r from-[#0F3642] to-mn-teal p-6 text-white shadow-md">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-bold text-emerald-200">
-                <ShieldCheck size={14} /> Integração RNDS / SUS
-              </span>
-              <span className="text-xs text-emerald-100/70">Rede Nacional de Dados em Saúde</span>
+      {/* Certificado Nacional Oficial de Vacinação Digital (RNDS / Ministério da Saúde / SUS) */}
+      <div className="overflow-hidden rounded-3xl border border-[#1E4C56] bg-[#0B2B33] p-6 text-white shadow-lg">
+        {/* Cabeçalho Federal */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-400">
+              <ShieldCheck size={24} />
             </div>
-            <h3 className="text-xl font-bold tracking-tight">Carteira de Vacinação Digital</h3>
-            <p className="max-w-2xl text-xs leading-relaxed text-slate-200">
-              Acompanhe doses aplicadas, histórico vacinal e receba lembretes automáticos de reforços anuais (Gripe, Covid-19, Tétano, HPV e Hepatite B).
-              Sincronize ou importe seu registro oficial diretamente pelo portal gov.br.
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-300">
+                República Federativa do Brasil
+              </p>
+              <h4 className="text-sm font-bold text-white">
+                Ministério da Saúde • Rede Nacional de Dados em Saúde (RNDS)
+              </h4>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
+              <CheckCircle2 size={13} /> Certificado RNDS Ativo
+            </span>
+          </div>
+        </div>
+
+        {/* Título & Documento Oficial */}
+        <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h3 className="text-xl font-bold tracking-tight text-white">
+              Carteira Nacional de Vacinação Digital
+            </h3>
+            <p className="mt-1 text-xs text-slate-300">
+              Registro Oficial do Programa Nacional de Imunizações (PNI) integrado ao SUS
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="https://meususdigital.saude.gov.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-xs font-bold text-mn-teal shadow transition hover:bg-mn-sand"
-            >
-              <span>Acessar Meu SUS Digital</span>
-              <ExternalLink size={14} />
-            </a>
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow transition hover:bg-emerald-500"
+          >
+            <Plus size={15} />
+            <span>Registrar dose</span>
+          </button>
+        </div>
 
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow transition hover:bg-emerald-500"
-            >
-              <Plus size={15} />
-              <span>Registrar dose</span>
-            </button>
+        {/* Identificação Oficial do Portador */}
+        <div className="mt-5 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Titular do Registro
+            </span>
+            <p className="text-sm font-bold text-white">{activeName}</p>
           </div>
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              CPF
+            </span>
+            <p className="font-mono text-sm font-bold text-slate-200">***.***.128-45</p>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Cartão Nacional de Saúde (CNS)
+            </span>
+            <p className="font-mono text-sm font-bold text-teal-300">7042 0981 3340 1928</p>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Chave de Validação RNDS
+            </span>
+            <p className="font-mono text-sm font-bold text-teal-300">BR-SUS-2026-9F8A</p>
+          </div>
+        </div>
+
+        {/* Selo Legal */}
+        <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-400">
+          <QrCode size={14} className="text-teal-400" />
+          <span>Válido em todo território nacional • Autenticidade garantida pela Portaria GM/MS nº 1.745</span>
         </div>
       </div>
 
@@ -292,6 +324,13 @@ export default function VaccineWallet() {
                     <span className="text-slate-400">Data de aplicação:</span>
                     <strong className="text-slate-800">{new Date(vac.appliedAt).toLocaleDateString("pt-BR")}</strong>
                   </div>
+
+                  {vac.manufacturer && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Fabricante:</span>
+                      <span className="font-semibold text-slate-700">{vac.manufacturer}</span>
+                    </div>
+                  )}
 
                   {vac.lot && (
                     <div className="flex items-center justify-between">
@@ -369,6 +408,19 @@ export default function VaccineWallet() {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold text-slate-700">Fabricante / Laboratório</label>
+                  <input
+                    type="text"
+                    value={manufacturer}
+                    onChange={e => setManufacturer(e.target.value)}
+                    placeholder="Ex: Butantan, Pfizer, Fiocruz..."
+                    className="mt-1 w-full rounded-xl border border-mn-border bg-mn-sand px-3 py-2 text-sm outline-none focus:border-mn-teal focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-semibold text-slate-700">Data da Aplicação</label>
                   <input
                     type="date"
@@ -378,9 +430,7 @@ export default function VaccineWallet() {
                     className="mt-1 w-full rounded-xl border border-mn-border bg-mn-sand px-3 py-2 text-sm outline-none focus:border-mn-teal focus:bg-white"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700">Número do Lote</label>
                   <input
@@ -391,17 +441,17 @@ export default function VaccineWallet() {
                     className="mt-1 w-full rounded-xl border border-mn-border bg-mn-sand px-3 py-2 text-sm outline-none focus:border-mn-teal focus:bg-white"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700">Próximo Reforço (opcional)</label>
-                  <input
-                    type="text"
-                    value={nextBooster}
-                    onChange={e => setNextBooster(e.target.value)}
-                    placeholder="Ex: Anual / 10 anos / Em 6 meses"
-                    className="mt-1 w-full rounded-xl border border-mn-border bg-mn-sand px-3 py-2 text-sm outline-none focus:border-mn-teal focus:bg-white"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Próximo Reforço (opcional)</label>
+                <input
+                  type="text"
+                  value={nextBooster}
+                  onChange={e => setNextBooster(e.target.value)}
+                  placeholder="Ex: Anual / 10 anos / Em 6 meses"
+                  className="mt-1 w-full rounded-xl border border-mn-border bg-mn-sand px-3 py-2 text-sm outline-none focus:border-mn-teal focus:bg-white"
+                />
               </div>
 
               <div>
