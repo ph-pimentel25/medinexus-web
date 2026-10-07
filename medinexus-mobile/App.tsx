@@ -1,4 +1,4 @@
-import {
+﻿import {
   CalendarDays,
   FileText,
   House,
@@ -1121,7 +1121,7 @@ function Main() {
                       <View>
                         <Text style={styles.cardTitle}>MediNexus Saúde Conectada</Text>
                         <Text style={[styles.copy, { fontSize: 11 }]}>
-                          {isHealthConnected ? "Sincronizado via Apple Saúde (HealthKit)" : "Toque para conectar sensores de biometria"}
+                          {isHealthConnected ? (Platform.OS === "ios" ? "Autorizado via Apple Saúde" : "Autorizado via Health Connect") : "Toque para conectar sensores de biometria"}
                         </Text>
                       </View>
                     </View>
@@ -1131,15 +1131,15 @@ function Main() {
                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
                       <View>
                         <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Passos no Mês</Text>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.graphite }}>218.400</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.graphite }}>—</Text>
                       </View>
                       <View>
                         <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pico FC</Text>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: "#E11D48" }}>142 bpm (24/Set)</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: "#E11D48" }}>—</Text>
                       </View>
                       <View>
                         <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>Pressão</Text>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.success }}>120/78</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.success }}>—</Text>
                       </View>
                     </View>
                   ) : (
@@ -3033,3 +3033,4 @@ const styles = StyleSheet.create({
   },
   slotBookBtnText: { color: "white", fontSize: 12, fontWeight: "700" },
 });
+

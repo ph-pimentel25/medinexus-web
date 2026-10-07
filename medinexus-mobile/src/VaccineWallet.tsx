@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -37,66 +37,8 @@ export interface MobileVaccine {
   status: "em_dia" | "reforco_pendente";
 }
 
-export const INITIAL_VACCINES: MobileVaccine[] = [
-  {
-    id: "v1",
-    dependentId: "self",
-    name: "Covid-19 (Bivalente Atualizada)",
-    dose: "Dose de Reforço",
-    appliedAt: "18/06/2025",
-    batch: "FL4109",
-    manufacturer: "Pfizer / BioNTech",
-    healthUnit: "UBS Vila Mariana - CNES 2781920",
-    nextBooster: "Junho de 2026",
-    status: "reforco_pendente",
-  },
-  {
-    id: "v2",
-    dependentId: "self",
-    name: "Gripe (Influenza Quadrivalente)",
-    dose: "Dose Anual 2026",
-    appliedAt: "12/04/2026",
-    batch: "INF260401",
-    manufacturer: "Instituto Butantan",
-    healthUnit: "Posto Central de Saúde - CNES 2073841",
-    nextBooster: "Abril de 2027",
-    status: "em_dia",
-  },
-  {
-    id: "v3",
-    dependentId: "self",
-    name: "Febre Amarela (Dose Única CIVP)",
-    dose: "Dose Única (CIVP)",
-    appliedAt: "04/11/2019",
-    batch: "FA191104",
-    manufacturer: "Bio-Manguinhos / Fiocruz",
-    healthUnit: "Ambulatório do Viajante - CNES 2198302",
-    status: "em_dia",
-  },
-  {
-    id: "v4",
-    dependentId: "self",
-    name: "Tétano e Difteria (dT adulto)",
-    dose: "Reforço 10 anos",
-    appliedAt: "10/08/2021",
-    batch: "DT210810",
-    manufacturer: "Instituto Butantan",
-    healthUnit: "UBS Vila Mariana - CNES 2781920",
-    nextBooster: "Agosto de 2031",
-    status: "em_dia",
-  },
-  {
-    id: "v5",
-    dependentId: "self",
-    name: "Hepatite B (Recombinante)",
-    dose: "3 Doses Completas",
-    appliedAt: "15/03/2018",
-    batch: "HB180315",
-    manufacturer: "Bio-Manguinhos / Fiocruz",
-    healthUnit: "Centro de Imunização Municipal",
-    status: "em_dia",
-  },
-];
+// Sem dados de exemplo: as doses vêm do registro oficial (RNDS) ou são informadas pelo paciente.
+export const INITIAL_VACCINES: MobileVaccine[] = [];
 
 interface VaccineWalletProps {
   activeDependentId: string;
@@ -161,7 +103,7 @@ export default function VaccineWallet({
           </View>
           <View style={styles.certBadgeOnline}>
             <CheckCircle2 size={12} color="#059669" />
-            <Text style={styles.certBadgeOnlineText}>RNDS ATIVO</Text>
+            <Text style={styles.certBadgeOnlineText}>NÃO CONECTADO</Text>
           </View>
         </View>
 
@@ -182,18 +124,18 @@ export default function VaccineWallet({
             </View>
             <View>
               <Text style={styles.certMetaLabel}>CPF</Text>
-              <Text style={styles.certMetaValue}>***.***.128-45</Text>
+              <Text style={styles.certMetaValue}>Não informado</Text>
             </View>
           </View>
 
           <View style={[styles.certRow, { marginTop: 8 }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.certMetaLabel}>CARTÃO NACIONAL DE SAÚDE (CNS)</Text>
-              <Text style={styles.certMetaMono}>7042 0981 3340 1928</Text>
+              <Text style={styles.certMetaMono}>Não informado</Text>
             </View>
             <View>
               <Text style={styles.certMetaLabel}>CHAVE DE VALIDAÇÃO</Text>
-              <Text style={styles.certMetaMono}>BR-SUS-2026-9F8A</Text>
+              <Text style={styles.certMetaMono}>Indisponível</Text>
             </View>
           </View>
         </View>
@@ -203,7 +145,7 @@ export default function VaccineWallet({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
             <QrCode size={16} color={colors.teal} />
             <Text style={styles.certLegalText}>
-              Válido em todo território nacional • Portaria GM/MS nº 1.745
+              Registro informado pelo paciente. A validação oficial exige a conexão com a RNDS (gov.br), ainda não habilitada.
             </Text>
           </View>
           <Pressable
@@ -652,3 +594,5 @@ const styles = StyleSheet.create({
     color: colors.graphite,
   },
 });
+
+

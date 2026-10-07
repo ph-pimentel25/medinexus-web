@@ -1,4 +1,4 @@
-import {timingSafeEqual} from "node:crypto";
+﻿import {timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 
 function clean(v?: string) { return typeof v === "string" ? v.trim().replace(/^["']|["']$/g, "").trim() : ""; }
@@ -6,7 +6,7 @@ function clean(v?: string) { return typeof v === "string" ? v.trim().replace(/^[
 export async function POST(request:Request){
  const secret=clean(process.env.ASAAS_WEBHOOK_TOKEN),received=(request.headers.get("asaas-access-token")||"").trim();
  if(!secret||secret.length<32||Buffer.byteLength(secret)!==Buffer.byteLength(received)||!timingSafeEqual(Buffer.from(secret),Buffer.from(received))){
-  console.error("Asaas webhook 401 unauthorized. Configured length:", secret.length, "Received length:", received.length);
+  console.error("Asaas webhook 401 unauthorized");
   return Response.json({error:"Unauthorized"},{status:401});
  }
  const envMode=clean(process.env.PAYMENT_ENVIRONMENT);
@@ -34,7 +34,7 @@ export async function POST(request:Request){
   cents=Math.round(val*100);
  }
  if(!Number.isSafeInteger(cents)||cents<=0){
-  console.error("Asaas webhook invalid amount:", cents, data);
+  console.error("Asaas webhook invalid amount");
   return Response.json({error:"Invalid total"},{status:400});
  }
  const url=clean(process.env.NEXT_PUBLIC_SUPABASE_URL)||process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -43,9 +43,10 @@ export async function POST(request:Request){
  const admin=createClient(url,key,{auth:{persistSession:false}});
  const result=await admin.rpc("apply_sandbox_checkout_event",{p_event_id:data.id,p_reference:checkoutRef,p_event:data.event,p_gross_cents:cents});
  if(result.error){
-  console.error("apply_sandbox_checkout_event error:", result.error, {eventId:data.id,checkoutRef,event:data.event,cents});
-  return Response.json({error:"Event not reconciled; retry required",detail:result.error.message},{status:503});
+  console.error("apply_sandbox_checkout_event error:", result.error.code);
+  return Response.json({error:"Event not reconciled; retry required"},{status:503});
  }
  return Response.json({received:true});
 }
+
 

@@ -51,6 +51,14 @@
     "plugins": [
       "expo-secure-store",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir que a MediNexus use a câmera nas consultas por vídeo?",
+          "microphonePermission": "Permitir que a MediNexus use o microfone nas consultas por vídeo?",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Permitir que a MediNexus use sua localização para encontrar atendimento e laboratórios próximos?"

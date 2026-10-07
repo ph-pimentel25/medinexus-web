@@ -9,6 +9,7 @@
     "@supabase/supabase-js": "^2.116.0",
     "base64-arraybuffer": "^1.0.2",
     "expo": "~57.0.23",
+    "expo-camera": "~57.0.6",
     "expo-image-manipulator": "~57.0.18",
     "expo-image-picker": "~57.0.18",
     "expo-local-authentication": "~57.0.3",

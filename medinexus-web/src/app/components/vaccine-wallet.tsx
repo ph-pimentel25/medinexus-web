@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { ShieldCheck, Plus, Calendar, CheckCircle2, AlertTriangle, Syringe, Clock, QrCode, Building2, Tag, X } from "lucide-react";
@@ -17,68 +17,8 @@ export interface VaccineRecord {
   status: "em_dia" | "reforco_pendente" | "proximo_vencimento";
 }
 
-const DEFAULT_VACCINES: VaccineRecord[] = [
-  {
-    id: "vac-1",
-    dependentId: "self",
-    name: "Covid-19 (Bivalente Atualizada)",
-    dose: "Dose de Reforço",
-    appliedAt: "2025-06-18",
-    manufacturer: "Pfizer / BioNTech",
-    lot: "COV-FL4109",
-    location: "UBS Vila Mariana - CNES 2781920",
-    nextBooster: "2026-06-18",
-    status: "reforco_pendente"
-  },
-  {
-    id: "vac-2",
-    dependentId: "self",
-    name: "Gripe (Influenza Quadrivalente)",
-    dose: "Dose Anual 2026",
-    appliedAt: "2026-04-12",
-    manufacturer: "Instituto Butantan",
-    lot: "INF-260401",
-    location: "Posto Central de Saúde - CNES 2073841",
-    nextBooster: "2027-04-12",
-    status: "em_dia"
-  },
-  {
-    id: "vac-3",
-    dependentId: "self",
-    name: "Febre Amarela (Dose Única CIVP)",
-    dose: "Dose Única (CIVP)",
-    appliedAt: "2019-11-04",
-    manufacturer: "Bio-Manguinhos / Fiocruz",
-    lot: "FA-191104",
-    location: "Ambulatório do Viajante - CNES 2198302",
-    nextBooster: "Dose única para toda a vida",
-    status: "em_dia"
-  },
-  {
-    id: "vac-4",
-    dependentId: "self",
-    name: "Tétano e Difteria (dT adulto)",
-    dose: "Reforço 10 anos",
-    appliedAt: "2021-08-10",
-    manufacturer: "Instituto Butantan",
-    lot: "TET-210810",
-    location: "UBS Vila Mariana - CNES 2781920",
-    nextBooster: "2031-08-10",
-    status: "em_dia"
-  },
-  {
-    id: "vac-5",
-    dependentId: "self",
-    name: "Hepatite B (Recombinante)",
-    dose: "Esquema completo (3 doses)",
-    appliedAt: "2018-03-15",
-    manufacturer: "Bio-Manguinhos / Fiocruz",
-    lot: "HEP-180315",
-    location: "Centro de Imunização Municipal",
-    nextBooster: "Imunidade permanente",
-    status: "em_dia"
-  }
-];
+// Sem dados de exemplo: as doses vêm do registro oficial (RNDS) ou são informadas pelo paciente.
+const DEFAULT_VACCINES: VaccineRecord[] = [];
 
 const STORAGE_KEY = "medinexus_vaccine_records";
 
@@ -201,7 +141,7 @@ export default function VaccineWallet() {
 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
-              <CheckCircle2 size={13} /> Certificado RNDS Ativo
+              <CheckCircle2 size={13} /> Registro oficial não conectado
             </span>
           </div>
         </div>
@@ -239,26 +179,26 @@ export default function VaccineWallet() {
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               CPF
             </span>
-            <p className="font-mono text-sm font-bold text-slate-200">***.***.128-45</p>
+            <p className="font-mono text-sm font-bold text-slate-200">Não informado</p>
           </div>
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Cartão Nacional de Saúde (CNS)
             </span>
-            <p className="font-mono text-sm font-bold text-teal-300">7042 0981 3340 1928</p>
+            <p className="font-mono text-sm font-bold text-teal-300">Não informado</p>
           </div>
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Chave de Validação RNDS
             </span>
-            <p className="font-mono text-sm font-bold text-teal-300">BR-SUS-2026-9F8A</p>
+            <p className="font-mono text-sm font-bold text-teal-300">Indisponível</p>
           </div>
         </div>
 
         {/* Selo Legal */}
         <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-400">
           <QrCode size={14} className="text-teal-400" />
-          <span>Válido em todo território nacional • Autenticidade garantida pela Portaria GM/MS nº 1.745</span>
+          <span>Registro informado pelo paciente. A validação oficial exige a conexão com a RNDS (gov.br), ainda não habilitada.</span>
         </div>
       </div>
 
@@ -487,3 +427,5 @@ export default function VaccineWallet() {
     </div>
   );
 }
+
+

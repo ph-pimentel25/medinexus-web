@@ -22,6 +22,7 @@ import {
   X,
   Stethoscope,
 } from "lucide-react-native";
+import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import { colors, shadows } from "./theme";
 
 interface TelemedicineModalProps {
@@ -39,23 +40,19 @@ export default function TelemedicineModal({
   const [camActive, setCamActive] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [showChat, setShowChat] = useState(false);
+  const [camPermission, requestCamPermission] = useCameraPermissions();
+  const [micPermission, requestMicPermission] = useMicrophonePermissions();
   const [chatMessages, setChatMessages] = useState<
     { id: string; sender: "doctor" | "patient" | "system"; text: string; time: string }[]
-  >([
-    {
-      id: "m0",
-      sender: "system",
-      text: "Sala Segura MediNexus com Criptografia E2E (Resolução CFM 2.314/2022).",
-      time: "Agora",
-    },
-    {
-      id: "m1",
-      sender: "doctor",
-      text: "Olá! Boa tarde. Estou com seu prontuário aberto. Consegue me ouvir bem?",
-      time: "14:02",
-    },
-  ]);
+  >([]);
   const [inputText, setInputText] = useState("");
+
+  // Pede câmera e microfone assim que a sala abre
+  useEffect(() => {
+    if (!visible) return;
+    if (!camPermission?.granted) requestCamPermission();
+    if (!micPermission?.granted) requestMicPermission();
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) {
@@ -91,7 +88,7 @@ export default function TelemedicineModal({
   };
 
   const doctorData = (appointment?.doctors as Record<string, unknown>) || null;
-  const doctorName = String(doctorData?.name || "Dr. Rafael Macedo");
+  const doctorName = String(doctorData?.name || "Seu médico");
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
@@ -128,7 +125,7 @@ export default function TelemedicineModal({
 
         {/* Video Stage */}
         <View style={styles.videoStage}>
-          {/* Doctor Video Feed Simulation */}
+          {/* Médico: sem transmissão real ainda (depende do provedor de vídeo). Estado honesto. */}
           <View style={styles.doctorFeed}>
             <View style={styles.doctorAvatarCircle}>
               <Text style={styles.doctorInitials}>
@@ -138,22 +135,20 @@ export default function TelemedicineModal({
                   .map((p) => p[0])
                   .join("")}
               </Text>
-              <View style={styles.onlineBadge}>
-                <CheckCircle2 size={12} color="white" />
-              </View>
             </View>
             <Text style={styles.doctorFeedName}>{doctorName}</Text>
-            <Text style={styles.doctorFeedStatus}>Áudio HD Estável • Câmera Ativa</Text>
+            <Text style={styles.doctorFeedStatus}>Aguardando o médico entrar na sala…</Text>
           </View>
 
-          {/* Local Patient Self-Preview (PiP) */}
+          {/* Pré-visualização REAL da câmera do paciente */}
           <View style={styles.pipView}>
-            {camActive ? (
-              <View style={styles.pipFeed}>
-                <View style={styles.pipAvatarMini}>
-                  <Text style={{ color: "white", fontSize: 13, fontWeight: "700" }}>Você</Text>
-                </View>
-              </View>
+            {!camPermission?.granted ? (
+              <Pressable style={styles.pipDisabled} onPress={requestCamPermission}>
+                <VideoOff size={16} color="#9CA3AF" />
+                <Text style={styles.pipDisabledText}>Permitir câmera</Text>
+              </Pressable>
+            ) : camActive ? (
+              <CameraView style={{ flex: 1 }} facing="front" mute={!micActive} />
             ) : (
               <View style={styles.pipDisabled}>
                 <VideoOff size={16} color="#9CA3AF" />
@@ -162,17 +157,18 @@ export default function TelemedicineModal({
             )}
             <View style={styles.pipLabel}>
               <Text style={styles.pipLabelText}>Você</Text>
-              {!micActive && <MicOff size={10} color="#F87171" />}
+              {(!micActive || !micPermission?.granted) && <MicOff size={10} color="#F87171" />}
             </View>
           </View>
 
-          {/* Selo Criptografia */}
-          <View style={styles.encryptionSeal}>
-            <Lock size={12} color="#34D399" />
-            <Text style={styles.encryptionSealText}>
-              Criptografia E2E Ponta a Ponta · CFM 2.314/2022
-            </Text>
-          </View>
+          {(!camPermission?.granted || !micPermission?.granted) && (
+            <View style={styles.encryptionSeal}>
+              <Lock size={12} color="#FBBF24" />
+              <Text style={styles.encryptionSealText}>
+                Autorize câmera e microfone para a consulta por vídeo
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Chat Drawer lateral/inferior */}
