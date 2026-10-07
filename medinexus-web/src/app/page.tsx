@@ -202,170 +202,223 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Coluna da Direita: Mockup Fiel do App Mobile Oficial MediNexus */}
+            {/* Coluna da Direita: Mockup Hiper-Realista iPhone 16 Pro (App Oficial MediNexus) */}
             <div className="relative flex justify-center lg:justify-end">
-              {/* Blur decorativo de fundo */}
-              <div className="absolute -left-6 -top-6 h-72 w-72 rounded-full bg-mn-sage/30 blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-6 -right-6 h-72 w-72 rounded-full bg-mn-purple/20 blur-3xl pointer-events-none" />
+              {/* Blur decorativo de iluminação ambiente */}
+              <div className="absolute -left-10 -top-10 h-80 w-80 rounded-full bg-mn-sage/35 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 h-80 w-80 rounded-full bg-mn-purple/25 blur-3xl pointer-events-none" />
 
-              {/* Tag Flutuante: Sincronização em Tempo Real */}
-              <div className="absolute -top-3 -left-3 z-20 hidden sm:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur-xl">
+              {/* Tag Flutuante Superior: Identificação do Dispositivo e OS */}
+              <div className="absolute -top-4 -left-4 z-30 hidden sm:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur-xl">
                 <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">App Oficial</p>
-                  <p className="text-xs font-bold text-mn-graphite">MediNexus Mobile OS</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">iPhone 16 Pro · iOS 18</p>
+                  <p className="text-xs font-bold text-mn-graphite">App Oficial MediNexus</p>
                 </div>
               </div>
 
-              {/* Tag Flutuante: Padrão CFM & LGPD */}
-              <div className="absolute -bottom-3 -right-3 z-20 hidden sm:flex items-center gap-2 rounded-2xl border border-white/90 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur-xl">
+              {/* Tag Flutuante Inferior: Certificação Clínica */}
+              <div className="absolute -bottom-4 -right-4 z-30 hidden sm:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur-xl">
                 <ShieldCheck size={18} className="text-mn-teal" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">Segurança Clínica</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">Padrão CFM & LGPD</p>
                   <p className="text-xs font-bold text-mn-graphite">100% Gratuito ao Paciente</p>
                 </div>
               </div>
 
-              {/* Moldura do iPhone / Smartphone */}
-              <div className="relative w-full max-w-[380px] rounded-[3.25rem] border-[7px] border-[#1E293B] bg-[#1E293B] p-2.5 shadow-[0_30px_90px_-20px_rgba(22,73,87,0.45)]">
-                {/* Tela do Aplicativo (Tema Sand Oficial MediNexus) */}
-                <div className="overflow-hidden rounded-[2.65rem] bg-[#FAF6F3] text-mn-graphite shadow-inner flex flex-col">
-                  {/* Status Bar com Dynamic Island */}
-                  <div className="relative px-6 pt-3 pb-1 flex items-center justify-between text-mn-graphite">
-                    <span className="text-xs font-bold tracking-tight">9:41</span>
-                    {/* Dynamic Island Pill */}
-                    <div className="h-4.5 w-24 rounded-full bg-black flex items-center justify-end pr-2.5">
-                      <span className="h-2 w-2 rounded-full bg-[#1E293B]" />
-                    </div>
-                    <div className="flex items-center gap-1.5 text-mn-graphite">
-                      <Wifi size={13} />
-                      <Battery size={15} />
-                    </div>
-                  </div>
+              {/* Contêiner do Aparelho com Botões Físicos Laterais do iPhone 16 */}
+              <div className="relative w-full max-w-[390px]">
+                {/* Botão de Ação (Action Button) - Superior Esquerdo */}
+                <div className="absolute -left-[6px] top-24 h-7 w-[6px] rounded-l-md bg-gradient-to-r from-[#1E293B] to-[#475569] shadow-sm z-10" />
 
-                  {/* Conteúdo da Dashboard Oficial (Início) */}
-                  <div className="px-4.5 pt-2 pb-4 space-y-3.5">
-                    {/* Cabeçalho do Paciente (idêntico ao app) */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-base font-black text-mn-graphite">Olá, Mariana</p>
-                        <p className="text-[11px] text-mn-graphite/60">Seu cuidado de saúde em um só lugar.</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {/* Sininho de Notificações com Bolinha */}
-                        <div className="relative flex h-8 w-8 items-center justify-center rounded-full border border-mn-border bg-white shadow-sm text-mn-teal">
-                          <Bell size={15} />
-                          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-                        </div>
-                        {/* Avatar do Paciente */}
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-mn-teal/30 bg-mn-sage/25 text-xs font-bold text-mn-teal">
-                          MS
-                        </div>
-                      </div>
-                    </div>
+                {/* Botão Volume + (Esquerdo) */}
+                <div className="absolute -left-[6px] top-36 h-12 w-[6px] rounded-l-md bg-gradient-to-r from-[#1E293B] to-[#475569] shadow-sm z-10" />
 
-                    {/* Métricas Rápidas (2 Cards do App) */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-1">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F3EE] text-mn-teal">
-                          <CalendarDays size={15} />
-                        </div>
-                        <p className="text-2xl font-black text-mn-teal leading-none">1</p>
-                        <p className="text-[10px] font-semibold text-mn-graphite/70">Consulta confirmada</p>
-                      </div>
+                {/* Botão Volume - (Esquerdo) */}
+                <div className="absolute -left-[6px] top-52 h-12 w-[6px] rounded-l-md bg-gradient-to-r from-[#1E293B] to-[#475569] shadow-sm z-10" />
 
-                      <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-1">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E6F4F1] text-mn-teal">
-                          <Pill size={15} />
-                        </div>
-                        <p className="text-2xl font-black text-mn-teal leading-none">3</p>
-                        <p className="text-[10px] font-semibold text-mn-graphite/70">Remédios ativos</p>
-                      </div>
-                    </div>
+                {/* Botão Lateral / Power (Direito) */}
+                <div className="absolute -right-[6px] top-32 h-16 w-[6px] rounded-r-md bg-gradient-to-l from-[#1E293B] to-[#475569] shadow-sm z-10" />
 
-                    {/* Próximo Atendimento (Card Oficial de Consulta) */}
-                    <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                          <Check size={11} className="stroke-[3]" />
-                          CONFIRMADA
-                        </span>
-                        <span className="text-[11px] font-bold text-mn-teal">Ter, 14:30</span>
-                      </div>
+                {/* Botão de Controle da Câmera (Camera Control - Exclusivo do iPhone 16) */}
+                <div className="absolute -right-[5px] top-64 h-14 w-[5px] rounded-r-sm bg-gradient-to-l from-[#334155] to-[#64748B] shadow-inner z-10" />
 
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mn-teal/10 text-mn-teal font-bold text-xs">
-                          RA
+                {/* Chassi de Titânio Natural do iPhone 16 Pro */}
+                <div className="relative rounded-[54px] p-[10px] bg-gradient-to-b from-[#475569] via-[#1E293B] to-[#0F172A] shadow-[0_35px_100px_-20px_rgba(15,23,42,0.65),0_15px_40px_-15px_rgba(22,73,87,0.45)] ring-1 ring-white/20">
+                  {/* Borda ultrafina uniforme de display OLED */}
+                  <div className="rounded-[45px] p-[3px] bg-black shadow-inner">
+                    {/* Tela Display Super Retina XDR */}
+                    <div className="relative overflow-hidden rounded-[42px] bg-[#FAF6F3] text-mn-graphite flex flex-col shadow-inner">
+                      {/* Reflexo de Vidro Físico (Glass Sheen) */}
+                      <div className="absolute -top-16 -right-16 h-72 w-72 rotate-45 bg-gradient-to-b from-white/15 via-white/5 to-transparent pointer-events-none rounded-full blur-[1px] z-20" />
+
+                      {/* Micro saída de áudio frontal no topo */}
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 h-1 w-12 rounded-full bg-[#0F172A]/70 z-30" />
+
+                      {/* Status Bar Nativa do iOS 18 com Dynamic Island */}
+                      <div className="relative px-6 pt-3 pb-1 flex items-center justify-between text-mn-graphite z-20">
+                        {/* Horário iOS */}
+                        <span className="text-[13px] font-black tracking-tight text-mn-graphite">9:41</span>
+
+                        {/* Dynamic Island com Lente de Câmera e Sensor Face ID */}
+                        <div className="h-6 w-28 rounded-full bg-black flex items-center justify-between px-3 shadow-md">
+                          <div className="h-2.5 w-2.5 rounded-full bg-[#0B132B] ring-1 ring-[#1E293B] flex items-center justify-center">
+                            <span className="h-1 w-1 rounded-full bg-[#3B82F6]/60" />
+                          </div>
+                          <div className="h-2 w-2 rounded-full bg-[#111827]" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-mn-graphite truncate">Dr. Rafael Alcantara</p>
-                          <p className="text-[11px] font-medium text-mn-teal truncate">Cardiologia Clínica</p>
-                          <p className="text-[10px] text-mn-graphite/50 truncate">Centro Médico Integrado · Botafogo</p>
+
+                        {/* Indicadores de Rede e Bateria */}
+                        <div className="flex items-center gap-1.5 text-mn-graphite">
+                          {/* 4 Barras de Sinal de Celular */}
+                          <div className="flex items-end gap-0.5 h-3">
+                            <span className="w-0.5 h-1 rounded-xs bg-mn-graphite" />
+                            <span className="w-0.5 h-1.5 rounded-xs bg-mn-graphite" />
+                            <span className="w-0.5 h-2 rounded-xs bg-mn-graphite" />
+                            <span className="w-0.5 h-2.5 rounded-xs bg-mn-graphite" />
+                          </div>
+                          <span className="text-[10px] font-bold text-mn-graphite">5G</span>
+                          <Wifi size={13} strokeWidth={2.5} />
+                          {/* Bateria com preenchimento */}
+                          <div className="flex items-center">
+                            <div className="w-5 h-2.5 rounded-[4px] border border-mn-graphite p-0.5 flex items-center">
+                              <div className="w-3.5 h-full rounded-[2px] bg-emerald-500" />
+                            </div>
+                            <span className="w-0.5 h-1 rounded-r-xs bg-mn-graphite" />
+                          </div>
                         </div>
                       </div>
 
-                      {/* Status de Presença */}
-                      <div className="flex items-center justify-between rounded-xl bg-[#E8F3EE] px-2.5 py-1.5 text-[10px] font-bold text-mn-teal">
-                        <span>Presença confirmada</span>
-                        <span className="text-[9px] font-medium text-mn-graphite/60">Aviso WhatsApp</span>
+                      {/* Conteúdo da Dashboard Oficial (Início) */}
+                      <div className="px-4.5 pt-2 pb-3 space-y-3.5 relative z-10">
+                        {/* Cabeçalho do Paciente (idêntico ao app) */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-black text-mn-graphite">Olá, Mariana</p>
+                            <p className="text-[11px] text-mn-graphite/60">Seu cuidado de saúde em um só lugar.</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {/* Sininho de Notificações com Bolinha */}
+                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full border border-mn-border bg-white shadow-sm text-mn-teal">
+                              <Bell size={15} />
+                              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                            </div>
+                            {/* Avatar do Paciente */}
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-mn-teal/30 bg-mn-sage/25 text-xs font-bold text-mn-teal">
+                              MS
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Métricas Rápidas (2 Cards Oficiais do App) */}
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-1">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F3EE] text-mn-teal">
+                              <CalendarDays size={15} />
+                            </div>
+                            <p className="text-2xl font-black text-mn-teal leading-none">1</p>
+                            <p className="text-[10px] font-semibold text-mn-graphite/70">Consulta confirmada</p>
+                          </div>
+
+                          <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-1">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E6F4F1] text-mn-teal">
+                              <Pill size={15} />
+                            </div>
+                            <p className="text-2xl font-black text-mn-teal leading-none">3</p>
+                            <p className="text-[10px] font-semibold text-mn-graphite/70">Remédios ativos</p>
+                          </div>
+                        </div>
+
+                        {/* Próximo Atendimento (Card Oficial de Consulta) */}
+                        <div className="rounded-2xl border border-mn-border bg-white p-3 shadow-sm space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                              <Check size={11} className="stroke-[3]" />
+                              CONFIRMADA
+                            </span>
+                            <span className="text-[11px] font-bold text-mn-teal">Ter, 14:30</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mn-teal/10 text-mn-teal font-bold text-xs">
+                              RA
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-mn-graphite truncate">Dr. Rafael Alcantara</p>
+                              <p className="text-[11px] font-medium text-mn-teal truncate">Cardiologia Clínica</p>
+                              <p className="text-[10px] text-mn-graphite/50 truncate">Centro Médico Integrado · Botafogo</p>
+                            </div>
+                          </div>
+
+                          {/* Status de Presença */}
+                          <div className="flex items-center justify-between rounded-xl bg-[#E8F3EE] px-2.5 py-1.5 text-[10px] font-bold text-mn-teal">
+                            <span>Presença confirmada</span>
+                            <span className="text-[9px] font-medium text-mn-graphite/60">Aviso WhatsApp</span>
+                          </div>
+                        </div>
+
+                        {/* Atalhos Rápidos Oficiais do App (Grid 2x2) */}
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] font-bold text-mn-graphite">O que você precisa hoje?</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="rounded-xl border border-mn-border bg-[#E8F3EE] p-2.5 text-mn-teal relative shadow-sm">
+                              <CalendarDays size={18} />
+                              <p className="mt-1 text-[11px] font-bold leading-tight">Agendar consulta</p>
+                              <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+                            </div>
+                            <div className="rounded-xl border border-mn-border bg-[#E6F4F1] p-2.5 text-mn-teal relative shadow-sm">
+                              <FlaskConical size={18} />
+                              <p className="mt-1 text-[11px] font-bold leading-tight">Exames e lab</p>
+                              <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+                            </div>
+                            <div className="rounded-xl border border-mn-border bg-[#E8F3EE] p-2.5 text-mn-teal relative shadow-sm">
+                              <Pill size={18} />
+                              <p className="mt-1 text-[11px] font-bold leading-tight">Meus remédios</p>
+                              <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+                            </div>
+                            <div className="rounded-xl border border-mn-border bg-[#F0EDF7] p-2.5 text-mn-purple relative shadow-sm">
+                              <FileText size={18} />
+                              <p className="mt-1 text-[11px] font-bold leading-tight">Documentos</p>
+                              <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Atalhos Rápidos Oficiais do App (Grid 2x2) */}
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-bold text-mn-graphite">O que você precisa hoje?</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-xl border border-mn-border bg-[#E8F3EE] p-2.5 text-mn-teal relative shadow-sm">
-                          <CalendarDays size={18} />
-                          <p className="mt-1 text-[11px] font-bold leading-tight">Agendar consulta</p>
-                          <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+                      {/* Barra de Abas Inferior (Tabs Oficiais do App) */}
+                      <div className="border-t border-mn-border/80 bg-white px-2 pt-2 pb-2 flex items-center justify-around relative z-10">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="flex h-5 w-8 items-center justify-center rounded-full bg-[#E8F3EE] text-mn-teal">
+                            <House size={13} />
+                          </div>
+                          <span className="text-[9px] font-bold text-mn-teal">Início</span>
                         </div>
-                        <div className="rounded-xl border border-mn-border bg-[#E6F4F1] p-2.5 text-mn-teal relative shadow-sm">
-                          <FlaskConical size={18} />
-                          <p className="mt-1 text-[11px] font-bold leading-tight">Exames e lab</p>
-                          <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+
+                        <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
+                          <Search size={13} />
+                          <span className="text-[9px] font-medium">Buscar</span>
                         </div>
-                        <div className="rounded-xl border border-mn-border bg-[#E8F3EE] p-2.5 text-mn-teal relative shadow-sm">
-                          <Pill size={18} />
-                          <p className="mt-1 text-[11px] font-bold leading-tight">Meus remédios</p>
-                          <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+
+                        <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
+                          <CalendarDays size={13} />
+                          <span className="text-[9px] font-medium">Consultas</span>
                         </div>
-                        <div className="rounded-xl border border-mn-border bg-[#F0EDF7] p-2.5 text-mn-purple relative shadow-sm">
-                          <FileText size={18} />
-                          <p className="mt-1 text-[11px] font-bold leading-tight">Documentos</p>
-                          <ArrowUpRight size={12} className="absolute top-2.5 right-2.5 opacity-60" />
+
+                        <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
+                          <Pill size={13} />
+                          <span className="text-[9px] font-medium">Remédios</span>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
+                          <FileText size={13} />
+                          <span className="text-[9px] font-medium">Documentos</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Barra de Abas Inferior (Tabs Oficiais do App) */}
-                  <div className="border-t border-mn-border/80 bg-white px-2 pt-2 pb-4 flex items-center justify-around">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="flex h-5 w-8 items-center justify-center rounded-full bg-[#E8F3EE] text-mn-teal">
-                        <House size={13} />
+                      {/* Home Indicator do iOS (Barra inferior física do iPhone) */}
+                      <div className="bg-white pb-2 pt-1 flex justify-center relative z-10">
+                        <div className="h-1 w-28 rounded-full bg-mn-graphite/35" />
                       </div>
-                      <span className="text-[9px] font-bold text-mn-teal">Início</span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
-                      <Search size={13} />
-                      <span className="text-[9px] font-medium">Buscar</span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
-                      <CalendarDays size={13} />
-                      <span className="text-[9px] font-medium">Consultas</span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
-                      <Pill size={13} />
-                      <span className="text-[9px] font-medium">Remédios</span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-0.5 text-mn-graphite/45">
-                      <FileText size={13} />
-                      <span className="text-[9px] font-medium">Documentos</span>
                     </div>
                   </div>
                 </div>
