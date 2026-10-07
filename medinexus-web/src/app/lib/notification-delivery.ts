@@ -30,7 +30,7 @@ export async function deliverMessage(input: { channel: "email" | "whatsapp"; kin
       const cleanTemplate=clean(template);
       if(cleanTemplate){
         params.set("ContentSid",cleanTemplate);
-        params.set("ContentVariables",JSON.stringify({"1":datePart,"2":`${timePart} (confira em ${appUrl}/solicitacoes)`}));
+        params.set("ContentVariables",JSON.stringify({"1":datePart,"2":timePart}));
       } else {
         params.set("Body",notificationText(input.kind,input.date,appUrl));
       }
