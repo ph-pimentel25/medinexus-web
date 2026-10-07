@@ -1,79 +1,316 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, Building2, CalendarDays, Check, ChevronDown, ClipboardList, FileText, HeartHandshake, MapPin, MessageCircle, Search, ShieldCheck, Stethoscope, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CalendarCheck,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  FileCheck,
+  FlaskConical,
+  Heart,
+  HeartHandshake,
+  Lock,
+  MapPin,
+  Pill,
+  Scale,
+  Search,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  TrendingDown,
+  UserRound,
+  Users,
+  Zap,
+} from "lucide-react";
 
-const audiences = [
-  { title: "Para quem busca cuidado", label: "Paciente", icon: UserRound, tone: "bg-mn-sage-light text-mn-teal", description: "Mais clareza para encontrar atendimento e acompanhar cada etapa.", items: ["Encontre profissionais por especialidade e localização.", "Solicite uma consulta e acompanhe a confirmação.", "Consulte seu histórico e os documentos liberados para você.", "Personalize seu perfil, escolha seus avisos e avalie o atendimento."], href: "/cadastro", action: "Criar meu cadastro" },
-  { title: "Para quem atende", label: "Médico", icon: Stethoscope, tone: "bg-mn-purple-light text-mn-purple", description: "Uma área de trabalho que reúne agenda, atendimento e registros.", items: ["Apresente seu perfil e suas especialidades.", "Organize a disponibilidade e acompanhe solicitações.", "Acesse os atendimentos e registre a evolução da consulta.", "Prepare documentos vinculados ao paciente e ao atendimento."], href: "/medico/cadastro", action: "Cadastrar como médico" },
-  { title: "Para quem organiza", label: "Clínica", icon: Building2, tone: "bg-mn-teal-light text-mn-teal", description: "Uma visão da equipe e da rotina de atendimento em um só lugar.", items: ["Gerencie os médicos vinculados à clínica.", "Acompanhe solicitações e confirmações de consultas.", "Mantenha endereço, contatos e convênios atualizados.", "Personalize a página da clínica com sua identidade."], href: "/clinica/cadastro", action: "Cadastrar minha clínica" },
+const principles = [
+  {
+    icon: UserRound,
+    title: "1. O Paciente no Centro de Tudo",
+    desc: "Acesso integralmente gratuito, transparência sobre preços e posse definitiva dos seus registros e exames.",
+  },
+  {
+    icon: Stethoscope,
+    title: "2. Respeito à Autonomia Médica",
+    desc: "Zero comissão sobre consultas particulares. A remuneração do profissional pertence integralmente a ele.",
+  },
+  {
+    icon: FlaskConical,
+    title: "3. Continuidade Real do Cuidado",
+    desc: "A consulta conecta-se aos exames laboratoriais e aos remédios, sem pontas soltas na jornada de cura.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "4. Ética, LGPD e Padrão CFM",
+    desc: "Segurança de dados clínicos rigorosa, criptografia de ponta a ponta e total conformidade regulatória.",
+  },
 ];
-const journey = [
-  { title: "Encontre", text: "Busque a especialidade e confira as opções de atendimento na região.", icon: Search },
-  { title: "Solicite", text: "Escolha uma opção disponível e envie sua solicitação de consulta.", icon: CalendarDays },
-  { title: "Acompanhe", text: "Veja o retorno do atendimento. O horário fica confirmado após a aprovação.", icon: MessageCircle },
-  { title: "Prepare-se", text: "Confira os dados da consulta, confirme sua presença quando solicitado e abra o trajeto.", icon: MapPin },
-  { title: "Continue", text: "Acesse os registros disponíveis para você e avalie a experiência após a consulta.", icon: ClipboardList },
+
+const nodes = [
+  {
+    title: "O Paciente",
+    badge: "100% Gratuito",
+    icon: UserRound,
+    desc: "Encontra médicos por dias e horários livres reais, confirma presença no WhatsApp, recebe receitas digitais no app e agenda exames com desconto em laboratórios credenciados.",
+  },
+  {
+    title: "O Médico",
+    badge: "0% de Comissão",
+    icon: Stethoscope,
+    desc: "Dispõe de prontuário eletrônico unificado, emissão de receitas com QR Code e assinatura digital, agenda anti-no-show e recebimento direto dos seus honorários.",
+  },
+  {
+    title: "A Clínica",
+    badge: "Gestão Integrada",
+    icon: Building2,
+    desc: "Orquestra equipe multidisciplinar, controle de salas, múltiplos convênios aceitos, confirmação de pacientes em tempo real e relatórios operacionais completos.",
+  },
+  {
+    title: "Rede de Exames & Farmácia",
+    badge: "Cuidado 360°",
+    icon: FlaskConical,
+    desc: "Conecta solicitações de exames diretamente a laboratórios parceiros com laudo digital e integra prescrições com farmácias para continuidade do tratamento.",
+  },
 ];
-const features = [
-  { icon: Search, title: "Uma busca com contexto", text: "Especialidade, localização e opções de atendimento ajudam a encontrar um profissional que faça sentido para sua necessidade." },
-  { icon: CalendarDays, title: "Consultas com etapas claras", text: "Solicitação recebida, consulta confirmada e presença são etapas diferentes. Você acompanha o andamento pela sua conta." },
-  { icon: FileText, title: "Informações do atendimento", text: "Consultas, histórico e documentos liberados ficam organizados na área do paciente, para facilitar a continuidade do cuidado." },
-  { icon: Building2, title: "Clínicas com identidade", text: "Uma página própria reúne a apresentação da clínica, sua equipe e os dados que ajudam você a planejar o atendimento." },
-  { icon: MapPin, title: "Do endereço ao trajeto", text: "Com os dados da consulta confirmada, abra a rota no seu aplicativo de mapas e planeje como chegar ao consultório." },
-  { icon: HeartHandshake, title: "Experiências que ajudam", text: "Após uma consulta concluída, pacientes podem avaliar médico e clínica, com a opção de ocultar seu nome na avaliação pública." },
+
+const compliance = [
+  {
+    title: "LGPD (Lei 13.709/2018)",
+    desc: "Tratamento de dados sensíveis de saúde baseado em consentimento expresso, anonimização e direito à exclusão integral da conta.",
+  },
+  {
+    title: "Conselho Federal de Medicina (CFM)",
+    desc: "Aderência estrita às resoluções CFM 1.821/2007 (prontuário digital) e 2.299/2021 (emissão segura de receitas e atestados eletrônicos).",
+  },
+  {
+    title: "Padrão ICP-Brasil",
+    desc: "Infraestrutura compatível com certificados digitais padrão ICP-Brasil (A1/A3 e nuvem) com carimbo de tempo para validade jurídica nacional.",
+  },
+  {
+    title: "Criptografia & Auditoria",
+    desc: "Banco de dados em nuvem isolada com criptografia AES-256 em repouso e TLS 1.3 em trânsito, com trilha de auditoria para cada acesso clínico.",
+  },
 ];
+
 const questions = [
-  { question: "O que é a MediNexus?", answer: "É uma plataforma que conecta pacientes, médicos e clínicas e organiza a jornada do atendimento: da busca por um profissional ao acompanhamento das consultas e dos documentos disponíveis. Cada perfil tem uma área própria, com as ações que fazem parte de sua rotina." },
-  { question: "A consulta já está confirmada quando faço uma solicitação?", answer: "A solicitação precisa ser analisada pelo atendimento. Acompanhe o status na sua conta e considere a consulta confirmada quando essa informação aparecer. Valores, cobertura de convênio e condições do atendimento devem ser conferidos com o profissional ou a clínica." },
-  { question: "Posso encontrar atendimento particular e por convênio?", answer: "A busca da plataforma web permite consultar essas modalidades conforme o cadastro dos profissionais e das clínicas. A disponibilidade varia por especialidade, agenda e plano. Confirme a cobertura e eventuais autorizações com o prestador antes da consulta." },
-  { question: "Todos os médicos encontrados podem ser agendados pela plataforma?", answer: "O agendamento pela MediNexus depende de o profissional estar cadastrado e ter atendimento disponível. Quando a busca de contatos externos estiver habilitada, esses resultados serão identificados separadamente e oferecerão os contatos disponíveis, sem reserva pela plataforma." },
-  { question: "Vou receber mensagens pelo WhatsApp ou por e-mail?", answer: "Você pode escolher os canais de aviso em seu perfil. O envio automático depende da ativação dos serviços de mensagem, que ainda está em preparação. Enquanto isso, acompanhe as solicitações e confirmações dentro da sua conta." },
-  { question: "Os documentos já têm assinatura digital certificada?", answer: "A integração da assinatura certificada está em implantação. A imagem da assinatura do médico, por si só, não certifica um documento. Até concluir a integração e a validação, os novos documentos permanecem em preparação e não são liberados como documentos certificados." },
-  { question: "Existe aplicativo para Android e iPhone?", answer: "A versão nativa para Android e iPhone está em desenvolvimento e ainda não foi publicada nas lojas. A plataforma web pode ser acessada pelo navegador do celular, com telas adaptadas para esse formato." },
+  {
+    question: "O que é a MediNexus?",
+    answer:
+      "A MediNexus é uma healthtech brasileira criada para conectar todos os elos do cuidado de saúde: pacientes, médicos autônomos, clínicas médicas e centros diagnósticos laboratoriais. Somos um sistema operacional de saúde que une busca inteligente, agendamento sem no-show, prontuário digital unificado e gestão de medicamentos.",
+  },
+  {
+    question: "Por que a plataforma é 100% gratuita para pacientes?",
+    answer:
+      "Acreditamos que cobrar taxas de conveniência ou comissões dos pacientes cria barreiras desnecessárias ao cuidado preventivo. Toda a experiência para o paciente (agendamento, prontuário, lembretes de remédios, cotação de farmácia e descontos em exames) é e sempre será 100% gratuita.",
+  },
+  {
+    question: "Como a MediNexus se sustenta sem cobrar comissões dos médicos?",
+    answer:
+      "Enquanto outras plataformas cobram até 30% de comissão sobre cada consulta, a MediNexus adota o modelo de Software como Serviço (SaaS). Oferecemos planos de ferramentas de alta produtividade (como assinatura ICP-Brasil, automações de recepção e relatórios corporativos) para consultórios e clínicas que desejam profissionalizar sua gestão.",
+  },
+  {
+    question: "Como funciona a rede de laboratórios e exames parceiros?",
+    answer:
+      "A MediNexus possui convênio com redes diagnósticas reconhecidas (como Dasa, Fleury e centros parceiros). Quando um médico solicita exames de sangue ou imagem na plataforma, o paciente pode agendar na unidade credenciada com condições especiais e receber o laudo digital integrado ao seu prontuário.",
+  },
+  {
+    question: "Como funciona a confirmação de presença e redução de faltas?",
+    answer:
+      "Quando uma consulta é solicitada e confirmada pela clínica, o paciente recebe um lembrete com opção de confirmar sua presença com um toque. Isso permite que a clínica reduza o no-show e remaneje horários vagos para outros pacientes que necessitam de atendimento.",
+  },
+  {
+    question: "Existe aplicativo móvel para celular?",
+    answer:
+      "Sim! O aplicativo móvel MediNexus está desenvolvido com suporte para iOS e Android, permitindo acesso nativo à carteira de remédios, alarmes diários, calendário de consultas e rotas GPS para os consultórios.",
+  },
 ];
 
 export default function SobrePage() {
-  return <main className="min-h-screen bg-mn-sand text-mn-graphite">
-    <section className="border-b border-mn-border" aria-labelledby="about-title">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-10 lg:py-20">
-        <div>
-          <p className="mn-eyebrow">Conheça a MediNexus</p>
-          <h1 id="about-title" className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight text-mn-teal sm:text-5xl lg:text-6xl">Mais conexão.<br/>Mais clareza para cuidar.</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-mn-graphite/80">Reunimos pacientes, médicos e clínicas para organizar o que acontece antes, durante e depois da consulta.</p>
-          <p className="mt-4 max-w-2xl leading-7 text-mn-graphite/75">Encontrar atendimento, entender a confirmação de um horário e localizar um documento fazem parte do cuidado. A MediNexus aproxima essas etapas para que cada pessoa saiba onde encontrar as informações de que precisa.</p>
-          <div className="mt-8 flex flex-wrap gap-3"><Link href="/cadastro" className="mn-button">Faça parte <ArrowUpRight size={17}/></Link><a href="#como-funciona" className="mn-button-secondary">Entenda como funciona <ArrowDown size={17}/></a></div>
+  return (
+    <main className="min-h-screen bg-mn-sand text-mn-graphite overflow-x-hidden">
+      {/* Header / Hero Manifesto */}
+      <section className="relative overflow-hidden border-b border-mn-border">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(122,157,140,0.28),transparent_35%),radial-gradient(circle_at_86%_16%,rgba(90,76,134,0.24),transparent_32%)] pointer-events-none" />
+
+        <div className="relative mx-auto max-w-[1500px] px-6 py-16 sm:px-10 lg:px-14 lg:py-24">
+          <div className="max-w-4xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-mn-border bg-white/70 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-mn-teal shadow-sm backdrop-blur-xl">
+              <HeartHandshake size={14} className="text-mn-teal" />
+              <span>Manifesto MediNexus</span>
+            </div>
+
+            <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-mn-graphite sm:text-6xl lg:text-[4.75rem]">
+              A tecnologia a favor da vida. A saúde conectada sem atrito.
+            </h1>
+
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-mn-graphite/75 sm:text-xl">
+              No Brasil, informações de saúde frequentemente se perdem entre papéis amassados, conversas de WhatsApp e
+              exames esquecidos na gaveta. Nascemos para integrar essa jornada com clareza, ética e tecnologia de
+              ponta.
+            </p>
+          </div>
         </div>
-        <aside className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm sm:p-8" aria-label="A conexão entre os três perfis">
-          <span className="inline-flex rounded-xl bg-mn-sage-light p-3 text-mn-teal"><HeartHandshake size={27} strokeWidth={1.5}/></span>
-          <h2 className="mt-5 text-2xl font-semibold tracking-tight">O cuidado conecta todos nós.</h2>
-          <p className="mt-3 text-sm leading-6 text-mn-graphite/75">Uma mesma jornada, com um espaço para cada papel.</p>
-          <div className="mt-6 divide-y divide-mn-border">{audiences.map(({label,icon:Icon,tone},i)=><div key={label} className="flex items-center gap-4 py-4"><span className={`rounded-xl p-2.5 ${tone}`}><Icon size={21} strokeWidth={1.7}/></span><div><h3 className="font-semibold">{label}</h3><p className="mt-1 text-sm text-mn-graphite/75">{["Encontra e acompanha","Atende e registra","Organiza e acolhe"][i]}</p></div><span className="ml-auto text-xs font-medium text-mn-teal" aria-hidden="true">0{i+1}</span></div>)}</div>
-        </aside>
-      </div>
-    </section>
+      </section>
 
-    <section aria-labelledby="purpose-title" className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-10 lg:py-20">
-      <div><p className="mn-eyebrow">Nosso propósito</p><h2 id="purpose-title" className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">Aproximar pessoas.<br/>Organizar o cuidado.</h2></div>
-      <div className="space-y-5 leading-8 text-mn-graphite/80"><p>Na rotina de saúde, informações importantes acabam espalhadas entre agendas, conversas e arquivos. A proposta da MediNexus é reunir essas etapas em uma experiência compreensível, com acesso adequado a cada perfil.</p><p>Para o paciente, isso significa acompanhar o próprio atendimento. Para o médico, manter a rotina e os registros organizados. Para a clínica, conectar a equipe à operação e apresentar melhor seus serviços.</p><p className="border-l-2 border-mn-sage pl-5 font-medium text-mn-teal">A tecnologia apoia a organização. O cuidado e as decisões clínicas continuam nas mãos das pessoas e dos profissionais responsáveis.</p></div>
-    </section>
+      {/* Propósito e Pilares Inegociáveis */}
+      <section className="py-20 sm:py-28 border-b border-mn-border bg-white/50">
+        <div className="mx-auto max-w-[1500px] px-6 sm:px-10 lg:px-14">
+          <div className="max-w-3xl mb-16">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-mn-teal">Nossos Pilares</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-mn-graphite sm:text-5xl">
+              Princípios que guiam cada linha de código que escrevemos.
+            </h2>
+          </div>
 
-    <section id="para-quem" aria-labelledby="audience-title" className="scroll-mt-24 border-y border-mn-border bg-white/60">
-      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-        <p className="mn-eyebrow">Para quem fazemos</p><h2 id="audience-title" className="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">Três perfis. Uma jornada compartilhada.</h2>
-        <div className="mt-9 grid gap-5 lg:grid-cols-3">{audiences.map(({label,title,icon:Icon,tone,description,items,href,action})=><article key={label} className="flex flex-col rounded-2xl border border-mn-border bg-white p-6 sm:p-7"><div className="flex items-center gap-3"><span className={`rounded-xl p-3 ${tone}`}><Icon size={23} strokeWidth={1.6}/></span><p className="text-xs font-semibold uppercase tracking-widest text-mn-teal">{label}</p></div><h3 className="mt-6 text-xl font-semibold">{title}</h3><p className="mt-3 text-sm leading-7 text-mn-graphite/75">{description}</p><ul className="my-6 space-y-4">{items.map(item=><li key={item} className="flex items-start gap-2.5 text-sm leading-6"><Check size={17} className="mt-1 shrink-0 text-mn-teal"/><span>{item}</span></li>)}</ul><Link href={href} className="mt-auto inline-flex min-h-11 items-center gap-2 border-t border-mn-border pt-4 text-sm font-semibold text-mn-teal">{action}<ArrowUpRight size={16}/></Link></article>)}</div>
-      </div>
-    </section>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {principles.map((p) => (
+              <div
+                key={p.title}
+                className="rounded-3xl border border-mn-border bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-mn-teal/30"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mn-sand text-mn-teal mb-6">
+                  <p.icon size={22} />
+                </div>
+                <h3 className="text-lg font-bold text-mn-graphite">{p.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-mn-graphite/70">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-    <section id="como-funciona" aria-labelledby="journey-title" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-      <p className="mn-eyebrow">Da busca ao acompanhamento</p><h2 id="journey-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Como acontece na prática.</h2><p className="mt-4 max-w-2xl leading-7 text-mn-graphite/75">Cada etapa tem uma informação e um próximo passo. Você acompanha o andamento pela sua conta.</p>
-      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{journey.map(({title,text,icon:Icon},i)=><li key={title} className="rounded-2xl border border-mn-border bg-white p-5"><div className="flex items-center justify-between text-mn-teal"><Icon size={23} strokeWidth={1.6}/><span className="text-xs font-semibold" aria-label={`Etapa ${i+1}`}>0{i+1}</span></div><h3 className="mt-6 text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-7 text-mn-graphite/75">{text}</p></li>)}</ol>
-    </section>
+      {/* Os 4 Nós da Arquitetura MediNexus */}
+      <section className="py-20 sm:py-28 border-b border-mn-border">
+        <div className="mx-auto max-w-[1500px] px-6 sm:px-10 lg:px-14">
+          <div className="max-w-3xl mb-16">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-mn-teal">Arquitetura Integrada</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-mn-graphite sm:text-5xl">
+              Como os 4 nós do ecossistema se conectam.
+            </h2>
+            <p className="mt-4 text-base text-mn-graphite/70">
+              Não somos um simples diretório de médicos. Somos a infraestrutura que acompanha o paciente desde a dor até a
+              cura completa.
+            </p>
+          </div>
 
-    <section aria-labelledby="features-title" className="border-y border-mn-border bg-white/60"><div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10 lg:py-20"><p className="mn-eyebrow">O que você encontra</p><h2 id="features-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Recursos que fazem parte da rotina.</h2><div className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">{features.map(({icon:Icon,title,text})=><article key={title}><Icon size={23} className="text-mn-purple" strokeWidth={1.6}/><h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-7 text-mn-graphite/75">{text}</p></article>)}</div></div></section>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {nodes.map((node) => (
+              <div
+                key={node.title}
+                className="flex flex-col rounded-3xl border border-mn-border bg-white p-8 shadow-sm relative overflow-hidden"
+              >
+                <span className="inline-flex self-start rounded-full bg-mn-sand px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-mn-teal border border-mn-border mb-4">
+                  {node.badge}
+                </span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mn-teal text-white mb-4">
+                  <node.icon size={22} />
+                </div>
+                <h3 className="text-xl font-black text-mn-graphite">{node.title}</h3>
+                <p className="mt-3 text-xs leading-relaxed text-mn-graphite/75 flex-1">{node.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-    <section aria-labelledby="trust-title" className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10 lg:py-20"><div className="grid gap-8 rounded-2xl bg-mn-teal p-6 text-white sm:p-9 lg:grid-cols-[0.8fr_1.2fr] lg:p-12"><div><ShieldCheck size={30} strokeWidth={1.5} className="text-mn-sage-light"/><h2 id="trust-title" className="mt-5 text-3xl font-semibold leading-tight tracking-tight">Informação com contexto e responsabilidade.</h2><p className="mt-5 text-sm leading-7 text-white/85">Dados de saúde exigem cuidado. A experiência considera quem está acessando a plataforma e qual informação faz parte daquele atendimento.</p></div><div className="space-y-6"><div><h3 className="font-semibold">Cada perfil tem seu espaço</h3><p className="mt-2 text-sm leading-7 text-white/85">Paciente, médico e clínica têm áreas e permissões próprias. O paciente acessa os documentos liberados para ele.</p></div><div><h3 className="font-semibold">Você escolhe os canais de aviso</h3><p className="mt-2 text-sm leading-7 text-white/85">As preferências de e-mail e WhatsApp ficam no perfil. Os envios dependem de sua autorização e da disponibilidade dos serviços.</p></div><div><h3 className="font-semibold">Avaliações com identificação opcional</h3><p className="mt-2 text-sm leading-7 text-white/85">Nas avaliações públicas de médicos e clínicas, você pode ocultar seu nome. Evite incluir informações pessoais ou clínicas no comentário.</p></div></div></div></section>
+      {/* Segurança, LGPD & CFM */}
+      <section className="py-20 sm:py-24 bg-white/70 border-b border-mn-border">
+        <div className="mx-auto max-w-[1500px] px-6 sm:px-10 lg:px-14">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div>
+              <span className="inline-flex rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1 text-xs font-bold text-emerald-800">
+                Segurança Jurídica & Sanitária
+              </span>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-mn-graphite sm:text-4xl">
+                Seus dados clínicos protegidos com rigor inegociável.
+              </h2>
+              <p className="mt-4 text-base text-mn-graphite/75 leading-relaxed">
+                Saúde exige respeito absoluto ao sigilo médico. A MediNexus foi projetada desde o dia zero para atender às
+                mais estritas normas regulatórias de proteção de dados e conselhos profissionais do país.
+              </p>
 
-    <section id="duvidas" aria-labelledby="faq-title" className="mx-auto grid max-w-7xl scroll-mt-24 gap-8 px-5 pb-14 sm:px-8 lg:grid-cols-[0.7fr_1.3fr] lg:px-10 lg:pb-20"><div><p className="mn-eyebrow">Antes de começar</p><h2 id="faq-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Dúvidas frequentes.</h2><p className="mt-5 leading-7 text-mn-graphite/75">Entenda como usar a plataforma e o que está em preparação.</p></div><div className="space-y-3">{questions.map(({question,answer})=><details key={question} className="group rounded-2xl border border-mn-border bg-white"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-2xl p-5 font-semibold marker:content-none [&::-webkit-details-marker]:hidden"><span>{question}</span><ChevronDown size={18} className="shrink-0 text-mn-teal transition-transform group-open:rotate-180"/></summary><p className="px-5 pb-5 text-sm leading-7 text-mn-graphite/80">{answer}</p></details>)}</div></section>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {compliance.map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-mn-border bg-white p-5 shadow-sm">
+                    <h3 className="text-xs font-bold text-mn-teal">{item.title}</h3>
+                    <p className="mt-1.5 text-xs text-mn-graphite/70 leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-    <section aria-labelledby="start-title" className="border-t border-mn-border bg-mn-sage-light/50"><div className="mx-auto flex max-w-7xl flex-col gap-7 px-5 py-12 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10"><div><h2 id="start-title" className="text-2xl font-semibold tracking-tight text-mn-teal sm:text-3xl">Seu próximo passo começa aqui.</h2><p className="mt-3 leading-7 text-mn-graphite/80">Conheça as clínicas e profissionais ou escolha seu perfil para participar.</p></div><div className="flex flex-wrap gap-3"><Link href="/cadastro" className="mn-button">Criar minha conta <ArrowUpRight size={16}/></Link><Link href="/clinicas" className="mn-button-secondary">Conhecer as clínicas</Link></div></div></section>
-  </main>;
+            {/* Quadro Ilustrativo de Compromisso */}
+            <div className="rounded-3xl bg-gradient-to-br from-mn-teal via-mn-graphite to-mn-purple p-8 text-white shadow-xl">
+              <ShieldCheck size={36} className="text-mn-sage-light mb-4" />
+              <h3 className="text-2xl font-bold tracking-tight">O paciente é o único dono do seu histórico.</h3>
+              <p className="mt-3 text-sm text-white/80 leading-relaxed">
+                Médicos e clínicas apenas registram as evoluções clínicas do atendimento. O paciente tem autonomia total
+                para visualizar, compartilhar com outros especialistas ou solicitar a revogação de acessos a qualquer
+                momento.
+              </p>
+              <div className="mt-6 border-t border-white/10 pt-4 flex items-center justify-between text-xs text-white/60">
+                <span>Certificado SSL/TLS 1.3</span>
+                <span>Armazenamento Criptografado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dúvidas Frequentes Institucionais */}
+      <section className="py-20 sm:py-24 border-b border-mn-border">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10">
+          <div className="text-center mb-14">
+            <p className="text-xs font-bold uppercase tracking-wider text-mn-teal">Transparência Total</p>
+            <h2 className="mt-2 text-3xl font-black text-mn-graphite sm:text-4xl">Perguntas Frequentes</h2>
+          </div>
+
+          <div className="space-y-4">
+            {questions.map((faq) => (
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-mn-border bg-white p-5 transition shadow-sm"
+              >
+                <summary className="flex cursor-pointer items-center justify-between font-bold text-sm text-mn-graphite">
+                  <span>{faq.question}</span>
+                  <ChevronDown size={18} className="text-mn-teal transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-xs leading-relaxed text-mn-graphite/75 border-t border-mn-border/50 pt-3">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-20 px-6 sm:px-10 lg:px-14">
+        <div className="mx-auto max-w-[1500px] rounded-3xl bg-mn-sand border border-mn-border p-10 sm:p-14 text-center">
+          <h2 className="text-2xl font-black text-mn-graphite sm:text-4xl">
+            Pronto para fazer parte da evolução da saúde?
+          </h2>
+          <p className="mt-3 text-sm text-mn-graphite/70 max-w-xl mx-auto">
+            Crie sua conta gratuita em menos de 2 minutos ou cadastre sua clínica para organizar seus atendimentos.
+          </p>
+          <div className="mt-8 flex justify-center flex-wrap gap-4">
+            <Link
+              href="/cadastro"
+              className="rounded-full bg-mn-teal px-8 py-3.5 text-xs font-bold text-white shadow-md hover:bg-[#123B46]"
+            >
+              Criar minha conta
+            </Link>
+            <Link
+              href="/descobrir"
+              className="rounded-full border border-mn-border bg-white px-8 py-3.5 text-xs font-bold text-mn-graphite hover:bg-mn-sand"
+            >
+              Buscar profissionais na rede
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }

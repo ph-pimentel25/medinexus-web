@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import { completeRegistration, type Registration } from "../lib/registration";
 import { useAuth } from "./auth-provider";
 import { isValidCnpj, formatCnpj } from "../lib/cnpj";
+import { formatPhone } from "../lib/masks";
 import { MIN_PASSWORD_LENGTH, isValidNewPassword } from "../lib/password-policy";
 import { getRoleDashboardPath } from "../lib/auth";
 
@@ -385,7 +386,7 @@ export default function RegistrationForm({ initialAccountType = "patient" }: { i
                           </label>
                           <input
                             value={clinicPhone}
-                            onChange={(event) => setClinicPhone(event.target.value)}
+                            onChange={(event) => setClinicPhone(formatPhone(event.target.value))}
                             placeholder="(21) 99999-9999"
                             className="w-full rounded-2xl border border-mn-border bg-white px-4 py-4 text-sm text-mn-graphite outline-none transition placeholder:text-mn-graphite/35 focus:border-mn-teal"
                           />

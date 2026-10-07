@@ -1,192 +1,271 @@
-﻿import Link from "next/link";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronDown,
+  Clock,
+  FileCheck,
+  FlaskConical,
+  HelpCircle,
+  Pill,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  TrendingDown,
+  User,
+  Zap,
+} from "lucide-react";
 
-const packages = [
-  { name: "Gratuito", eyebrow: "Médicos e clínicas", price: "Sem comissão", description: "Nesta fase, a MediNexus não cobra comissão sobre consultas particulares intermediadas pela plataforma.", features: ["Agenda e solicitações", "Atendimento e documentos", "Perfil na rede MediNexus"], href: "/cadastro", cta: "Cadastrar profissional", featured: false },
-  { name: "Profissional", eyebrow: "Para médicos", price: "Sem comissão", description: "Organize agenda, atendimentos e documentos. As condições dos futuros planos profissionais ainda estão em definição.", features: ["Organização da rotina médica", "Gestão de consultas e documentos", "Sem cobrança automática na adesão"], href: "/cadastro", cta: "Conhecer como médico", featured: true },
-  { name: "Clínica / Premium", eyebrow: "Para a equipe", price: "Sem comissão", description: "Centralize a rotina da equipe e da clínica. As condições dos futuros pacotes ainda estão em definição.", features: ["Gestão de médicos e clínica", "Agenda e solicitações da equipe", "Sem cobrança automática na adesão"], href: "/cadastro", cta: "Cadastrar clínica", featured: false },
+const plans = [
+  {
+    name: "Paciente",
+    badge: "100% Gratuito Para Sempre",
+    badgeTone: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    price: "R$ 0",
+    priceSub: "sem mensalidades ou taxas de uso",
+    description: "Acesso integral e vitalício a todas as ferramentas de saúde para você e sua família.",
+    features: [
+      "Busca inteligente por disponibilidade e especialidade",
+      "Agendamento de consultas sem taxas de intermediação",
+      "Controle e lembretes diários de medicamentos no app",
+      "Prontuário unificado com receitas e atestados digitais",
+      "Descontos exclusivos em exames na rede de laboratórios parceiros",
+      "Cotação rápida de medicamentos em farmácias credenciadas",
+      "Suporte via WhatsApp e Assistente IA 24/7",
+    ],
+    cta: "Criar Conta Gratuita",
+    href: "/cadastro?tipo=patient",
+    featured: false,
+  },
+  {
+    name: "Médico Starter",
+    badge: "Piloto Gratuito · 0% Comissão",
+    badgeTone: "bg-mn-teal/10 text-mn-teal border-mn-teal/20",
+    price: "R$ 0",
+    priceSub: "zero comissão sobre suas consultas",
+    description: "Ideal para médicos autônomos que desejam organizar agenda e prontuário sem custos predatórios.",
+    features: [
+      "Algoritmo de encaixe de agenda em blocos de 15 minutos",
+      "Prontuário eletrônico ágil e evolução clínica",
+      "Emissão de receitas digitais e atestados estruturados",
+      "100% dos seus honorários são seus (0% de comissão retida)",
+      "Confirmação ativa de presença de pacientes para reduzir faltas",
+      "Perfil público na rede de busca geolocalizada",
+    ],
+    cta: "Cadastrar como Médico",
+    href: "/cadastro?tipo=doctor",
+    featured: false,
+  },
+  {
+    name: "Médico Pro",
+    badge: "Mais Popular · Especialistas",
+    badgeTone: "bg-amber-50 text-amber-800 border-amber-200",
+    price: "R$ 149",
+    priceSub: "/ mês (30 dias grátis para testar)",
+    description: "Para médicos com alto volume de atendimentos que buscam máxima produtividade e certificação.",
+    features: [
+      "Todos os recursos do plano Médico Starter",
+      "Assinatura digital ICP-Brasil com carimbo de tempo",
+      "Disparo automático de lembretes e confirmações no WhatsApp",
+      "Histórico clínico compartilhado entre especialidades (com consentimento)",
+      "Relatórios de produtividade, faturamento e retenção de pacientes",
+      "Destaque de perfil verificado nas buscas",
+      "Suporte prioritário via WhatsApp com gerente de conta",
+    ],
+    cta: "Experimentar 30 dias grátis",
+    href: "/cadastro?tipo=doctor",
+    featured: true,
+  },
+  {
+    name: "Clínicas & Laboratórios",
+    badge: "Equipes & Centros de Saúde",
+    badgeTone: "bg-purple-50 text-purple-700 border-purple-200",
+    price: "R$ 349",
+    priceSub: "/ mês (para até 5 profissionais)",
+    description: "Centralize a operação da clínica, secretárias, múltiplos médicos e parcerias com laboratórios de diagnóstico.",
+    features: [
+      "Painel de recepção multi-atendente em tempo real",
+      "Gestão de múltiplos consultórios, salas e especialidades",
+      "Roteamento inteligente de agenda para toda a equipe",
+      "Módulo de conexão com laboratórios para exames com laudo digital",
+      "Gestão detalhada de convênios aceitos por profissional",
+      "Relatórios gerenciais de ocupação e taxa de no-show da clínica",
+      "Treinamento e onboarding guiado para a equipe de recepção",
+    ],
+    cta: "Falar com consultor de clínicas",
+    href: "https://wa.me/5521979828341?text=Ol%C3%A1%2C%20gostaria%20de%20conhecer%20o%20plano%20para%20Cl%C3%ADnicas%20do%20MediNexus.",
+    featured: false,
+  },
+];
+
+const faqs = [
+  {
+    q: "O paciente realmente não paga nada pelo uso da plataforma?",
+    a: "Sim, exatamente! A MediNexus é 100% gratuita para pacientes. Não cobramos mensalidade, taxa de conveniência nem percentual sobre consultas ou exames. Nas consultas particulares, o paciente paga apenas o valor do atendimento diretamente ao profissional ou clínica.",
+  },
+  {
+    q: "A MediNexus cobra comissão sobre as consultas dos médicos?",
+    a: "Não cobramos comissão! Enquanto outras plataformas retêm entre 15% e 30% de cada consulta médica, na MediNexus o médico fica com 100% dos seus honorários. Nosso modelo de sustentabilidade é baseado em planos mensais de software e infraestrutura para consultórios e clínicas.",
+  },
+  {
+    q: "Existe taxa de adesão ou fidelidade obrigatória nos planos?",
+    a: "Não há fidelidade nem taxas de cancelamento. Você pode cancelar sua assinatura médica ou de clínica a qualquer momento com apenas um clique e exportar todos os seus dados e prontuários com total segurança jurídica.",
+  },
+  {
+    q: "Como funciona a parceria com laboratórios de exames?",
+    a: "A MediNexus credencia centros diagnósticos e laboratórios de análises clínicas. Quando o médico prescreve um exame, o paciente pode agendá-lo diretamente na rede credenciada com condições especiais e descontos de até 30%, recebendo o laudo digital integrado ao seu prontuário.",
+  },
 ];
 
 export default function PacotesPage() {
   return (
     <main className="min-h-screen bg-mn-sand text-mn-graphite">
+      {/* Header / Hero de Planos */}
       <section className="relative overflow-hidden border-b border-mn-border">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(122,157,140,0.24),transparent_30%),radial-gradient(circle_at_86%_18%,rgba(90,76,134,0.20),transparent_32%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(122,157,140,0.25),transparent_32%),radial-gradient(circle_at_86%_18%,rgba(90,76,134,0.22),transparent_32%)] pointer-events-none" />
 
-        <div className="relative mx-auto max-w-[1500px] px-6 py-20 sm:px-10 lg:px-14 lg:py-28">
-          <div className="max-w-5xl">
-            <div className="mb-7 inline-flex rounded-full border border-mn-border bg-white/65 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-mn-teal shadow-sm backdrop-blur-xl">
-              Pacotes MediNexus
+        <div className="relative mx-auto max-w-[1500px] px-6 py-16 sm:px-10 lg:px-14 lg:py-24">
+          <div className="max-w-4xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-mn-border bg-white/70 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-mn-teal shadow-sm backdrop-blur-xl">
+              <Sparkles size={14} className="text-mn-teal" />
+              <span>Transparência e Equidade em Saúde</span>
             </div>
 
-            <h1 className="max-w-6xl text-[4rem] font-semibold leading-[0.92] tracking-[-0.075em] text-mn-graphite sm:text-[5.6rem] lg:text-[7rem]">
-              Planos para profissionais. Acesso gratuito para pacientes.
+            <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-mn-graphite sm:text-6xl lg:text-[4.75rem]">
+              100% Gratuito para pacientes. Ferramentas de alta performance para médicos e clínicas.
             </h1>
 
-            <p className="mt-8 max-w-3xl text-xl leading-9 text-mn-graphite/70">
-              Pacientes têm acesso integral e gratuito à MediNexus, sem assinatura ou plano premium.
-              O valor de uma consulta particular é informado antes do pagamento.
-              Os planos abaixo são destinados exclusivamente a médicos e clínicas.
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-mn-graphite/75 sm:text-xl">
+              Acreditamos que o acesso à saúde não deve ser intermediado por taxas predatórias. Pacientes nunca pagam
+              para usar a MediNexus, e profissionais contam com tecnologia de ponta com <strong className="text-mn-teal">zero comissão</strong> sobre honorários.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1500px] px-6 py-20 sm:px-10 lg:px-14">
-        <div className="grid gap-6 lg:grid-cols-3">
-          {packages.map((item) => (
+      {/* Grid de Pacientes e Planos Profissionais */}
+      <section className="mx-auto max-w-[1500px] px-6 py-16 sm:px-10 lg:px-14">
+        {/* Banner de Garantia ao Paciente */}
+        <div className="mb-12 rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-mn-sand p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
+              <ShieldCheck size={26} />
+            </div>
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                Compromisso MediNexus com Pacientes
+              </span>
+              <h2 className="text-xl font-black text-mn-graphite mt-1">
+                Acesso gratuito para agendar consultas, gerenciar remédios e exames
+              </h2>
+              <p className="text-sm text-mn-graphite/70 mt-1">
+                Você nunca será cobrado para criar sua conta, pesquisar médicos ou receber suas receitas digitais.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/cadastro?tipo=patient"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-700 px-7 text-xs font-bold text-white shadow-md transition hover:bg-emerald-800 shrink-0"
+          >
+            Cadastrar como Paciente
+          </Link>
+        </div>
+
+        {/* Grid com os 4 Planos */}
+        <div className="grid gap-8 lg:grid-cols-4">
+          {plans.map((item) => (
             <article
               key={item.name}
-              className={`relative overflow-hidden rounded-[2.6rem] border p-8 shadow-[0_35px_100px_-80px_rgba(46,57,63,0.75)] transition hover:-translate-y-1 ${
+              className={`relative flex flex-col rounded-[2.5rem] border p-8 transition-all hover:-translate-y-1.5 duration-300 shadow-sm ${
                 item.featured
-                  ? "border-mn-teal bg-gradient-to-br from-mn-teal via-mn-graphite to-mn-purple text-white"
-                  : "border-mn-border bg-white/70 text-mn-graphite backdrop-blur"
+                  ? "border-mn-teal bg-gradient-to-br from-white via-mn-sand to-mn-teal/5 shadow-xl ring-2 ring-mn-teal/20"
+                  : "border-mn-border bg-white"
               }`}
             >
-              {item.featured && (
-                <div className="absolute right-6 top-6 rounded-full bg-white/14 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/75 backdrop-blur">
-                  Destaque
-                </div>
-              )}
-
-              <p
-                className={`text-xs font-semibold uppercase tracking-[0.22em] ${
-                  item.featured ? "text-white/50" : "text-mn-sage"
-                }`}
-              >
-                {item.eyebrow}
-              </p>
-
-              <h2 className="mt-5 text-4xl font-semibold tracking-[-0.06em]">
-                {item.name}
-              </h2>
-
-              <p
-                className={`mt-3 text-2xl font-semibold tracking-[-0.04em] ${
-                  item.featured ? "text-white" : "text-mn-teal"
-                }`}
-              >
-                {item.price}
-              </p>
-
-              <p
-                className={`mt-5 min-h-[96px] text-sm leading-7 ${
-                  item.featured ? "text-white/68" : "text-mn-graphite/66"
-                }`}
-              >
-                {item.description}
-              </p>
-
-              <div
-                className={`my-7 h-px ${
-                  item.featured ? "bg-white/12" : "bg-mn-border"
-                }`}
-              />
-
-              <div className="space-y-4">
-                {item.features.map((feature) => (
-                  <div key={feature} className="flex gap-3">
-                    <span
-                      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                        item.featured ? "bg-mn-sage" : "bg-mn-teal"
-                      }`}
-                    />
-
-                    <p
-                      className={`text-sm leading-6 ${
-                        item.featured ? "text-white/78" : "text-mn-graphite/70"
-                      }`}
-                    >
-                      {feature}
-                    </p>
-                  </div>
-                ))}
+              {/* Badge de Destaque */}
+              <div className="flex items-center justify-between">
+                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-bold ${item.badgeTone}`}>
+                  {item.badge}
+                </span>
               </div>
 
+              <h3 className="mt-5 text-2xl font-black tracking-tight text-mn-graphite">{item.name}</h3>
+
+              {/* Preço */}
+              <div className="mt-4 flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-mn-teal sm:text-4xl">{item.price}</span>
+                <span className="text-xs font-medium text-mn-graphite/60">{item.priceSub}</span>
+              </div>
+
+              <p className="mt-4 min-h-[48px] text-xs leading-relaxed text-mn-graphite/70">{item.description}</p>
+
+              <div className="my-6 h-px bg-mn-border" />
+
+              {/* Features do Plano */}
+              <ul className="space-y-3.5 mb-8 flex-1">
+                {item.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5 text-xs text-mn-graphite/85">
+                    <Check size={16} className="mt-0.5 shrink-0 text-mn-teal" />
+                    <span className="leading-snug">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Botão de Ação */}
               <Link
                 href={item.href}
-                className={`mt-8 inline-flex h-13 items-center justify-center rounded-full px-7 py-4 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                className={`inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-xs font-bold transition ${
                   item.featured
-                    ? "bg-white text-mn-teal hover:bg-mn-sand"
-                    : "bg-mn-teal text-white hover:bg-[#123B46]"
+                    ? "bg-mn-teal text-white shadow-md hover:bg-[#123B46]"
+                    : "border border-mn-border bg-mn-sand text-mn-graphite hover:bg-white hover:border-mn-teal"
                 }`}
               >
-                {item.cta}
+                <span>{item.cta}</span>
+                <ArrowRight size={14} />
               </Link>
             </article>
           ))}
         </div>
       </section>
 
-      <p className="app-shell pb-10 text-sm leading-6 text-mn-graphite/70">A MediNexus não cobra comissão nesta fase. Consultas particulares continuam com o valor informado pelo profissional ou pela clínica. Eventuais tarifas do provedor de pagamento são separadas e serão informadas antes da ativação. O cadastro não inicia uma cobrança.</p>
-      <section className="border-y border-mn-border bg-white/50">
-        <div className="mx-auto grid max-w-[1500px] gap-12 px-6 py-20 sm:px-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-14">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-mn-purple">
-              Por que escolher
-            </p>
-
-            <h2 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.02] tracking-[-0.065em] text-mn-graphite">
-              Uma estrutura para a saúde funcionar melhor.
-            </h2>
+      {/* Dúvidas Frequentes sobre Planos e Preços */}
+      <section className="border-t border-mn-border bg-white/60 py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10">
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-wider text-mn-teal">Tire suas dúvidas</p>
+            <h2 className="mt-2 text-3xl font-black text-mn-graphite sm:text-4xl">Perguntas sobre planos e condições</h2>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                title: "Fluxo único",
-                text: "Consulta, confirmação, atendimento e documento dentro da mesma jornada.",
-              },
-              {
-                title: "Experiência clara",
-                text: "Cada usuário entende o que precisa fazer e o que já aconteceu.",
-              },
-              {
-                title: "Operação escalável",
-                text: "A plataforma cresce junto com médicos, clínicas e pacientes.",
-              },
-            ].map((item) => (
-              <article key={item.title} className="border-t border-mn-border pt-7">
-                <h3 className="text-2xl font-semibold tracking-[-0.045em] text-mn-teal">
-                  {item.title}
-                </h3>
-
-                <p className="mt-4 text-sm leading-7 text-mn-graphite/66">
-                  {item.text}
+          <div className="space-y-4">
+            {faqs.map((faq) => (
+              <details
+                key={faq.q}
+                className="group rounded-2xl border border-mn-border bg-white p-5 transition shadow-sm"
+              >
+                <summary className="flex cursor-pointer items-center justify-between font-bold text-sm text-mn-graphite">
+                  <span>{faq.q}</span>
+                  <ChevronDown size={18} className="text-mn-teal transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-xs leading-relaxed text-mn-graphite/75 border-t border-mn-border/50 pt-3">
+                  {faq.a}
                 </p>
-              </article>
+              </details>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section className="px-6 py-20 sm:px-10 lg:px-14">
-        <div className="mx-auto max-w-[1500px] overflow-hidden rounded-[3rem] bg-gradient-to-br from-mn-teal via-mn-graphite to-mn-purple p-10 text-white shadow-[0_45px_130px_-75px_rgba(46,57,63,0.9)] sm:p-14">
-          <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">
-                Comece agora
-              </p>
-
-              <h2 className="mt-5 max-w-4xl text-5xl font-semibold leading-[1.02] tracking-[-0.065em]">
-                Escolha seu ponto de entrada na plataforma MediNexus.
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap gap-3 lg:justify-end">
-              <Link
-                href="/cadastro"
-                className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-mn-teal transition hover:-translate-y-0.5 hover:bg-mn-sand"
-              >
-                Criar conta
-              </Link>
-
-              <Link
-                href="/sobre"
-                className="rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
-              >
-                Conhecer a MediNexus
-              </Link>
-            </div>
+          <div className="mt-12 text-center">
+            <p className="text-xs text-mn-graphite/70">
+              Precisa de uma proposta personalizada para uma rede de clínicas ou hospitais?
+            </p>
+            <a
+              href="https://wa.me/5521979828341?text=Ol%C3%A1%2C%20gostaria%20de%20uma%20proposta%20personalizada%20para%20minha%20cl%C3%ADnica."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 font-bold text-sm text-mn-teal hover:underline"
+            >
+              Falar com nosso time comercial no WhatsApp →
+            </a>
           </div>
         </div>
       </section>

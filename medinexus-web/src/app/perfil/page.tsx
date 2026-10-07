@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import ProfilePhoto from "../components/profile-photo";
 import { coordinatesForProfileSave, geocodeBrazilAddress, hasCoordinates, type AddressParams } from "../lib/geocode";
 import { captureBestLocation, reverseGeocode, type ParsedAddress } from "../lib/geolocation";
 import { supabase } from "../lib/supabase";
+import { formatCpf, formatPhone } from "../lib/masks";
 
 type ProfileRow = {
   full_name: string | null;
@@ -323,8 +324,8 @@ export default function PerfilPage() {
     setForm({
       full_name: profile?.full_name || "",
       email: profile?.email || user.email || "",
-      phone: profile?.phone || "",
-      cpf: profile?.cpf || patient?.cpf || "",
+      phone: formatPhone(profile?.phone || ""),
+      cpf: formatCpf(profile?.cpf || patient?.cpf || ""),
       birth_date: patient?.birth_date || "",
       address_zipcode: profile?.address_zipcode || "",
       address_street: profile?.address_street || "",
@@ -369,9 +370,12 @@ export default function PerfilPage() {
       return;
     }
 
+    const formattedValue =
+      name === "cpf" ? formatCpf(value) : name === "phone" ? formatPhone(value) : value;
+
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: formattedValue,
     }));
   }
 
