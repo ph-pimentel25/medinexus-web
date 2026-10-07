@@ -3,12 +3,15 @@
 import Link from "next/link";
 import DoctorAvatar from "../components/doctor-avatar";
 import { useEffect, useMemo, useState } from "react";
-import { Video } from "lucide-react";
+import { Video, Sparkles, MessageSquare, Bell } from "lucide-react";
 import Alert from "../components/alert";
 import { ReviewForm } from "../components/reviews";
 import AppointmentPayment from "../components/appointment-payment";
 import AppointmentDirections from "../components/appointment-directions";
 import FamilyProfileSwitcher from "../components/family-profile-switcher";
+import { TriageModal } from "../components/triage-modal";
+import { PostConsultationChatModal } from "../components/post-consultation-chat-modal";
+import { checkWebNotificationSupport, requestWebNotificationPermission, sendWebNotification } from "../lib/push-notifications";
 import { supabase } from "../lib/supabase";
 
 type AppointmentRow = {
@@ -218,6 +221,41 @@ export default function SolicitacoesPage() {
   );
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Triagem Pré-Consulta com IA
+  const [triageModal, setTriageModal] = useState<{
+    isOpen: boolean;
+    appointmentId: string;
+    patientName: string;
+    doctorName: string;
+  }>({ isOpen: false, appointmentId: "", patientName: "", doctorName: "" });
+
+  // Chat Pós-Consulta (7 dias)
+  const [chatModal, setChatModal] = useState<{
+    isOpen: boolean;
+    appointmentId: string;
+    patientName: string;
+    doctorName: string;
+    appointmentDate?: string;
+  }>({ isOpen: false, appointmentId: "", patientName: "", doctorName: "" });
+
+  // Notificações Push Web
+  const [pushGranted, setPushGranted] = useState(false);
+
+  useEffect(() => {
+    const status = checkWebNotificationSupport();
+    setPushGranted(status.permission === "granted");
+  }, []);
+
+  async function handleEnablePush() {
+    const granted = await requestWebNotificationPermission();
+    setPushGranted(granted);
+    if (granted) {
+      sendWebNotification("🔔 Notificações Ativadas", {
+        body: "Você receberá lembretes das suas consultas e remédios pelo MediNexus.",
+      });
+    }
+  }
 
 
   async function loadAppointments() {
@@ -461,6 +499,31 @@ export default function SolicitacoesPage() {
 
         <FamilyProfileSwitcher className="mb-6" />
 
+        {!pushGranted && (
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-mn-teal/20 bg-[#E8F3EE] p-4 sm:flex-row sm:items-center sm:justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mn-teal text-white">
+                <Bell size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">
+                  Ative as Notificações em Segundo Plano
+                </p>
+                <p className="text-xs text-slate-600">
+                  Receba avisos instantâneos quando faltarem 15 minutos para sua consulta ou na hora do seu remédio.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleEnablePush}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-mn-teal px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#123B46] transition"
+            >
+              Ativar Notificações
+            </button>
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "Total", value: stats.total, tone: "text-slate-950" },
@@ -639,7 +702,45 @@ export default function SolicitacoesPage() {
                         </button>
                       )}
 
-                      {item.status === "completed" && <><ReviewForm appointmentId={item.id} kind="doctor" />{item.clinic_id && <ReviewForm appointmentId={item.id} kind="clinic" />}</>}
+                      {item.status === "completed" && (
+                        <>
+                          <ReviewForm appointmentId={item.id} kind="doctor" />
+                          {item.clinic_id && <ReviewForm appointmentId={item.id} kind="clinic" />}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setChatModal({
+                                isOpen: true,
+                                appointmentId: item.id,
+                                patientName: getPatientName(item),
+                                doctorName: getDoctorName(item),
+                                appointmentDate: item.confirmed_start_at || item.created_at || undefined,
+                              })
+                            }
+                            className="flex items-center gap-1.5 rounded-2xl border border-mn-teal/30 bg-[#E8F3EE] px-5 py-3 text-sm font-semibold text-mn-teal transition hover:bg-[#D4E8DF]"
+                          >
+                            <MessageSquare size={16} />
+                            <span>Dúvidas Pós-Consulta (7 dias)</span>
+                          </button>
+                        </>
+                      )}
+                      {(item.status === "confirmed" || item.status === "pending") && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTriageModal({
+                              isOpen: true,
+                              appointmentId: item.id,
+                              patientName: getPatientName(item),
+                              doctorName: getDoctorName(item),
+                            })
+                          }
+                          className="flex items-center gap-1.5 rounded-2xl border border-mn-teal bg-white px-5 py-3 text-sm font-semibold text-mn-teal transition hover:bg-[#E8F3EE]"
+                        >
+                          <Sparkles size={16} />
+                          <span>Triagem Pré-Consulta (IA)</span>
+                        </button>
+                      )}
                       {item.status === "confirmed" && item.appointment_mode === "private" && <AppointmentPayment appointmentId={item.id} />}
                       {item.status === "confirmed" && <AppointmentDirections clinicId={item.clinic_id} doctorId={item.doctor_id} />}
                       {item.status === "confirmed" && (
@@ -668,6 +769,24 @@ export default function SolicitacoesPage() {
           )}
         </div>
       </section>
+
+      <TriageModal
+        isOpen={triageModal.isOpen}
+        onClose={() => setTriageModal((prev) => ({ ...prev, isOpen: false }))}
+        appointmentId={triageModal.appointmentId}
+        patientName={triageModal.patientName}
+        doctorName={triageModal.doctorName}
+      />
+
+      <PostConsultationChatModal
+        isOpen={chatModal.isOpen}
+        onClose={() => setChatModal((prev) => ({ ...prev, isOpen: false }))}
+        appointmentId={chatModal.appointmentId}
+        patientName={chatModal.patientName}
+        doctorName={chatModal.doctorName}
+        appointmentDate={chatModal.appointmentDate}
+        viewerRole="patient"
+      />
     </main>
   );
 }

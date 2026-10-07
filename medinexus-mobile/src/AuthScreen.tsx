@@ -1,9 +1,16 @@
 import { colors, shadows } from "./theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
+import { Eye, EyeOff, Lock, Mail, User, Fingerprint } from "lucide-react-native";
 import { appUrl, supabase } from "./supabase";
 import { Button, ui } from "./ui";
+import {
+  checkBiometrics,
+  authenticateWithBiometrics,
+  getBiometricLoginEmail,
+  enableBiometricLogin,
+  type BiometricCapability,
+} from "./biometrics";
 
 export default function AuthScreen({ onCreated, openWeb }: { onCreated: () => void; openWeb: (url: string) => void }) {
   const [registering, setRegistering] = useState(false);
@@ -14,6 +21,18 @@ export default function AuthScreen({ onCreated, openWeb }: { onCreated: () => vo
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [bioCapability, setBioCapability] = useState<BiometricCapability | null>(null);
+  const [savedBioEmail, setSavedBioEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const cap = await checkBiometrics();
+      setBioCapability(cap);
+      const saved = await getBiometricLoginEmail();
+      setSavedBioEmail(saved);
+      if (saved) setEmail(saved);
+    })();
+  }, []);
 
   async function submit() {
     const normalizedEmail = email.trim().toLowerCase();
@@ -72,6 +91,9 @@ export default function AuthScreen({ onCreated, openWeb }: { onCreated: () => vo
           throw new Error("E-mail ou senha incorretos, ou confirmação pendente no seu e-mail.");
         }
         setPassword("");
+        if (bioCapability?.available) {
+          void enableBiometricLogin(normalizedEmail);
+        }
       }
     } catch (error) {
       setIsError(true);
@@ -79,6 +101,43 @@ export default function AuthScreen({ onCreated, openWeb }: { onCreated: () => vo
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleBiometricLogin() {
+    setBusy(true);
+    setMessage("");
+    setIsError(false);
+
+    const auth = await authenticateWithBiometrics(
+      `Acesse sua conta com ${bioCapability?.label || "Biometria"}`
+    );
+    if (!auth.success) {
+      setBusy(false);
+      if (auth.error) {
+        setMessage(auth.error);
+        setIsError(true);
+      }
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      setBusy(false);
+      onCreated();
+      return;
+    }
+
+    if (savedBioEmail) {
+      setEmail(savedBioEmail);
+      setMessage("Biometria confirmada! Digite sua senha para renovar o acesso permanente.");
+      setIsError(false);
+    } else {
+      setMessage("Faça login com sua senha uma vez para memorizar o Face ID.");
+      setIsError(false);
+    }
+    setBusy(false);
   }
 
   return (
@@ -179,6 +238,16 @@ export default function AuthScreen({ onCreated, openWeb }: { onCreated: () => vo
             disabled={busy}
             onPress={() => void submit()}
           />
+
+          {bioCapability?.available && !registering && (
+            <Button
+              secondary
+              title={`Entrar com ${bioCapability.label}`}
+              icon={Fingerprint}
+              disabled={busy}
+              onPress={() => void handleBiometricLogin()}
+            />
+          )}
 
           <Button
             secondary

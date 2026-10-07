@@ -4,10 +4,12 @@ import ClinicalAISummary from "../../../components/clinical-ai-summary";
 import AuthorizedClinicalHistory from "../../../components/authorized-clinical-history";
 import HealthMetricsTracker from "../../../components/health-metrics-tracker";
 import { ANAMNESIS_TEMPLATES } from "../../../lib/anamnesis-templates";
-import { Video } from "lucide-react";
+import { Video, MessageSquare, Sparkles } from "lucide-react";
 import { markDocumentPreview } from "../../../lib/document-preview";
 import Link from "next/link";
 import { Reviews, ReviewForm } from "../../../components/reviews";
+import { PostConsultationChatModal } from "../../../components/post-consultation-chat-modal";
+import { loadTriage, type PreConsultationTriage } from "../../../lib/pre-consultation-triage";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
@@ -230,6 +232,8 @@ export default function MedicoConsultaPage() {
     useState<ConsultationNoteRow | null>(null);
   const [documents, setDocuments] = useState<MedicalDocumentRow[]>([]);
   const [previousNotes, setPreviousNotes] = useState<ConsultationNoteRow[]>([]);
+  const [patientTriage, setPatientTriage] = useState<PreConsultationTriage | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const [recordForm, setRecordForm] = useState<RecordForm>({
     base_anamnesis: "",
@@ -490,6 +494,8 @@ export default function MedicoConsultaPage() {
       private_notes: loadedNotes?.private_notes || "",
       summary: loadedNotes?.summary || "",
     });
+
+    setPatientTriage(loadTriage(appointmentId));
 
     setLoading(false);
   }
@@ -906,6 +912,15 @@ export default function MedicoConsultaPage() {
                 <span>Telemedicina (1-Clique)</span>
               </Link>
 
+              <button
+                type="button"
+                onClick={() => setIsChatOpen(true)}
+                className="inline-flex items-center gap-2 justify-center rounded-2xl border border-mn-teal/30 bg-[#E8F3EE] px-5 py-4 text-sm font-bold text-mn-teal shadow-sm transition hover:bg-[#D4E8DF]"
+              >
+                <MessageSquare size={16} />
+                <span>Chat Pós-Consulta (7 dias)</span>
+              </button>
+
               {!isClosed && (
                 <button
                   type="button"
@@ -1070,6 +1085,92 @@ export default function MedicoConsultaPage() {
             )}
           </section>
         </div>
+
+        {patientTriage && (
+          <section className="mb-6 rounded-[38px] border border-mn-teal/30 bg-white p-7 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F3EE] text-mn-teal">
+                  <Sparkles size={22} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-mn-teal">
+                    Triagem Pré-Consulta com IA (Respondida pelo Paciente)
+                  </p>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    {patientTriage.chiefComplaint}
+                  </h3>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    patientTriage.aiSummary.urgencyLevel.includes("Prioritário")
+                      ? "bg-red-100 text-red-800"
+                      : patientTriage.aiSummary.urgencyLevel.includes("Moderado")
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-emerald-100 text-emerald-800"
+                  }`}
+                >
+                  {patientTriage.aiSummary.urgencyLevel}
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                  Dor: {patientTriage.painLevel}/10
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3 text-xs">
+              <div className="rounded-2xl bg-mn-sand p-4">
+                <span className="font-bold text-slate-500 uppercase">Evolução</span>
+                <p className="mt-1 font-semibold text-slate-800">{patientTriage.duration}</p>
+              </div>
+              <div className="rounded-2xl bg-mn-sand p-4">
+                <span className="font-bold text-slate-500 uppercase">Sintomas Associados</span>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {patientTriage.associatedSymptoms.length > 0
+                    ? patientTriage.associatedSymptoms.join(", ")
+                    : "Nenhum informado"}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-mn-sand p-4">
+                <span className="font-bold text-slate-500 uppercase">Medicação em Domicílio</span>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {patientTriage.previousMedication || "Nenhuma relatada"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-mn-border/80 bg-slate-50 p-4">
+              <span className="text-xs font-bold text-slate-600 uppercase">
+                Hipóteses Sugeridas pela IA:
+              </span>
+              <ul className="mt-1.5 list-disc pl-5 text-xs text-slate-700 space-y-1">
+                {patientTriage.aiSummary.suggestedHypotheses.map((h, i) => (
+                  <li key={i}>{h}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setNotesForm((prev) => ({
+                    ...prev,
+                    subjective: prev.subjective
+                      ? `${prev.subjective}\n\n${patientTriage.aiSummary.clinicalSummaryText}`
+                      : patientTriage.aiSummary.clinicalSummaryText,
+                  }));
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-mn-teal px-4 py-2.5 text-xs font-bold text-white hover:bg-[#123B46] transition"
+              >
+                <Sparkles size={14} />
+                <span>Importar Resumo da Triagem para Queixa da Anamnese</span>
+              </button>
+            </div>
+          </section>
+        )}
 
         {appointment.patient_id && (
           <div className="space-y-6">
@@ -1371,6 +1472,16 @@ export default function MedicoConsultaPage() {
         </section>
       </section>
       {appointment?.patient_id && <div className="mx-auto max-w-7xl space-y-4 px-4 pb-12"><ClinicalAISummary appointmentId={appointment.id} canReview/><Reviews kind="patient" targetId={appointment.patient_id}/>{appointment.status === "completed" && <ReviewForm appointmentId={appointment.id} kind="patient" />}</div>}
+
+      <PostConsultationChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        appointmentId={appointmentId}
+        patientName={patientName}
+        doctorName={doctorName}
+        appointmentDate={appointmentStart || undefined}
+        viewerRole="doctor"
+      />
     </main>
   );
 }

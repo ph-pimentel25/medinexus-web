@@ -29,6 +29,8 @@ import {
   Heart,
   Users,
   Syringe,
+  Sparkles,
+  Fingerprint,
 } from "lucide-react-native";
 import { colors, shadows } from "./src/theme";
 import { useCallback, useEffect, useState } from "react";
@@ -63,6 +65,14 @@ import FamilySwitcher, { type FamilyMember, INITIAL_DEPENDENTS } from "./src/Fam
 import VaccineWallet from "./src/VaccineWallet";
 import TelemedicineModal from "./src/TelemedicineModal";
 import HealthMetricsModal from "./src/HealthMetricsModal";
+import TriageModal from "./src/TriageModal";
+import PostConsultationChatModal from "./src/PostConsultationChatModal";
+import {
+  requestNotificationPermission,
+  scheduleMedicationReminder,
+  scheduleAppointmentReminder,
+  sendImmediateNotification,
+} from "./src/notifications";
 
 type Row = Record<string, unknown>;
 type Appointment = {
@@ -417,6 +427,17 @@ function Main() {
 
   // Saúde Conectada Apple Health / Google Fit
   const [showHealthMetricsModal, setShowHealthMetricsModal] = useState(false);
+
+  // Triagem Pré-Consulta com IA
+  const [showTriageModal, setShowTriageModal] = useState(false);
+  const [triageAppointment, setTriageAppointment] = useState<Appointment | null>(null);
+
+  // Chat Pós-Consulta (7 dias)
+  const [showPostChatModal, setShowPostChatModal] = useState(false);
+  const [postChatAppointment, setPostChatAppointment] = useState<Appointment | null>(null);
+
+  // Notificações Push Nativas (Expo Push / APNs)
+  const [pushStatusGranted, setPushStatusGranted] = useState(false);
 
   // Central de Vídeos Educativos e Auto-cuidado
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
@@ -807,7 +828,12 @@ function Main() {
       prev.map(m => {
         if (m.id === medId) {
           const next = !m.reminderActive;
-          Alert.alert("Lembrete", next ? "Lembretes diários ativados para este medicamento." : "Lembretes desativados.");
+          if (next) {
+            void scheduleMedicationReminder(m.name, m.schedule[0] || "08:00");
+            Alert.alert("Lembrete Push Ativo", `Você receberá alertas no iPhone todos os dias às ${m.schedule[0] || "08:00"} para tomar ${m.name}.`);
+          } else {
+            Alert.alert("Lembrete", "Lembretes desativados.");
+          }
           return { ...m, reminderActive: next };
         }
         return m;
@@ -855,6 +881,9 @@ function Main() {
       status: "em_uso",
       isContinuous: true,
     };
+
+    void scheduleMedicationReminder(newMed.name, newMed.schedule[0] || "08:00");
+
     setMedications(prev => [newMed, ...prev]);
     setShowAddMedModal(false);
     setNewMedName("");
@@ -1424,6 +1453,15 @@ function Main() {
                               setTelemedicineCallActive(true);
                             }}
                           />
+                          <Button
+                            secondary
+                            title="Triagem Pré-Consulta (IA)"
+                            icon={Sparkles}
+                            onPress={() => {
+                              setTriageAppointment(a);
+                              setShowTriageModal(true);
+                            }}
+                          />
                           <Button secondary title="Como chegar" icon={MapPin} onPress={() => directions(a)} />
                           {a.patient_confirmation_status === "awaiting_confirmation" && (
                             <Button
@@ -1436,13 +1474,38 @@ function Main() {
                         </View>
                       )}
 
+                      {a.status === "pending" && (
+                        <View style={{ gap: 8, marginTop: 4 }}>
+                          <Button
+                            secondary
+                            title="Triagem Pré-Consulta (IA)"
+                            icon={Sparkles}
+                            onPress={() => {
+                              setTriageAppointment(a);
+                              setShowTriageModal(true);
+                            }}
+                          />
+                        </View>
+                      )}
+
                       {a.status === "completed" && (
-                        <Button
-                          secondary
-                          title="Avaliar médico e consultório"
-                          icon={Star}
-                          onPress={() => setRatingAppointment(a)}
-                        />
+                        <View style={{ gap: 8, marginTop: 4 }}>
+                          <Button
+                            secondary
+                            title="Dúvidas Pós-Consulta (7 dias)"
+                            icon={MessageSquare}
+                            onPress={() => {
+                              setPostChatAppointment(a);
+                              setShowPostChatModal(true);
+                            }}
+                          />
+                          <Button
+                            secondary
+                            title="Avaliar médico e consultório"
+                            icon={Star}
+                            onPress={() => setRatingAppointment(a)}
+                          />
+                        </View>
                       )}
                     </View>
                   ))
@@ -2038,6 +2101,38 @@ function Main() {
                   </View>
                 ))}
 
+              {/* Notificações Push em Segundo Plano (APNs / Expo Push) */}
+              <View style={[styles.notifCard, { backgroundColor: colors.lightSage, borderColor: colors.teal, borderWidth: 1 }]}>
+                <Bell size={20} color={colors.teal} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.notifTitle}>Alertas Push em Segundo Plano</Text>
+                  <Text style={styles.notifText}>
+                    Receba avisos instantâneos 15 minutos antes da consulta e lembretes para tomar remédios.
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      void (async () => {
+                        const perm = await requestNotificationPermission();
+                        if (perm.granted) {
+                          setPushStatusGranted(true);
+                          await sendImmediateNotification(
+                            "🔔 MediNexus Conectado",
+                            "Seus lembretes em segundo plano no iPhone estão ativos!"
+                          );
+                          Alert.alert("Sucesso", "Notificação de teste enviada para o seu iPhone.");
+                        } else {
+                          Alert.alert("Permissão necessária", "Autorize as notificações do MediNexus nos Ajustes do iPhone.");
+                        }
+                      })();
+                    }}
+                    style={{ marginTop: 6, alignSelf: "flex-start", backgroundColor: colors.teal, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 }}
+                  >
+                    <Text style={{ color: "white", fontSize: 11, fontWeight: "700" }}>Testar Notificação Push</Text>
+                  </Pressable>
+                </View>
+              </View>
+
               {/* Botão de Alternar Mostrar Todas / Voltar */}
               {!showAllNotifications ? (
                 <Button
@@ -2381,6 +2476,25 @@ function Main() {
         visible={showHealthMetricsModal}
         patientName={name || "Você"}
         onClose={() => setShowHealthMetricsModal(false)}
+      />
+
+      {/* Triagem Pré-Consulta com IA */}
+      <TriageModal
+        visible={showTriageModal}
+        onClose={() => setShowTriageModal(false)}
+        appointmentId={triageAppointment?.id || ""}
+        patientName={name || "Você"}
+        doctorName={String(one(triageAppointment?.doctors || null)?.name || "o profissional")}
+      />
+
+      {/* Chat Pós-Consulta (7 dias) */}
+      <PostConsultationChatModal
+        visible={showPostChatModal}
+        onClose={() => setShowPostChatModal(false)}
+        appointmentId={postChatAppointment?.id || ""}
+        patientName={name || "Você"}
+        doctorName={String(one(postChatAppointment?.doctors || null)?.name || "Profissional")}
+        appointmentDate={postChatAppointment?.confirmed_start_at || postChatAppointment?.requested_start_at || undefined}
       />
 
       {/* ======================================================== */}

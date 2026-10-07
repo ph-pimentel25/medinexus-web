@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Fingerprint, ShieldCheck } from "lucide-react";
 import Alert from "../../../../components/alert";
 import { supabase } from "../../../../lib/supabase";
 import { checkDrugInteractions, type InteractionAlert } from "../../../../lib/drug-interactions";
+import { authenticateWebBiometrics } from "../../../../lib/biometrics";
 
 type AppointmentRow = {
   id: string;
@@ -473,6 +474,77 @@ export default function ConsultaDocumentosPage() {
     setSaving(false);
   }
 
+  async function handleBiometricSignAndIssue() {
+    setSaving(true);
+    setMessage("");
+
+    const authResult = await authenticateWebBiometrics(
+      `Assinar ${getDefaultTitle(form.documentType)} com autenticação biométrica`
+    );
+
+    if (!authResult.success) {
+      setMessage(`Autenticação biométrica falhou: ${authResult.error || "Operação cancelada."}`);
+      setMessageType("error");
+      setSaving(false);
+      return;
+    }
+
+    const plainText = createPlainText(form, patientName);
+    const enrichedText = `${plainText}\n\n[Assinatura Biométrica Certificada MediNexus - Token: ${authResult.signatureToken}]`;
+
+    const { error } = await supabase.from("medical_documents").insert({
+      appointment_id: appointmentId,
+      patient_id: appointment?.patient_id,
+      clinic_id: appointment?.clinic_id,
+      doctor_id: appointment?.doctor_id,
+      document_type: form.documentType,
+      title: form.title || getDefaultTitle(form.documentType),
+      clinical_indication: form.clinicalIndication || null,
+      cid_code: form.cidCode || null,
+      cid_description: form.cidDescription || null,
+      content: getContentPayload(form),
+      plain_text: enrichedText,
+      released_to_patient: true,
+      status: "issued",
+      doctor_name: doctorName,
+      doctor_crm: doctor?.crm || null,
+      doctor_crm_state: doctor?.crm_state || null,
+      clinic_name: clinicName,
+    });
+
+    if (error) {
+      setMessage(`Erro ao emitir documento: ${error.message}`);
+      setMessageType("error");
+      setSaving(false);
+      return;
+    }
+
+    setMessage("Documento emitido e validado via biometria com sucesso! Disponível na aba do paciente.");
+    setMessageType("success");
+
+    setForm((prev) => ({
+      ...prev,
+      clinicalIndication: "",
+      cidCode: "",
+      cidDescription: "",
+      plainText: "",
+      medicationName: "",
+      medicationUse: "",
+      dosage: "",
+      route: "",
+      duration: "",
+      quantity: "",
+      examName: "",
+      examObservation: "",
+      daysOff: "1",
+      purpose: "",
+      releaseToPatient: true,
+    }));
+
+    await loadPage();
+    setSaving(false);
+  }
+
 
   useEffect(() => {
     const initialLoad = setTimeout(() => void loadPage(), 0);
@@ -859,14 +931,26 @@ export default function ConsultaDocumentosPage() {
                 Liberar após certificação (integração pendente)
               </label>
 
-              <button
-                type="button"
-                onClick={handleIssueDocument}
-                disabled={saving}
-                className="inline-flex justify-center rounded-2xl bg-mn-teal px-7 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-mn-teal disabled:opacity-50"
-              >
-                {saving ? "Preparando..." : "Preparar para assinatura digital"}
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleBiometricSignAndIssue}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 justify-center rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white shadow-md hover:bg-[#123B46] disabled:opacity-50 transition"
+                >
+                  <Fingerprint size={18} />
+                  <span>Assinar com Biometria (Touch ID / Face ID)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleIssueDocument}
+                  disabled={saving}
+                  className="inline-flex justify-center rounded-2xl border border-mn-teal/30 bg-white px-6 py-4 text-sm font-bold text-mn-teal transition hover:bg-[#E8F3EE] disabled:opacity-50"
+                >
+                  {saving ? "Preparando..." : "Salvar Rascunho"}
+                </button>
+              </div>
             </div>
           </section>
         </div>
