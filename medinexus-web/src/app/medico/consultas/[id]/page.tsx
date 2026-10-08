@@ -4,7 +4,21 @@ import ClinicalAISummary from "../../../components/clinical-ai-summary";
 import AuthorizedClinicalHistory from "../../../components/authorized-clinical-history";
 import HealthMetricsTracker from "../../../components/health-metrics-tracker";
 import { ANAMNESIS_TEMPLATES } from "../../../lib/anamnesis-templates";
-import { Video, MessageSquare, Sparkles } from "lucide-react";
+import {
+  Video,
+  MessageSquare,
+  Sparkles,
+  ArrowLeft,
+  FileText,
+  Clock,
+  Phone,
+  Mail,
+  Power,
+  Building,
+  User,
+  ShieldCheck,
+  CheckCircle2,
+} from "lucide-react";
 import { markDocumentPreview } from "../../../lib/document-preview";
 import Link from "next/link";
 import { Reviews, ReviewForm } from "../../../components/reviews";
@@ -870,52 +884,101 @@ export default function MedicoConsultaPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-mn-sand">
-      <section className="relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,#DCEBFF_0,transparent_34%),radial-gradient(circle_at_82%_12%,#EDE7FF_0,transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
+    <main className="min-h-screen bg-mn-sand pb-16">
+      {/* Top Context & Action Bar */}
+      <section className="border-b border-mn-border/80 bg-white sticky top-0 z-30 shadow-xs">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            href="/medico/solicitacoes"
+            className="inline-flex items-center gap-2 rounded-xl border border-mn-border bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-mn-sand hover:text-mn-teal active:scale-95"
+          >
+            <ArrowLeft size={14} />
+            <span>Voltar aos atendimentos</span>
+          </Link>
 
-        <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                isClosed
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isClosed ? "bg-slate-400" : "bg-emerald-500 animate-pulse"
+                }`}
+              />
+              {isClosed ? "Atendimento Encerrado" : "Atendimento em Andamento"}
+            </span>
+
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-mn-border bg-mn-sand px-3 py-1 text-xs font-semibold text-slate-700">
+              <Clock size={13} className="text-mn-teal" />
+              <span>Duração:</span>
+              <strong className="font-mono text-mn-teal font-bold">
+                {isClosed ? "Concluída" : secondsToClock(elapsedSeconds)}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Header & Clinical Actions */}
+      <section className="border-b border-mn-border bg-white/90 backdrop-blur-xs">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
-                Prontuário médico
-              </p>
-              <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-slate-950">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex rounded-full border border-mn-teal/20 bg-mn-teal-light/40 px-3 py-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-mn-teal">
+                  Prontuário Médico Digital • CFM 1.821/2007
+                </span>
+                {patient?.health_plan_operator ? (
+                  <span className="rounded-full bg-purple-50 px-2.5 py-0.5 text-[11px] font-bold text-mn-purple border border-purple-200">
+                    {patient.health_plan_operator}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                    Particular
+                  </span>
+                )}
+              </div>
+
+              <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
                 Atendimento de {patientName}
               </h1>
-              <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                Registre anamnese, notas da consulta, documentos médicos e
-                histórico clínico do paciente.
+              <p className="mt-1.5 max-w-2xl text-xs sm:text-sm leading-relaxed text-slate-600">
+                Registre anamnese, evolução clínica (SOAP), emita documentos médicos com assinatura e inicie a teleconsulta ao vivo.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            {/* Action Bar com Hierarquia Perfeita */}
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
               <Link
-                href="/medico/solicitacoes"
-                className="inline-flex justify-center rounded-2xl border border-mn-purple-light bg-white px-6 py-4 text-sm font-bold text-mn-purple shadow-sm transition hover:bg-mn-purple-light"
+                href={`/telemedicina/${appointmentId}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-mn-teal px-5 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#123B46] active:scale-95"
               >
-                Voltar
+                <div className="relative flex items-center justify-center">
+                  <Video size={16} />
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                </div>
+                <span>Telemedicina (1-Clique)</span>
               </Link>
 
               <Link
                 href={`/medico/consultas/${appointmentId}/documentos`}
-                className="inline-flex justify-center rounded-2xl bg-mn-purple px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(110,86,207,0.9)] transition hover:bg-mn-purple"
+                className="inline-flex items-center gap-2 rounded-xl bg-mn-purple px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#483B6E] active:scale-95"
               >
-                Emitir documentos
-              </Link>
-
-              <Link
-                href={`/telemedicina/${appointmentId}`}
-                className="inline-flex items-center gap-2 justify-center rounded-2xl bg-[#0E3D4A] px-6 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-mn-teal"
-              >
-                <Video size={16} />
-                <span>Telemedicina (1-Clique)</span>
+                <FileText size={16} />
+                <span>Emitir documentos</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setIsChatOpen(true)}
-                className="inline-flex items-center gap-2 justify-center rounded-2xl border border-mn-teal/30 bg-[#E8F3EE] px-5 py-4 text-sm font-bold text-mn-teal shadow-sm transition hover:bg-[#D4E8DF]"
+                className="inline-flex items-center gap-2 rounded-xl border border-mn-teal/30 bg-[#E8F3EE] px-4 py-3 text-xs font-bold text-mn-teal shadow-2xs transition hover:bg-[#D4E8DF] active:scale-95"
               >
                 <MessageSquare size={16} />
                 <span>Chat Pós-Consulta (7 dias)</span>
@@ -926,165 +989,141 @@ export default function MedicoConsultaPage() {
                   type="button"
                   onClick={handleCloseAppointment}
                   disabled={closing}
-                  className="inline-flex justify-center rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white shadow-[0_18px_50px_-30px_rgba(40,60,122,0.9)] transition hover:bg-mn-teal disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 active:scale-95 disabled:opacity-50"
                 >
-                  {closing ? "Encerrando..." : "Encerrar atendimento"}
+                  <Power size={14} className="text-slate-400" />
+                  <span>{closing ? "Encerrando..." : "Encerrar atendimento"}</span>
                 </button>
               )}
             </div>
           </div>
-        </section>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         {message && (
-          <div className="mb-6">
+          <div>
             <Alert variant={messageType}>{message}</Alert>
           </div>
         )}
 
         {isClosed && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
-            Este atendimento foi encerrado. Por política interna, os registros
-            ficam preservados para histórico e não devem ser alterados.
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
+            Este atendimento foi encerrado. Os registros ficam arquivados para conformidade jurídica (CFM) e não podem ser alterados.
           </div>
         )}
 
-        <div className="mb-8 grid gap-4 lg:grid-cols-4">
-          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Paciente
-            </p>
-            <p className="mt-2 font-bold text-slate-950">{patientName}</p>
-            <p className="mt-1 text-sm text-slate-500">
-              {getAge(patient?.birth_date)} • CPF {patient?.cpf || "N/I"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Consulta
-            </p>
-            <p className="mt-2 font-bold text-slate-950">
-              {formatDateTime(appointmentStart)}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Status: {appointment.status || "não informado"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Tempo
-            </p>
-            <p className="mt-2 text-2xl font-bold text-mn-teal">
-              {appointment.finished_at
-                ? "Encerrada"
-                : secondsToClock(elapsedSeconds)}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Início: {formatDateTime(appointment.started_at)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-mn-purple-light bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              Documentos
-            </p>
-            <p className="mt-2 text-2xl font-bold text-mn-purple">
-              {documents.length}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Emitidos nesta consulta
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <section className="rounded-[38px] border border-mn-purple-light bg-white p-7 shadow-[0_24px_80px_-70px_rgba(40,60,122,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-teal">
-              Dados do paciente
-            </p>
-
-            <div className="mt-6 grid gap-3">
-              <div className="rounded-3xl bg-mn-sand p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Contato
-                </p>
-                <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.phone || "Telefone não informado"}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {patient?.email || "E-mail não informado"}
-                </p>
+        {/* Painel Unificado de Dados do Paciente e Consulta */}
+        <div className="rounded-3xl border border-mn-border bg-white p-6 shadow-sm">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Paciente */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-mn-teal text-white font-black text-lg">
+                {patientName
+                  .split(" ")
+                  .slice(0, 2)
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()}
               </div>
-
-              <div className="rounded-3xl bg-mn-sand p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Plano
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Paciente
+                </span>
+                <h3 className="text-base font-bold text-slate-900 truncate">
+                  {patientName}
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {getAge(patient?.birth_date)} • CPF: {patient?.cpf || "Não informado"}
                 </p>
-                <p className="mt-2 font-semibold text-slate-800">
-                  {patient?.health_plan_operator || "Particular/Não informado"}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {patient?.health_plan_product_name || "Modelo não informado"}
-                </p>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  {patient?.phone && (
+                    <a
+                      href={`https://wa.me/55${patient.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline"
+                    >
+                      <Phone size={11} />
+                      {patient.phone}
+                    </a>
+                  )}
+                  {patient?.email && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate max-w-[180px]">
+                      <Mail size={11} />
+                      {patient.email}
+                    </span>
+                  )}
+                </div>
               </div>
+            </div>
 
-              <div className="rounded-3xl bg-mn-sand p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Médico e clínica
+            {/* Consulta & Plano */}
+            <div className="border-t border-slate-100 pt-4 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0 space-y-2">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Agendamento & Local
+                </span>
+                <p className="mt-1 text-xs font-semibold text-slate-900">
+                  {formatDateTime(appointmentStart)}
                 </p>
-                <p className="mt-2 font-semibold text-slate-800">
-                  {doctorName}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  CRM {doctor?.crm || "N/I"}
-                  {doctor?.crm_state ? ` / ${doctor.crm_state}` : ""} •{" "}
+                <p className="text-xs text-slate-500 truncate">
                   {clinicName}
                 </p>
               </div>
-            </div>
-          </section>
 
-          <section className="rounded-[38px] border border-mn-purple-light bg-gradient-to-br from-mn-purple-light to-mn-sand p-7 shadow-[0_24px_80px_-70px_rgba(94,75,154,0.45)]">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-mn-purple">
-              Histórico recente
-            </p>
-
-            <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-slate-950">
-              Resumo da consulta anterior
-            </h2>
-
-            {lastPreviousSummary ? (
-              <p className="mt-4 whitespace-pre-line leading-8 text-slate-700">
-                {lastPreviousSummary}
-              </p>
-            ) : (
-              <p className="mt-4 leading-8 text-slate-600">
-                Nenhum resumo anterior encontrado para este paciente.
-              </p>
-            )}
-
-            {previousNotes.length > 0 && (
-              <div className="mt-6 grid gap-3">
-                {previousNotes.slice(0, 3).map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl bg-white/80 p-4 ring-1 ring-white"
-                  >
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                      Consulta anterior
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-700">
-                      {formatDateTime(item.created_at)}
-                    </p>
-                  </div>
-                ))}
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Cobertura
+                </span>
+                <p className="mt-0.5 text-xs font-semibold text-mn-purple">
+                  {patient?.health_plan_operator || "Particular (Sem Convênio)"}{" "}
+                  {patient?.health_plan_product_name ? `• ${patient.health_plan_product_name}` : ""}
+                </p>
               </div>
-            )}
-          </section>
+            </div>
+
+            {/* Métricas Clínicas */}
+            <div className="border-t border-slate-100 pt-4 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0 grid grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-mn-sand p-3.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Tempo Atendimento
+                </span>
+                <p className="mt-1 font-mono text-xl font-bold text-mn-teal">
+                  {appointment.finished_at ? "Encerrada" : secondsToClock(elapsedSeconds)}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  {appointment.started_at ? `Iniciado ${formatDate(appointment.started_at)}` : "Em aguardo"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-mn-sand p-3.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Documentos
+                </span>
+                <p className="mt-1 font-mono text-xl font-bold text-mn-purple">
+                  {documents.length}
+                </p>
+                <p className="text-[10px] text-slate-400">Emitidos nesta sessão</p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Resumo da Consulta Anterior (se houver) */}
+        {lastPreviousSummary && (
+          <div className="rounded-3xl border border-mn-border bg-white p-6 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-mn-purple">
+              Histórico Recente do Paciente
+            </span>
+            <h3 className="mt-1 text-base font-bold text-slate-900">
+              Resumo da Consulta Anterior
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600 whitespace-pre-line bg-mn-sand/60 p-4 rounded-2xl border border-mn-border/60">
+              {lastPreviousSummary}
+            </p>
+          </div>
+        )}
 
         {patientTriage && (
           <section className="mb-6 rounded-[38px] border border-mn-teal/30 bg-white p-7 shadow-sm">

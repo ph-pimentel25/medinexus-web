@@ -8,6 +8,16 @@ import {
 
 const headers = { "Cache-Control": "no-store" };
 
+function cleanLivekitUrl(raw?: string): string {
+  if (!raw) return "";
+  let u = raw.trim().replace(/^["']|["']$/g, "").trim();
+  u = u.replace(/\/+$/, "");
+  if (u.startsWith("https://")) u = "wss://" + u.slice(8);
+  else if (u.startsWith("http://")) u = "ws://" + u.slice(7);
+  else if (!u.startsWith("wss://") && !u.startsWith("ws://")) u = "wss://" + u;
+  return u;
+}
+
 export function GET() {
   const available = Boolean(
     process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET
@@ -16,9 +26,14 @@ export function GET() {
 }
 
 export async function POST(request: Request) {
-  const lkUrl = process.env.LIVEKIT_URL;
-  const lkKey = process.env.LIVEKIT_API_KEY;
-  const lkSecret = process.env.LIVEKIT_API_SECRET;
+  const rawLkUrl = process.env.LIVEKIT_URL;
+  const rawLkKey = process.env.LIVEKIT_API_KEY;
+  const rawLkSecret = process.env.LIVEKIT_API_SECRET;
+
+  const lkUrl = cleanLivekitUrl(rawLkUrl);
+  const lkKey = (rawLkKey || "").trim().replace(/^["']|["']$/g, "").trim();
+  const lkSecret = (rawLkSecret || "").trim().replace(/^["']|["']$/g, "").trim();
+
   if (!lkUrl || !lkKey || !lkSecret) {
     return Response.json(
       { error: "Telemedicina ainda não ativada neste ambiente." },

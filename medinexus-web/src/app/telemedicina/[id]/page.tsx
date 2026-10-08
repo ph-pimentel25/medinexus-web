@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Mic,
   MicOff,
@@ -15,6 +16,10 @@ import {
   Lock,
   Loader2,
   AlertTriangle,
+  RefreshCw,
+  ArrowLeft,
+  FileText,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Room,
@@ -61,6 +66,10 @@ export default function TelemedicineRoomPage({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
 
+  const [serverHost, setServerHost] = useState("");
+  const [joinAttempt, setJoinAttempt] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const attachRemote = useCallback((track: RemoteTrack) => {
     if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
       track.attach(remoteVideoRef.current);
@@ -78,6 +87,9 @@ export default function TelemedicineRoomPage({
 
     async function join() {
       try {
+        setPhase("connecting");
+        setErrorMsg("");
+
         const { data } = await supabase.auth.getSession();
         const accessToken = data.session?.access_token;
         if (!accessToken) throw new Error("Entre na sua conta para acessar a teleconsulta.");
@@ -89,6 +101,23 @@ export default function TelemedicineRoomPage({
         });
         const payload = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(payload.error || "Não foi possível entrar na sala.");
+
+        let targetUrl = String(payload.url || "")
+          .trim()
+          .replace(/^["']|["']$/g, "")
+          .trim()
+          .replace(/\/+$/, "");
+
+        if (targetUrl.startsWith("https://")) targetUrl = "wss://" + targetUrl.slice(8);
+        else if (targetUrl.startsWith("http://")) targetUrl = "ws://" + targetUrl.slice(7);
+        else if (!targetUrl.startsWith("wss://") && !targetUrl.startsWith("ws://")) targetUrl = "wss://" + targetUrl;
+
+        try {
+          const parsed = new URL(targetUrl.replace(/^wss:\/\//, "https://").replace(/^ws:\/\//, "http://"));
+          setServerHost(parsed.host);
+        } catch {
+          setServerHost(targetUrl);
+        }
 
         room
           .on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _pub: RemoteTrackPublication, p: RemoteParticipant) => {
@@ -121,7 +150,7 @@ export default function TelemedicineRoomPage({
             ]);
           });
 
-        await room.connect(payload.url, payload.token);
+        await room.connect(targetUrl, payload.token);
         if (cancelled) {
           room.disconnect();
           return;
@@ -148,10 +177,13 @@ export default function TelemedicineRoomPage({
           });
         });
         setPhase("live");
-      } catch (e) {
+      } catch (e: any) {
         if (cancelled) return;
-        setErrorMsg(e instanceof Error ? e.message : "Falha ao conectar.");
+        const msg = e instanceof Error ? e.message : String(e || "Falha ao conectar.");
+        setErrorMsg(msg);
         setPhase("error");
+      } finally {
+        setIsRetrying(false);
       }
     }
 
@@ -161,7 +193,7 @@ export default function TelemedicineRoomPage({
       room.disconnect();
       roomRef.current = null;
     };
-  }, [appointmentId, attachRemote]);
+  }, [appointmentId, attachRemote, joinAttempt]);
 
   useEffect(() => {
     if (phase !== "live") return;
@@ -230,18 +262,89 @@ export default function TelemedicineRoomPage({
   }
 
   if (phase === "error" && !roomRef.current?.localParticipant?.identity) {
+    const isSignalError =
+      errorMsg.includes("signal connection") ||
+      errorMsg.includes("Failed to fetch") ||
+      errorMsg.includes("NetworkError");
+
     return (
-      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 p-6 text-center text-slate-200">
-        <AlertTriangle className="text-amber-400" size={36} />
-        <h1 className="mt-4 text-lg font-bold">Não foi possível abrir a sala</h1>
-        <p className="mt-2 max-w-sm text-sm text-slate-400">{errorMsg}</p>
-        <button
-          type="button"
-          onClick={() => router.push("/solicitacoes")}
-          className="mt-6 rounded-xl bg-mn-teal px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          Voltar às consultas
-        </button>
+      <div className="flex min-h-screen w-screen flex-col items-center justify-center bg-slate-950 p-6 text-slate-100">
+        <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900/95 p-8 text-center shadow-2xl backdrop-blur-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-5">
+            <AlertTriangle size={32} />
+          </div>
+
+          <span className="inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-3">
+            {isSignalError ? "Falha no Servidor de Telemedicina" : "Aviso de Conexão"}
+          </span>
+
+          <h1 className="text-xl font-bold text-white">Não foi possível abrir a sala</h1>
+
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            {isSignalError
+              ? "O navegador não conseguiu estabelecer a conexão WebRTC de vídeo com o servidor LiveKit Cloud."
+              : errorMsg}
+          </p>
+
+          {serverHost && (
+            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/80 p-3 text-xs font-mono text-slate-400 text-left">
+              <span className="text-slate-500 block text-[10px] uppercase font-sans font-bold tracking-wider mb-1">
+                Servidor de sinalização:
+              </span>
+              <span className="text-emerald-400 break-all">{serverHost}</span>
+            </div>
+          )}
+
+          {isSignalError && (
+            <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-left text-xs text-slate-300 space-y-2">
+              <p className="font-bold text-slate-200">🔍 Possíveis causas e como resolver:</p>
+              <ul className="list-disc pl-4 space-y-1.5 text-slate-400">
+                <li>
+                  <strong>Painel da Vercel:</strong> Verifique se a variável <code className="text-amber-300">LIVEKIT_URL</code> está no formato exato <code className="text-amber-300">wss://seu-projeto.livekit.cloud</code> (sem aspas e sem barra <code className="text-amber-300">/</code> no final).
+                </li>
+                <li>
+                  <strong>Status do LiveKit:</strong> Confirme em <span className="text-mn-teal font-medium">cloud.livekit.io</span> se o seu projeto gratuito está ativo e não está pausado.
+                </li>
+                <li>
+                  <strong>Rede / Extensões:</strong> Desative bloqueadores de anúncios (AdBlock, Brave Shields) ou redes VPN que possam bloquear WebSockets.
+                </li>
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRetrying(true);
+                setPhase("connecting");
+                setErrorMsg("");
+                setJoinAttempt((prev) => prev + 1);
+              }}
+              disabled={isRetrying}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-mn-teal px-5 py-3 text-xs font-bold text-white transition hover:bg-[#123B46] active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={isRetrying ? "animate-spin" : ""} />
+              <span>{isRetrying ? "Reconectando..." : "Tentar reconectar"}</span>
+            </button>
+
+            <Link
+              href={`/medico/consultas/${appointmentId}`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-bold text-slate-200 transition hover:bg-slate-700 active:scale-95"
+            >
+              <FileText size={15} />
+              <span>Voltar ao prontuário</span>
+            </Link>
+
+            <Link
+              href="/solicitacoes"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-800 px-4 py-3 text-xs font-bold text-slate-400 transition hover:bg-slate-800/60 active:scale-95"
+            >
+              <ArrowLeft size={15} />
+              <span>Consultas</span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
