@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, use } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import {
   Mic,
@@ -9,30 +8,33 @@ import {
   Video,
   VideoOff,
   PhoneOff,
-  ShieldCheck,
   MessageSquare,
-  Maximize2,
-  Minimize2,
   Send,
-  Activity,
-  Heart,
-  Footprints,
   Clock,
-  Sparkles,
-  Info,
-  CheckCircle2,
   Stethoscope,
   Lock,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  Room,
+  RoomEvent,
+  Track,
+  type RemoteTrack,
+  type RemoteTrackPublication,
+  type RemoteParticipant,
+} from "livekit-client";
 import { supabase } from "../../lib/supabase";
 
 interface ChatMessage {
   id: string;
-  sender: "doctor" | "patient" | "system";
+  mine: boolean;
   name: string;
   time: string;
   text: string;
 }
+
+type Phase = "connecting" | "live" | "error";
 
 export default function TelemedicineRoomPage({
   params,
@@ -40,242 +42,279 @@ export default function TelemedicineRoomPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const resolvedParams = use(params);
-  const appointmentId = resolvedParams.id;
+  const appointmentId = use(params).id;
 
-  // Local media stream
+  const roomRef = useRef<Room | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+
+  const [phase, setPhase] = useState<Phase>("connecting");
+  const [errorMsg, setErrorMsg] = useState("");
   const [micActive, setMicActive] = useState(true);
   const [videoActive, setVideoActive] = useState(true);
-  const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null);
-
-  // Call status
+  const [remoteName, setRemoteName] = useState<string | null>(null);
+  const [remoteHasVideo, setRemoteHasVideo] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
-  const [isConnected, setIsConnected] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [showVitals, setShowVitals] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
-
-  // Chat
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "msg-0",
-      sender: "system",
-      name: "MediNexus Seguro",
-      time: "Agora",
-      text: "Sala de Telemedicina criptografada ponta a ponta (E2E). Atendimento regulamentado pela Resolução CFM nº 2.314/2022.",
-    },
-    {
-      id: "msg-1",
-      sender: "doctor",
-      name: "Dr. Rafael Macedo",
-      time: "14:02",
-      text: "Olá! Boa tarde. Estou com seu prontuário aberto e revisando seus exames recentes. Consegue me ouvir e me ver bem?",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
 
-  // Start webcam
-  useEffect(() => {
-    let activeStream: MediaStream | null = null;
+  const attachRemote = useCallback((track: RemoteTrack) => {
+    if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
+      track.attach(remoteVideoRef.current);
+      setRemoteHasVideo(true);
+    }
+    if (track.kind === Track.Kind.Audio && remoteAudioRef.current) {
+      track.attach(remoteAudioRef.current);
+    }
+  }, []);
 
-    async function initMedia() {
+  useEffect(() => {
+    let cancelled = false;
+    const room = new Room({ adaptiveStream: true, dynacast: true });
+    roomRef.current = room;
+
+    async function join() {
       try {
-        if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: true,
+        const { data } = await supabase.auth.getSession();
+        const accessToken = data.session?.access_token;
+        if (!accessToken) throw new Error("Entre na sua conta para acessar a teleconsulta.");
+
+        const res = await fetch("/api/telemedicine/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ appointmentId }),
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload.error || "Não foi possível entrar na sala.");
+
+        room
+          .on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _pub: RemoteTrackPublication, p: RemoteParticipant) => {
+            setRemoteName(p.name || "Participante");
+            attachRemote(track);
+          })
+          .on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+            track.detach();
+            if (track.kind === Track.Kind.Video) setRemoteHasVideo(false);
+          })
+          .on(RoomEvent.ParticipantDisconnected, () => {
+            setRemoteName(null);
+            setRemoteHasVideo(false);
+          })
+          .on(RoomEvent.Disconnected, () => {
+            if (!cancelled) setPhase((p) => (p === "live" ? "error" : p));
+            if (!cancelled) setErrorMsg((m) => m || "A conexão com a sala foi encerrada.");
+          })
+          .on(RoomEvent.DataReceived, (bytes: Uint8Array, p?: RemoteParticipant) => {
+            const text = new TextDecoder().decode(bytes).slice(0, 2000);
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                id: `r-${Date.now()}-${prev.length}`,
+                mine: false,
+                name: p?.name || "Participante",
+                time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+                text,
+              },
+            ]);
           });
-          activeStream = stream;
-          setLocalStream(stream);
-          setCameraPermissionGranted(true);
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
+
+        await room.connect(payload.url, payload.token);
+        if (cancelled) {
+          room.disconnect();
+          return;
         }
-      } catch (err) {
-        console.warn("Dispositivo sem webcam ou permissão negada; ativando modo simulado seguro.", err);
-        setCameraPermissionGranted(false);
+
+        // Pede câmera e microfone; se o usuário negar, entra apenas ouvindo.
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true);
+        } catch {
+          setMicActive(false);
+        }
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+          const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+          if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
+        } catch {
+          setVideoActive(false);
+        }
+
+        room.remoteParticipants.forEach((p) => {
+          setRemoteName(p.name || "Participante");
+          p.trackPublications.forEach((pub) => {
+            if (pub.track) attachRemote(pub.track as RemoteTrack);
+          });
+        });
+        setPhase("live");
+      } catch (e) {
+        if (cancelled) return;
+        setErrorMsg(e instanceof Error ? e.message : "Falha ao conectar.");
+        setPhase("error");
       }
     }
 
-    initMedia();
-
+    join();
     return () => {
-      if (activeStream) {
-        activeStream.getTracks().forEach((track) => track.stop());
-      }
+      cancelled = true;
+      room.disconnect();
+      roomRef.current = null;
     };
-  }, []);
+  }, [appointmentId, attachRemote]);
 
-  // Timer
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
+    if (phase !== "live") return;
+    const timer = setInterval(() => setCallDuration((p) => p + 1), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [phase]);
 
-  const formatTimer = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const secs = (totalSeconds % 60).toString().padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
+  const formatTimer = (s: number) =>
+    `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const toggleMic = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach((track) => {
-        track.enabled = !micActive;
-      });
+  const toggleMic = async () => {
+    const next = !micActive;
+    try {
+      await roomRef.current?.localParticipant.setMicrophoneEnabled(next);
+      setMicActive(next);
+    } catch {
+      setErrorMsg("Permita o acesso ao microfone nas configurações do navegador.");
     }
-    setMicActive(!micActive);
   };
 
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach((track) => {
-        track.enabled = !videoActive;
-      });
+  const toggleVideo = async () => {
+    const next = !videoActive;
+    try {
+      await roomRef.current?.localParticipant.setCameraEnabled(next);
+      setVideoActive(next);
+      if (next) {
+        const pub = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
+      }
+    } catch {
+      setErrorMsg("Permita o acesso à câmera nas configurações do navegador.");
     }
-    setVideoActive(!videoActive);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
-
-    const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: "patient",
-      name: "Você",
-      time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-      text: inputMessage.trim(),
-    };
-
-    setChatMessages((prev) => [...prev, newMsg]);
+    const text = inputMessage.trim();
+    if (!text || !roomRef.current) return;
+    await roomRef.current.localParticipant.publishData(new TextEncoder().encode(text), { reliable: true });
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `m-${Date.now()}`,
+        mine: true,
+        name: "Você",
+        time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        text,
+      },
+    ]);
     setInputMessage("");
   };
 
   const handleEndCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach((t) => t.stop());
-    }
+    roomRef.current?.disconnect();
     router.push("/solicitacoes");
   };
 
+  if (phase === "connecting") {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 text-slate-200">
+        <Loader2 className="animate-spin text-mn-teal" size={32} />
+        <p className="mt-4 text-sm">Conectando à sala segura…</p>
+        <p className="mt-1 text-xs text-slate-500">Permita câmera e microfone quando o navegador pedir.</p>
+      </div>
+    );
+  }
+
+  if (phase === "error" && !roomRef.current?.localParticipant?.identity) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 p-6 text-center text-slate-200">
+        <AlertTriangle className="text-amber-400" size={36} />
+        <h1 className="mt-4 text-lg font-bold">Não foi possível abrir a sala</h1>
+        <p className="mt-2 max-w-sm text-sm text-slate-400">{errorMsg}</p>
+        <button
+          type="button"
+          onClick={() => router.push("/solicitacoes")}
+          className="mt-6 rounded-xl bg-mn-teal px-5 py-2.5 text-sm font-semibold text-white"
+        >
+          Voltar às consultas
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-slate-950 font-sans text-slate-100">
-      {/* Top Bar */}
-      <header className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-800/80 bg-slate-900/90 px-4 backdrop-blur-md sm:px-6">
+      <header className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-800/80 bg-slate-900/90 px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-mn-teal text-white shadow-md">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-mn-teal text-white">
             <Stethoscope size={18} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-sm sm:text-base">MediNexus Telemedicina</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                AO VIVO
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400">Dr. Rafael Macedo · CRM/SP 198421</p>
-          </div>
+          <span className="text-sm font-bold text-white sm:text-base">MediNexus Telemedicina</span>
         </div>
-
-        {/* Status Central e Criptografia */}
-        <div className="hidden items-center gap-4 md:flex">
-          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300">
-            <Lock size={12} className="text-emerald-400" />
-            <span>Criptografia E2E Ponta a Ponta</span>
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+            <Lock size={12} className="text-mn-teal" />
+            <span>Conexão criptografada em trânsito</span>
           </div>
-
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-800/60 px-3 py-1 text-xs font-mono text-slate-300">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-800/60 px-3 py-1 font-mono text-xs text-slate-300">
             <Clock size={12} className="text-mn-teal" />
             <span>{formatTimer(callDuration)}</span>
           </div>
         </div>
-
-        {/* Ações Topo */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowVitals(!showVitals)}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-              showVitals ? "bg-rose-500/20 text-rose-300 border border-rose-500/40" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-            }`}
-          >
-            <Activity size={15} />
-            <span className="hidden sm:inline">Métricas de Saúde</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowChat(!showChat)}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-              showChat ? "bg-mn-teal text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-            }`}
-          >
-            <MessageSquare size={15} />
-            <span className="hidden sm:inline">Chat</span>
-            {chatMessages.length > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                {chatMessages.length}
-              </span>
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowChat(!showChat)}
+          className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold ${
+            showChat ? "bg-mn-teal text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+          }`}
+        >
+          <MessageSquare size={15} />
+          <span className="hidden sm:inline">Chat</span>
+        </button>
       </header>
 
-      {/* Main Video Arena */}
+      {errorMsg && (
+        <div className="bg-amber-500/15 px-4 py-2 text-center text-xs text-amber-200">{errorMsg}</div>
+      )}
+
       <div className="relative flex flex-1 overflow-hidden">
-        {/* Remote Doctor Video Container */}
-        <div className="relative flex flex-1 items-center justify-center bg-slate-900/60 p-2 sm:p-4">
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
-            {/* Doctor Feed Mock / Connected Stream */}
-            <div className="relative flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-[#102730] to-slate-950 p-6 text-center">
-              <div className="relative mb-4 flex h-32 w-32 items-center justify-center rounded-full border-4 border-mn-teal/40 bg-gradient-to-tr from-mn-teal to-mn-purple text-4xl font-bold text-white shadow-2xl sm:h-40 sm:w-40">
-                <span>RM</span>
-                <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white ring-4 ring-slate-950">
-                  <CheckCircle2 size={14} />
-                </span>
+        <div className="relative flex flex-1 items-center justify-center p-2 sm:p-4">
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-slate-950">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className={`h-full w-full object-cover ${remoteHasVideo ? "" : "hidden"}`}
+            />
+            <audio ref={remoteAudioRef} autoPlay />
+            {!remoteHasVideo && (
+              <div className="p-6 text-center">
+                <Loader2 className="mx-auto animate-spin text-mn-teal" size={28} />
+                <p className="mt-4 text-sm text-slate-300">
+                  {remoteName ? `${remoteName} está na sala (sem vídeo)` : "Aguardando o outro participante entrar…"}
+                </p>
               </div>
-
-              <h2 className="text-xl font-bold text-white sm:text-2xl">Dr. Rafael Macedo</h2>
-              <p className="mt-1 text-sm text-slate-400">Cardiologia Clínica & Preventiva • Hospital Israelita Albert Einstein</p>
-
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 text-xs text-slate-300 border border-slate-700">
-                  <Activity size={12} className="text-emerald-400" /> Áudio HD Estável (32 kbps)
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 text-xs text-slate-300 border border-slate-700">
-                  <ShieldCheck size={12} className="text-mn-teal" /> Conexão Segura E2E
-                </span>
+            )}
+            {remoteName && remoteHasVideo && (
+              <div className="absolute left-4 top-4 rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold">
+                {remoteName}
               </div>
-            </div>
+            )}
 
-            {/* Local Patient Video (Picture-in-Picture) */}
-            <div className="absolute bottom-4 right-4 z-20 h-36 w-48 overflow-hidden rounded-2xl border-2 border-slate-700 bg-slate-900 shadow-2xl transition hover:scale-105 sm:h-44 sm:w-60">
+            <div className="absolute bottom-4 right-4 z-20 h-36 w-48 overflow-hidden rounded-2xl border-2 border-slate-700 bg-slate-900 shadow-2xl sm:h-44 sm:w-60">
               {videoActive ? (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="h-full w-full object-cover -scale-x-100"
-                />
+                <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full -scale-x-100 object-cover" />
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center bg-slate-800 text-slate-400">
                   <VideoOff size={24} />
                   <span className="mt-1 text-[11px]">Câmera desativada</span>
                 </div>
               )}
-
-              <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-lg bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-md">
+              <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-lg bg-black/70 px-2 py-0.5 text-[10px] font-semibold">
                 <span>Você</span>
                 {!micActive && <MicOff size={10} className="text-rose-400" />}
               </div>
@@ -283,122 +322,40 @@ export default function TelemedicineRoomPage({
           </div>
         </div>
 
-        {/* Sidebar Direita: Métricas de Saúde (Apple Health / Google Fit) */}
-        {showVitals && (
-          <aside className="w-80 shrink-0 border-l border-slate-800 bg-slate-900/95 p-4 backdrop-blur-md">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Heart className="text-rose-500" size={18} />
-                <h3 className="font-bold text-sm text-white">Apple Health & Google Fit</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowVitals(false)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3 text-xs">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Frequência Cardíaca</span>
-                <p className="mt-1 text-2xl font-bold text-white">68 <span className="text-xs font-normal text-slate-400">bpm (repouso)</span></p>
-                <p className="mt-1 text-[11px] text-slate-400">Pico no mês: <strong className="text-rose-300">142 bpm</strong> em 24/Set</p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-mn-teal">Pressão Arterial Recente</span>
-                <p className="mt-1 text-2xl font-bold text-white">120 / 78 <span className="text-xs font-normal text-slate-400">mmHg</span></p>
-                <p className="mt-1 text-[11px] text-emerald-400">Classificação: Ótima / Controlada</p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Atividade Mensal</span>
-                <p className="mt-1 text-2xl font-bold text-white">218.400 <span className="text-xs font-normal text-slate-400">passos</span></p>
-                <p className="mt-1 text-[11px] text-slate-400">Média diária: 7.280 passos/dia</p>
-              </div>
-
-              <div className="rounded-2xl border border-blue-900/40 bg-blue-950/20 p-3 text-[11px] text-blue-200">
-                <p className="font-bold flex items-center gap-1">
-                  <Sparkles size={12} className="text-blue-400" />
-                  Tendência Preventiva:
-                </p>
-                <p className="mt-1 text-slate-300">
-                  Dados integrados sincronizados em tempo real com o prontuário para suporte ao diagnóstico médico durante a teleconsulta.
-                </p>
-              </div>
-            </div>
-          </aside>
-        )}
-
-        {/* Sidebar Direita: Chat Criptografado */}
         {showChat && (
-          <aside className="flex w-80 shrink-0 flex-col border-l border-slate-800 bg-slate-900/95 backdrop-blur-md">
-            <div className="flex items-center justify-between border-b border-slate-800 p-4">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="text-mn-teal" size={18} />
-                <h3 className="font-bold text-sm text-white">Chat Seguro E2E</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowChat(false)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Lista de mensagens */}
+          <aside className="flex w-80 shrink-0 flex-col border-l border-slate-800 bg-slate-900/95">
+            <div className="border-b border-slate-800 p-4 text-sm font-bold">Chat da sala</div>
             <div className="flex-1 space-y-3 overflow-y-auto p-4 text-xs">
+              <p className="rounded-xl border border-slate-800 bg-slate-950/80 p-2 text-center text-[10px] text-slate-400">
+                As mensagens existem só durante a chamada e não são salvas.
+              </p>
               {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${
-                    msg.sender === "patient"
-                      ? "items-end"
-                      : msg.sender === "system"
-                      ? "items-center"
-                      : "items-start"
-                  }`}
-                >
-                  {msg.sender === "system" ? (
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-2 text-center text-[10px] text-slate-400">
-                      {msg.text}
+                <div key={msg.id} className={`flex flex-col ${msg.mine ? "items-end" : "items-start"}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-3 ${
+                      msg.mine ? "bg-mn-teal text-white" : "border border-slate-800 bg-slate-800 text-slate-200"
+                    }`}
+                  >
+                    <div className="mb-1 flex justify-between gap-2 text-[10px] opacity-75">
+                      <span className="font-bold">{msg.name}</span>
+                      <span>{msg.time}</span>
                     </div>
-                  ) : (
-                    <div
-                      className={`max-w-[85%] rounded-2xl p-3 ${
-                        msg.sender === "patient"
-                          ? "bg-mn-teal text-white"
-                          : "border border-slate-800 bg-slate-800 text-slate-200"
-                      }`}
-                    >
-                      <div className="mb-1 flex items-center justify-between gap-2 text-[10px] opacity-75">
-                        <span className="font-bold">{msg.name}</span>
-                        <span>{msg.time}</span>
-                      </div>
-                      <p className="leading-relaxed">{msg.text}</p>
-                    </div>
-                  )}
+                    <p className="leading-relaxed">{msg.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
-
-            {/* Input */}
             <form onSubmit={handleSendMessage} className="border-t border-slate-800 p-3">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={inputMessage}
+                  maxLength={500}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Escreva sua mensagem..."
-                  className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-mn-teal"
+                  className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none focus:border-mn-teal"
                 />
-                <button
-                  type="submit"
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-mn-teal text-white hover:bg-[#123B46]"
-                >
+                <button type="submit" className="flex h-8 w-8 items-center justify-center rounded-xl bg-mn-teal text-white">
                   <Send size={14} />
                 </button>
               </div>
@@ -407,61 +364,43 @@ export default function TelemedicineRoomPage({
         )}
       </div>
 
-      {/* Floating Bottom Control Dock */}
-      <footer className="z-20 flex h-20 shrink-0 items-center justify-center border-t border-slate-800/80 bg-slate-900/90 px-4 backdrop-blur-md">
+      <footer className="z-20 flex h-20 shrink-0 items-center justify-center border-t border-slate-800/80 bg-slate-900/90 px-4">
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Microfone */}
           <button
             type="button"
             onClick={toggleMic}
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl transition shadow-lg ${
-              micActive
-                ? "bg-slate-800 text-white hover:bg-slate-700"
-                : "bg-rose-600 text-white hover:bg-rose-500"
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+              micActive ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-rose-600 text-white"
             }`}
-            title={micActive ? "Desativar Microfone" : "Ativar Microfone"}
+            title={micActive ? "Desativar microfone" : "Ativar microfone"}
           >
             {micActive ? <Mic size={20} /> : <MicOff size={20} />}
           </button>
-
-          {/* Câmera */}
           <button
             type="button"
             onClick={toggleVideo}
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl transition shadow-lg ${
-              videoActive
-                ? "bg-slate-800 text-white hover:bg-slate-700"
-                : "bg-rose-600 text-white hover:bg-rose-500"
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+              videoActive ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-rose-600 text-white"
             }`}
-            title={videoActive ? "Desativar Câmera" : "Ativar Câmera"}
+            title={videoActive ? "Desativar câmera" : "Ativar câmera"}
           >
             {videoActive ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
-
-          {/* Desligar chamada */}
           <button
             type="button"
             onClick={() => setLeaveModalOpen(true)}
-            className="flex h-12 items-center gap-2 rounded-2xl bg-rose-600 px-6 font-bold text-white shadow-lg transition hover:bg-rose-500 active:scale-95"
+            className="flex h-12 items-center gap-2 rounded-2xl bg-rose-600 px-6 text-xs font-bold text-white hover:bg-rose-500"
           >
             <PhoneOff size={20} />
-            <span className="hidden sm:inline text-xs">Encerrar Chamada</span>
+            <span className="hidden sm:inline">Encerrar chamada</span>
           </button>
         </div>
       </footer>
 
-      {/* Modal Confirmação Encerramento */}
       {leaveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/20 text-rose-500">
-              <PhoneOff size={24} />
-            </div>
-            <h3 className="mt-4 text-lg font-bold text-white">Deseja sair da teleconsulta?</h3>
-            <p className="mt-2 text-xs text-slate-400">
-              Sua evolução clínica e receitas emitidas permanecerão salvas com segurança na sua conta MediNexus.
-            </p>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-6 text-center">
+            <h3 className="text-lg font-bold text-white">Deseja sair da teleconsulta?</h3>
             <div className="mt-6 flex justify-center gap-3">
               <button
                 type="button"

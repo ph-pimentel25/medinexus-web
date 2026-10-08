@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -98,12 +98,12 @@ export default function VaccineWallet({
             <ShieldCheck size={20} color="#059669" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.certGovText}>REPÚBLICA FEDERATIVA DO BRASIL</Text>
-            <Text style={styles.certMinistryText}>MINISTÉRIO DA SAÚDE • RNDS / SUS</Text>
+            <Text style={styles.certGovText}>MEU REGISTRO PESSOAL</Text>
+            <Text style={styles.certMinistryText}>Integração SUS / RNDS em breve</Text>
           </View>
           <View style={styles.certBadgeOnline}>
-            <CheckCircle2 size={12} color="#059669" />
-            <Text style={styles.certBadgeOnlineText}>NÃO CONECTADO</Text>
+            <Clock size={12} color="#059669" />
+            <Text style={styles.certBadgeOnlineText}>SUS: EM BREVE</Text>
           </View>
         </View>
 
@@ -111,7 +111,7 @@ export default function VaccineWallet({
         <View style={styles.certTitleBlock}>
           <Text style={styles.certDocTitle}>Carteira Nacional de Vacinação Digital</Text>
           <Text style={styles.certDocSubtitle}>
-            Registro Oficial do Programa Nacional de Imunizações (PNI)
+            Seu registro pessoal de vacinas. A conexão oficial com o SUS chega em breve.
           </Text>
         </View>
 
@@ -163,7 +163,7 @@ export default function VaccineWallet({
       <View style={styles.reminderBar}>
         <AlertTriangle size={16} color={colors.warning} />
         <Text style={styles.reminderText}>
-          Campanha Oficial 2026: Reforço anual da vacina contra Gripe e Covid-19 disponível na rede básica e parceiros MediNexus.
+          Consulte seu calendário de vacinação no posto de saúde ou com seu médico. Lembretes de reforço usarão as datas que você registrar.
         </Text>
       </View>
 
@@ -326,7 +326,7 @@ export default function VaccineWallet({
                 </View>
               </View>
 
-              <Button title="Salvar na Carteira Oficial" onPress={handleAddVaccine} />
+              <Button title="Salvar registro" onPress={handleAddVaccine} />
             </ScrollView>
           </View>
         </View>

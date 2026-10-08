@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { ShieldCheck, Plus, Calendar, CheckCircle2, AlertTriangle, Syringe, Clock, QrCode, Building2, Tag, X } from "lucide-react";
@@ -141,7 +141,7 @@ export default function VaccineWallet() {
 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
-              <CheckCircle2 size={13} /> Registro oficial não conectado
+              <Clock size={13} /> Conexão com o SUS: Em breve
             </span>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function VaccineWallet() {
               Carteira Nacional de Vacinação Digital
             </h3>
             <p className="mt-1 text-xs text-slate-300">
-              Registro Oficial do Programa Nacional de Imunizações (PNI) integrado ao SUS
+              Seu registro pessoal de vacinas. A integração oficial com o SUS (PNI/RNDS) chega em breve.
             </p>
           </div>
 
