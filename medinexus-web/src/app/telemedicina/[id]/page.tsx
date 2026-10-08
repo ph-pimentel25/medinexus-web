@@ -30,6 +30,8 @@ import {
   type RemoteParticipant,
 } from "livekit-client";
 import { supabase } from "../../lib/supabase";
+import { getUserRole } from "../../lib/auth";
+import { TelemedicineClinicalPanel } from "../../components/telemedicine-clinical-panel";
 
 interface ChatMessage {
   id: string;
@@ -62,6 +64,8 @@ export default function TelemedicineRoomPage({
   const [remoteHasVideo, setRemoteHasVideo] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [showChat, setShowChat] = useState(false);
+  const [isDoctor, setIsDoctor] = useState(false);
+  const [showClinicalPanel, setShowClinicalPanel] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -101,6 +105,20 @@ export default function TelemedicineRoomPage({
         });
         const payload = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(payload.error || "Não foi possível entrar na sala.");
+
+        let isDoc = payload.role === "doctor";
+        if (!isDoc) {
+          try {
+            const roleInfo = await getUserRole();
+            if (roleInfo.role === "doctor") isDoc = true;
+          } catch {
+            // ignore
+          }
+        }
+        setIsDoctor(isDoc);
+        if (isDoc && typeof window !== "undefined" && window.innerWidth >= 1024) {
+          setShowClinicalPanel(true);
+        }
 
         let targetUrl = String(payload.url || "")
           .trim()
@@ -248,7 +266,11 @@ export default function TelemedicineRoomPage({
 
   const handleEndCall = () => {
     roomRef.current?.disconnect();
-    router.push("/solicitacoes");
+    if (isDoctor) {
+      router.push(`/medico/consultas/${appointmentId}`);
+    } else {
+      router.push("/solicitacoes");
+    }
   };
 
   if (phase === "connecting") {
@@ -368,16 +390,45 @@ export default function TelemedicineRoomPage({
             <span>{formatTimer(callDuration)}</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowChat(!showChat)}
-          className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold ${
-            showChat ? "bg-mn-teal text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-          }`}
-        >
-          <MessageSquare size={15} />
-          <span className="hidden sm:inline">Chat</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {isDoctor && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowClinicalPanel(!showClinicalPanel);
+                if (!showClinicalPanel && typeof window !== "undefined" && window.innerWidth < 1024) {
+                  setShowChat(false);
+                }
+              }}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                showClinicalPanel
+                  ? "bg-teal-600 text-white shadow-md shadow-teal-900/40"
+                  : "bg-slate-800 text-teal-300 border border-teal-500/30 hover:bg-slate-700 hover:text-white"
+              }`}
+              title="Prontuário Médico Digital"
+            >
+              <FileText size={15} />
+              <span className="hidden sm:inline">Prontuário & Atendimento</span>
+              <span className="sm:hidden">Prontuário</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowChat(!showChat);
+              if (!showChat && typeof window !== "undefined" && window.innerWidth < 1024) {
+                setShowClinicalPanel(false);
+              }
+            }}
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+              showChat ? "bg-mn-teal text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            <MessageSquare size={15} />
+            <span className="hidden sm:inline">Chat</span>
+          </button>
+        </div>
       </header>
 
       {errorMsg && (
@@ -385,7 +436,7 @@ export default function TelemedicineRoomPage({
       )}
 
       <div className="relative flex flex-1 overflow-hidden">
-        <div className="relative flex flex-1 items-center justify-center p-2 sm:p-4">
+        <div className="relative flex flex-1 min-w-0 items-center justify-center p-2 sm:p-4">
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-slate-950">
             <video
               ref={remoteVideoRef}
@@ -424,6 +475,15 @@ export default function TelemedicineRoomPage({
             </div>
           </div>
         </div>
+
+        {/* Painel do Prontuário para o Médico */}
+        {isDoctor && (
+          <TelemedicineClinicalPanel
+            appointmentId={appointmentId}
+            isOpen={showClinicalPanel}
+            onClose={() => setShowClinicalPanel(false)}
+          />
+        )}
 
         {showChat && (
           <aside className="flex w-80 shrink-0 flex-col border-l border-slate-800 bg-slate-900/95">
@@ -467,7 +527,24 @@ export default function TelemedicineRoomPage({
         )}
       </div>
 
-      <footer className="z-20 flex h-20 shrink-0 items-center justify-center border-t border-slate-800/80 bg-slate-900/90 px-4">
+      <footer className="z-20 flex h-20 shrink-0 items-center justify-between border-t border-slate-800/80 bg-slate-900/90 px-4 sm:px-6">
+        <div className="flex items-center gap-2">
+          {isDoctor && (
+            <button
+              type="button"
+              onClick={() => setShowClinicalPanel(!showClinicalPanel)}
+              className={`flex h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition sm:hidden ${
+                showClinicalPanel
+                  ? "bg-teal-600 text-white"
+                  : "bg-slate-800 text-teal-300 border border-teal-500/30"
+              }`}
+            >
+              <FileText size={16} />
+              <span>Prontuário</span>
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             type="button"
@@ -498,26 +575,37 @@ export default function TelemedicineRoomPage({
             <span className="hidden sm:inline">Encerrar chamada</span>
           </button>
         </div>
+
+        <div className="w-12 sm:w-24 flex justify-end">
+          {/* placeholder para equilíbrio visual */}
+        </div>
       </footer>
 
       {leaveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-6 text-center">
-            <h3 className="text-lg font-bold text-white">Deseja sair da teleconsulta?</h3>
+            <h3 className="text-lg font-bold text-white">
+              {isDoctor ? "Encerrar chamada e ir ao prontuário?" : "Deseja sair da teleconsulta?"}
+            </h3>
+            <p className="mt-2 text-xs text-slate-400">
+              {isDoctor
+                ? "O vídeo será finalizado e você continuará na tela de atendimento médico e prescrições."
+                : "A sua chamada de vídeo com o médico será encerrada."}
+            </p>
             <div className="mt-6 flex justify-center gap-3">
               <button
                 type="button"
                 onClick={() => setLeaveModalOpen(false)}
                 className="rounded-xl border border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
               >
-                Voltar à consulta
+                Voltar à chamada
               </button>
               <button
                 type="button"
                 onClick={handleEndCall}
                 className="rounded-xl bg-rose-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-rose-500"
               >
-                Sim, sair
+                {isDoctor ? "Sim, ir ao prontuário" : "Sim, sair"}
               </button>
             </div>
           </div>

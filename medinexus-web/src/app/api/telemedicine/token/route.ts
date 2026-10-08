@@ -82,16 +82,28 @@ export async function POST(request: Request) {
     role = "patient";
     displayName = "Paciente";
   } else {
-    const { data: member } = await client
-      .from("clinic_members")
-      .select("doctor_id")
+    const { data: directDoc } = await client
+      .from("doctors")
+      .select("id, name")
       .eq("user_id", user.id)
-      .eq("clinic_id", appt.clinic_id)
-      .eq("doctor_id", appt.doctor_id)
+      .eq("id", appt.doctor_id)
       .maybeSingle();
-    if (member) {
+
+    if (directDoc) {
       role = "doctor";
-      displayName = "Médico";
+      displayName = directDoc.name ? `Dr(a). ${directDoc.name}` : "Médico";
+    } else {
+      const { data: member } = await client
+        .from("clinic_members")
+        .select("doctor_id")
+        .eq("user_id", user.id)
+        .eq("clinic_id", appt.clinic_id)
+        .eq("doctor_id", appt.doctor_id)
+        .maybeSingle();
+      if (member) {
+        role = "doctor";
+        displayName = "Médico";
+      }
     }
   }
   if (!role) return Response.json({ error: "Sem acesso a esta consulta." }, { status: 403, headers });
