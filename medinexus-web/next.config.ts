@@ -22,15 +22,16 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      `connect-src 'self' ${supabaseOrigins.join(" ")} https://viacep.com.br https://nominatim.openstreetmap.org${production?"":" ws://localhost:* ws://127.0.0.1:*"}`,
+      "media-src 'self' blob: data:",
+      `connect-src 'self' ${supabaseOrigins.join(" ")} https://viacep.com.br https://nominatim.openstreetmap.org https://*.livekit.cloud wss://*.livekit.cloud${production?"":" ws://localhost:* ws://127.0.0.1:*"}`,
       "object-src 'none'", "base-uri 'self'", "form-action 'self'",
       "frame-ancestors 'none'", "frame-src 'self' blob:", "worker-src 'self' blob:",
     ].join("; ");
     return [{source:"/:path*",headers:[
       {key:"X-Content-Type-Options",value:"nosniff"},
       {key:"Referrer-Policy",value:"strict-origin-when-cross-origin"},
-      // Location and camera/photo capture remain available to this application.
-      {key:"Permissions-Policy",value:"geolocation=(self), camera=(self), microphone=(), payment=(), usb=()"},
+      // Location, camera/photo capture and microphone remain available to this application.
+      {key:"Permissions-Policy",value:"geolocation=(self), camera=(self), microphone=(self), payment=(), usb=()"},
       {key:"X-Frame-Options",value:"DENY"},
       {key:"Content-Security-Policy",value:csp},
       ...(process.env.VERCEL==="1"?[{key:"Strict-Transport-Security",value:"max-age=31536000"}]:[]),
