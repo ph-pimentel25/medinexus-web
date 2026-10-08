@@ -2,12 +2,13 @@ import { colors, shadows } from "./theme";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, Switch, type StyleProp, type ViewStyle } from "react-native";
 import type { ComponentType } from "react";
 
-export type BadgeVariant = "confirmed" | "pending" | "cancelled" | "completed" | "brand" | "neutral" | "external";
+export type BadgeVariant = "confirmed" | "pending" | "warning" | "cancelled" | "completed" | "brand" | "neutral" | "external";
 
 export function Badge({ label, variant = "neutral" }: { label: string; variant?: BadgeVariant }) {
   const badgeColors: Record<BadgeVariant, { bg: string; text: string }> = {
     confirmed: { bg: colors.successBg, text: colors.success },
     pending: { bg: colors.warningBg, text: colors.warning },
+    warning: { bg: colors.warningBg, text: colors.warning },
     cancelled: { bg: colors.dangerBg, text: colors.danger },
     completed: { bg: colors.infoBg, text: colors.info },
     brand: { bg: colors.lightSage, text: colors.teal },

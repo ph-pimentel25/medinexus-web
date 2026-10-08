@@ -18,6 +18,7 @@ import {
   CheckCheck,
 } from "lucide-react-native";
 import { supabase } from "./supabase";
+import { colors, shadows } from "./theme";
 
 interface ChatMessage {
   id: string;
