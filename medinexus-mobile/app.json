@@ -24,8 +24,7 @@
         "NSPhotoLibraryUsageDescription": "Permite anexar resultados de exames, pedidos médicos e fotos de perfil ao seu prontuário.",
         "NSLocationWhenInUseUsageDescription": "Permite localizar consultórios, clínicas credenciadas e laboratórios de exames mais próximos de você.",
         "UIBackgroundModes": [
-          "remote-notification",
-          "audio"
+          "remote-notification"
         ]
       }
     },

@@ -7,7 +7,7 @@ import * as Location from "expo-location";
 import { decode } from "base64-arraybuffer";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Camera, MapPin, User, Bell, Trash2, ShieldAlert, CalendarDays } from "lucide-react-native";
-import { supabase } from "./supabase";
+import { appUrl, supabase } from "./supabase";
 import { brazilState, formatCpf, formatPhone, validBirthDate, validCpf } from "./address";
 import { Button, Toggle, ui } from "./ui";
 
@@ -233,7 +233,7 @@ export default function PatientProfile({ userId, email, onSaved, openPlans, isNe
   function requestAccountDeletion() {
     Alert.alert(
       "Excluir conta e dados",
-      "De acordo com as diretrizes de privacidade e LGPD, sua conta de acesso será cancelada. Prontuários e prescrições médicas já emitidos são preservados pelo prazo legal de 20 anos (Resolução CFM 1.821/2007). Deseja prosseguir?",
+      "De acordo com as diretrizes da Apple e a LGPD, sua conta de login e dados de contato serão permanentemente excluídos. Prontuários e prescrições médicas já emitidos são preservados sob sigilo pelo prazo legal de 20 anos (Resolução CFM 1.821/2007). Deseja prosseguir?",
       [
         { text: "Voltar", style: "cancel" },
         {
@@ -243,10 +243,17 @@ export default function PatientProfile({ userId, email, onSaved, openPlans, isNe
             void (async () => {
               setBusy(true);
               try {
-                // Limpar preferências e deslogar usuário
-                await supabase.from("patient_preferences").delete().eq("patient_id", userId);
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.access_token) {
+                  await fetch(`${appUrl}/api/account/delete`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${session.access_token}`,
+                    },
+                  });
+                }
                 await supabase.auth.signOut();
-                Alert.alert("Solicitação registrada", "Sua sessão foi encerrada e seus dados foram desvinculados.");
+                Alert.alert("Conta excluída", "Sua conta foi excluída com sucesso em conformidade com a LGPD e as diretrizes da loja.");
               } catch {
                 Alert.alert("Erro", "Não foi possível registrar a exclusão. Tente novamente.");
               } finally {

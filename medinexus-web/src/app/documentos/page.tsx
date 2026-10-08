@@ -6,6 +6,34 @@ import { supabase } from "../lib/supabase";
 import FamilyProfileSwitcher from "../components/family-profile-switcher";
 import VaccineWallet from "../components/vaccine-wallet";
 
+import {
+  FlaskConical,
+  MessageCircle,
+  FileText,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  Sparkles,
+} from "lucide-react";
+
+type ExamOrderRow = {
+  id: string;
+  patient_id: string;
+  doctor_id?: string | null;
+  clinic_id?: string | null;
+  appointment_id?: string | null;
+  title: string;
+  category: string;
+  instructions?: string | null;
+  status: "solicitado" | "agendado" | "em_andamento" | "concluido";
+  lab_name?: string | null;
+  result_url?: string | null;
+  result_notes?: string | null;
+  scheduled_for?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+};
+
 type MedicalDocumentRow = {
   id: string;
   patient_id?: string | null;
@@ -19,6 +47,8 @@ type MedicalDocumentRow = {
   description?: string | null;
   is_released_to_patient?: boolean | null;
   released_to_patient?: boolean | null;
+  status?: string | null;
+  result_url?: string | null;
   created_at?: string | null;
   issued_at?: string | null;
   [key: string]: unknown;
@@ -101,9 +131,11 @@ export default function DocumentosPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [documents, setDocuments] = useState<MedicalDocumentRow[]>([]);
+  const [examOrders, setExamOrders] = useState<ExamOrderRow[]>([]);
   const [filter, setFilter] = useState<FilterType>("all");
   const [query, setQuery] = useState("");
 
+  const PARTNER_LAB_WHATSAPP = "5521979828341";
 
   async function loadDocuments() {
     setLoading(true);
@@ -116,38 +148,71 @@ export default function DocumentosPage() {
     if (!user) {
       setMessage("Você precisa estar logado para visualizar documentos.");
       setDocuments([]);
+      setExamOrders([]);
       setLoading(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("medical_documents")
-      .select("*")
-      .eq("patient_id", user.id)
-      .order("created_at", { ascending: false });
+    const [docsRes, examsRes] = await Promise.all([
+      supabase
+        .from("medical_documents")
+        .select("*")
+        .eq("patient_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("exam_orders")
+        .select("*")
+        .eq("patient_id", user.id)
+        .order("created_at", { ascending: false }),
+    ]);
 
-    if (error) {
-      setMessage(`Erro ao carregar documentos: ${error.message}`);
-      setDocuments([]);
-      setLoading(false);
-      return;
+    if (docsRes.error && !docsRes.data) {
+      setMessage(`Erro ao carregar documentos: ${docsRes.error.message}`);
     }
 
-    const safeDocs = ((data as MedicalDocumentRow[]) || []).filter((item) => {
+    const safeDocs = ((docsRes.data as MedicalDocumentRow[]) || []).filter((item) => {
       const released =
         item.is_released_to_patient ?? item.released_to_patient ?? true;
       return released !== false;
     });
 
+    const safeExams = (examsRes.data as ExamOrderRow[]) || [];
     setDocuments(safeDocs);
+    setExamOrders(safeExams);
     setLoading(false);
   }
-
 
   useEffect(() => {
     const initialLoad = setTimeout(() => void loadDocuments(), 0);
     return () => clearTimeout(initialLoad);
   }, []);
+
+  // Exames pendentes para agendamento (status "solicitado")
+  const pendingExams = useMemo(() => {
+    const fromOrders = examOrders.filter((e) => e.status === "solicitado");
+    const fromDocs = documents
+      .filter((d) => matchesType(d, "exame"))
+      .filter((d) => !examOrders.some((e) => e.title === d.title || e.id === d.id));
+    return [...fromOrders, ...fromDocs];
+  }, [examOrders, documents]);
+
+  function handleBatchWhatsApp() {
+    if (!pendingExams.length) return;
+    const list = pendingExams
+      .map((e, idx) => `${idx + 1}. ${"title" in e ? e.title : getDocumentTitle(e)}`)
+      .join("\n");
+    const text = encodeURIComponent(
+      `Olá! Gostaria de solicitar o agendamento dos meus exames pela rede parceira MediNexus:\n\n${list}\n\nPor favor, confirmem as unidades disponíveis e orientações de preparo.`
+    );
+    window.open(`https://wa.me/${PARTNER_LAB_WHATSAPP}?text=${text}`, "_blank");
+  }
+
+  function handleSingleWhatsApp(title: string) {
+    const text = encodeURIComponent(
+      `Olá! Gostaria de agendar o exame "${title}" pela rede credenciada do MediNexus.`
+    );
+    window.open(`https://wa.me/${PARTNER_LAB_WHATSAPP}?text=${text}`, "_blank");
+  }
 
   const summary = useMemo(() => {
     return {
@@ -292,59 +357,138 @@ export default function DocumentosPage() {
           </div>
         ) : (
           <div className="mt-6 grid gap-4">
-          {loading ? (
-            <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
-              Carregando documentos...
-            </div>
-          ) : filteredDocuments.length === 0 ? (
-            <div className="rounded-2xl border border-mn-border bg-white p-10 text-center shadow-sm">
-              <h2 className="text-xl font-bold text-slate-950">
-                Nenhum documento encontrado
-              </h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Quando um documento for liberado para você, ele aparecerá aqui.
-              </p>
-            </div>
-          ) : (
-            filteredDocuments.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-mn-border bg-white p-5 shadow-sm"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            {/* Banner de Agendamento Geral de Exames via WhatsApp */}
+            {(filter === "all" || filter === "exame") && pendingExams.length > 0 && (
+              <div className="rounded-3xl border border-emerald-500/30 bg-emerald-50/50 p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-600">
+                    <FlaskConical size={24} />
+                  </div>
                   <div>
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-mn-teal">
-                        {getDocumentTypeLabel(item)}
-                      </span>
-
-                      <span className="text-xs text-slate-400">
-                        Emitido em {formatDate(item.issued_at || item.created_at)}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-slate-950">
-                      {getDocumentTitle(item)}
-                    </h3>
-
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                      {getDocumentDescription(item)}
+                    <h4 className="font-bold text-slate-900">
+                      Você tem {pendingExams.length} exame{pendingExams.length > 1 ? "s" : ""} pendente{pendingExams.length > 1 ? "s" : ""} de agendamento
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      Dispare a lista completa de uma só vez para a central de atendimento e agendamento dos laboratórios credenciados.
                     </p>
                   </div>
-
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <Link
-                      href={`/documentos-medicos/${item.id}`}
-                      className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
-                    >
-                      Abrir documento
-                    </Link>
-                  </div>
                 </div>
-              </article>
-            ))
-          )}
-        </div>
+                <button
+                  type="button"
+                  onClick={handleBatchWhatsApp}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#047857] transition"
+                >
+                  <MessageCircle size={18} />
+                  <span>Disparar todos os exames via WhatsApp</span>
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="rounded-2xl border border-mn-border bg-white p-6 text-sm text-slate-500 shadow-sm">
+                Carregando documentos...
+              </div>
+            ) : filteredDocuments.length === 0 ? (
+              <div className="rounded-2xl border border-mn-border bg-white p-10 text-center shadow-sm">
+                <h2 className="text-xl font-bold text-slate-950">
+                  Nenhum documento encontrado
+                </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Quando um documento for liberado para você, ele aparecerá aqui.
+                </p>
+              </div>
+            ) : (
+              filteredDocuments.map((item) => {
+                const isExam = matchesType(item, "exame");
+                const matchedOrder = examOrders.find((e) => e.title === item.title || e.id === item.id);
+                const examStatus = matchedOrder?.status || (item.status as string) || "solicitado";
+                const isCompleted = examStatus === "concluido";
+
+                return (
+                  <article
+                    key={item.id}
+                    className="rounded-2xl border border-mn-border bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-mn-sage-light px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-mn-teal">
+                            {getDocumentTypeLabel(item)}
+                          </span>
+
+                          {isExam && (
+                            <span
+                              className={`rounded-full px-3 py-1 text-[11px] font-bold ${
+                                isCompleted
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : examStatus === "em_andamento"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : examStatus === "agendado"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-amber-100 text-amber-800"
+                              }`}
+                            >
+                              {isCompleted
+                                ? "Concluído / Laudo liberado"
+                                : examStatus === "em_andamento"
+                                ? "Em análise laboratorial"
+                                : examStatus === "agendado"
+                                ? "Agendado no laboratório"
+                                : "Pendente de agendamento"}
+                            </span>
+                          )}
+
+                          <span className="text-xs text-slate-400">
+                            Emitido em {formatDate(item.issued_at || item.created_at)}
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-slate-950">
+                          {getDocumentTitle(item)}
+                        </h3>
+
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                          {getDocumentDescription(item)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
+                        {isExam && !isCompleted && (
+                          <button
+                            type="button"
+                            onClick={() => handleSingleWhatsApp(getDocumentTitle(item))}
+                            className="flex items-center gap-1.5 rounded-2xl border border-emerald-600 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition"
+                          >
+                            <MessageCircle size={15} />
+                            <span>Agendar via WhatsApp</span>
+                          </button>
+                        )}
+
+                        {isExam && isCompleted && (
+                          <a
+                            href={matchedOrder?.result_url || (item.result_url as string) || `/documentos-medicos/${item.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                          >
+                            <CheckCircle2 size={16} />
+                            <span>Ver resultados</span>
+                          </a>
+                        )}
+
+                        <Link
+                          href={`/documentos-medicos/${item.id}`}
+                          className="rounded-2xl bg-mn-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#123B46]"
+                        >
+                          Abrir documento
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
         )}
       </section>
     </main>

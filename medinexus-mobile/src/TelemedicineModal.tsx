@@ -23,7 +23,9 @@ import {
   Stethoscope,
 } from "lucide-react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
+import { Linking } from "react-native";
 import { colors, shadows } from "./theme";
+import { appUrl, supabase } from "./supabase";
 
 interface TelemedicineModalProps {
   visible: boolean;
@@ -42,17 +44,73 @@ export default function TelemedicineModal({
   const [showChat, setShowChat] = useState(false);
   const [camPermission, requestCamPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
+  const [roomToken, setRoomToken] = useState<string | null>(null);
+  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  const [roomError, setRoomError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
   const [chatMessages, setChatMessages] = useState<
     { id: string; sender: "doctor" | "patient" | "system"; text: string; time: string }[]
   >([]);
   const [inputText, setInputText] = useState("");
 
-  // Pede câmera e microfone assim que a sala abre
+  // Pede câmera e microfone e obtém o token da sala
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      setRoomToken(null);
+      setRoomUrl(null);
+      setRoomError(null);
+      return;
+    }
+
     if (!camPermission?.granted) requestCamPermission();
     if (!micPermission?.granted) requestMicPermission();
-  }, [visible]);
+
+    const apptId = appointment?.id as string | undefined;
+    if (!apptId) return;
+
+    let active = true;
+    setConnecting(true);
+
+    async function fetchLiveKitToken() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          if (active) setRoomError("Faça login para entrar na sala.");
+          return;
+        }
+
+        const res = await fetch(`${appUrl}/api/telemedicine/token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ appointmentId: apptId }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+
+        if (res.ok && data.token) {
+          setRoomToken(data.token);
+          setRoomUrl(data.url);
+          setRoomError(null);
+        } else {
+          setRoomError(data.error || "Aguardando janela de horário da consulta.");
+        }
+      } catch (err) {
+        if (active) setRoomError("Não foi possível conectar ao servidor de vídeo.");
+      } finally {
+        if (active) setConnecting(false);
+      }
+    }
+
+    void fetchLiveKitToken();
+
+    return () => {
+      active = false;
+    };
+  }, [visible, appointment?.id]);
 
   useEffect(() => {
     if (!visible) {
@@ -137,7 +195,39 @@ export default function TelemedicineModal({
               </Text>
             </View>
             <Text style={styles.doctorFeedName}>{doctorName}</Text>
-            <Text style={styles.doctorFeedStatus}>Aguardando o médico entrar na sala…</Text>
+            <Text style={styles.doctorFeedStatus}>
+              {roomToken
+                ? "Sala LiveKit pronta • Criptografada em trânsito"
+                : connecting
+                ? "Conectando ao servidor seguro..."
+                : roomError || "Aguardando o médico entrar na sala…"}
+            </Text>
+
+            {roomToken && (
+              <Pressable
+                onPress={() => {
+                  const apptId = appointment?.id as string;
+                  void Linking.openURL(`${appUrl}/telemedicina/${apptId}`);
+                }}
+                style={{
+                  marginTop: 14,
+                  backgroundColor: "rgba(22, 73, 87, 0.85)",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  borderWidth: 1,
+                  borderColor: colors.teal,
+                }}
+              >
+                <Video size={16} color="white" />
+                <Text style={{ color: "white", fontSize: 12, fontWeight: "700" }}>
+                  Abrir sala em tela cheia no navegador
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Pré-visualização REAL da câmera do paciente */}

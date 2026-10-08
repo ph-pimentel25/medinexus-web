@@ -14,6 +14,8 @@ import {
   Lock,
 } from "lucide-react";
 
+import { supabase } from "../lib/supabase";
+
 export interface ChatMessage {
   id: string;
   sender: "patient" | "doctor" | "system";
@@ -32,7 +34,6 @@ interface PostConsultationChatModalProps {
   viewerRole: "patient" | "doctor";
 }
 
-const STORAGE_PREFIX = "medinexus_post_chat_";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function PostConsultationChatModal({
@@ -46,10 +47,11 @@ export function PostConsultationChatModal({
 }: PostConsultationChatModalProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newText, setNewText] = useState("");
+  const [sending, setSending] = useState(false);
 
   const consultationTimestamp = appointmentDate
     ? new Date(appointmentDate).getTime()
-    : Date.now() - 2 * 24 * 60 * 60 * 1000; // default 2 dias atrás se não informado
+    : Date.now();
 
   const expiryTimestamp = consultationTimestamp + SEVEN_DAYS_MS;
   const now = Date.now();
@@ -57,79 +59,143 @@ export function PostConsultationChatModal({
   const daysRemaining = Math.max(0, Math.ceil((expiryTimestamp - now) / (24 * 60 * 60 * 1000)));
 
   useEffect(() => {
-    if (!appointmentId) return;
+    if (!isOpen || !appointmentId) return;
 
-    try {
-      const saved = localStorage.getItem(`${STORAGE_PREFIX}${appointmentId}`);
-      if (saved) {
-        setMessages(JSON.parse(saved));
+    let active = true;
+
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from("post_consultation_messages")
+        .select("*")
+        .eq("appointment_id", appointmentId)
+        .order("created_at", { ascending: true });
+
+      if (!active) return;
+
+      if (!error && data && data.length > 0) {
+        setMessages(
+          data.map((m) => ({
+            id: m.id,
+            sender: m.sender_role as "patient" | "doctor" | "system",
+            senderName: m.sender_name,
+            content: m.content,
+            timestamp: m.created_at,
+          }))
+        );
       } else {
-        // Mensagem inicial do sistema
-        const initialMessages: ChatMessage[] = [
+        // Mensagem inicial do sistema de orientação
+        setMessages([
           {
-            id: "msg-0",
+            id: "system-guideline",
             sender: "system",
             senderName: "MediNexus Cuidado Contínuo",
-            content: `Canal de dúvidas pós-consulta aberto com Dr(a). ${doctorName}. Conforme as diretrizes clínicas e do CFM, este canal é exclusivo para esclarecimentos rápidos sobre a prescrição ou orientações dadas em consulta e permanecerá disponível por 7 dias.`,
+            content: `Canal de dúvidas pós-consulta aberto com Dr(a). ${doctorName}. Conforme a Resolução CFM nº 2.314/2022, este canal é exclusivo para esclarecimentos rápidos sobre a prescrição ou orientações dadas em consulta e permanecerá ativo por 7 dias.`,
             timestamp: new Date(consultationTimestamp).toISOString(),
           },
-          {
-            id: "msg-1",
-            sender: "doctor",
-            senderName: doctorName,
-            content: `Olá, ${patientName}! Caso tenha ficado alguma dúvida sobre as orientações ou sobre os medicamentos prescritos, pode me enviar por aqui durante esta semana.`,
-            timestamp: new Date(consultationTimestamp + 5 * 60 * 1000).toISOString(),
-          },
-        ];
-        setMessages(initialMessages);
-        localStorage.setItem(`${STORAGE_PREFIX}${appointmentId}`, JSON.stringify(initialMessages));
+        ]);
       }
-    } catch {
-      // Ignora erro no local storage
     }
-  }, [appointmentId, consultationTimestamp, doctorName, patientName]);
+
+    void loadMessages();
+
+    // Inscrição em tempo real para novas mensagens
+    const channel = supabase
+      .channel(`post_chat_${appointmentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "post_consultation_messages",
+          filter: `appointment_id=eq.${appointmentId}`,
+        },
+        (payload) => {
+          const newRow = payload.new as {
+            id: string;
+            sender_role: string;
+            sender_name: string;
+            content: string;
+            created_at: string;
+          };
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newRow.id)) return prev;
+            return [
+              ...prev,
+              {
+                id: newRow.id,
+                sender: newRow.sender_role as "patient" | "doctor" | "system",
+                senderName: newRow.sender_name,
+                content: newRow.content,
+                timestamp: newRow.created_at,
+              },
+            ];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [isOpen, appointmentId, consultationTimestamp, doctorName]);
 
   if (!isOpen) return null;
 
-  function handleSend() {
-    if (!newText.trim() || isExpired) return;
+  async function handleSend() {
+    if (!newText.trim() || isExpired || sending) return;
 
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: viewerRole,
-      senderName: viewerRole === "doctor" ? doctorName : patientName,
-      content: newText.trim(),
-      timestamp: new Date().toISOString(),
-    };
-
-    const updated = [...messages, newMessage];
-    setMessages(updated);
-    setNewText("");
-
+    setSending(true);
     try {
-      localStorage.setItem(`${STORAGE_PREFIX}${appointmentId}`, JSON.stringify(updated));
-    } catch (e) {
-      console.warn("Erro ao salvar mensagem:", e);
-    }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Sua sessão expirou. Faça login novamente.");
+        return;
+      }
 
-    // Se quem mandou foi o paciente, simula uma confirmação profissional do médico se for a primeira mensagem
-    if (viewerRole === "patient" && !messages.some((m) => m.sender === "doctor" && m.id !== "msg-1")) {
-      setTimeout(() => {
-        const reply: ChatMessage = {
-          id: `msg-${Date.now() + 1}`,
-          sender: "doctor",
-          senderName: doctorName,
-          content: "Recebi sua dúvida! Estou revisando seus apontamentos no prontuário e lhe oriento em breve.",
+      const textToSend = newText.trim();
+      setNewText("");
+
+      const { data, error } = await supabase
+        .from("post_consultation_messages")
+        .insert({
+          appointment_id: appointmentId,
+          sender_id: user.id,
+          sender_role: viewerRole,
+          sender_name: viewerRole === "doctor" ? doctorName : patientName,
+          content: textToSend,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[Post-consultation chat error]", error);
+        // Fallback local se o banco ainda não rodou a migration
+        const localMsg: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          sender: viewerRole,
+          senderName: viewerRole === "doctor" ? doctorName : patientName,
+          content: textToSend,
           timestamp: new Date().toISOString(),
         };
-        const withReply = [...updated, reply];
-        setMessages(withReply);
-        try {
-          localStorage.setItem(`${STORAGE_PREFIX}${appointmentId}`, JSON.stringify(withReply));
-        } catch {
-          // ignore
-        }
-      }, 1500);
+        setMessages((prev) => [...prev, localMsg]);
+      } else if (data) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === data.id)) return prev;
+          return [
+            ...prev,
+            {
+              id: data.id,
+              sender: data.sender_role as "patient" | "doctor" | "system",
+              senderName: data.sender_name,
+              content: data.content,
+              timestamp: data.created_at,
+            },
+          ];
+        });
+      }
+    } finally {
+      setSending(false);
     }
   }
 

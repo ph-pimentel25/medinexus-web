@@ -1,4 +1,4 @@
-﻿import {
+import {
   CalendarDays,
   FileText,
   House,
@@ -31,6 +31,7 @@
   Syringe,
   Sparkles,
   Fingerprint,
+  MessageCircle,
 } from "lucide-react-native";
 import { colors, shadows } from "./src/theme";
 import { useCallback, useEffect, useState } from "react";
@@ -863,6 +864,33 @@ function Main() {
   function handleOpenExamBooking(examName = "") {
     setExamSearchName(examName);
     setShowExamModal(true);
+  }
+
+  function handleBatchWhatsAppExams() {
+    const pendingExamDocs = documents.filter(d => {
+      const isExam = String(d.document_type || "").includes("exam") || String(d.title || "").toLowerCase().includes("exame");
+      return isExam && d.status !== "concluido";
+    });
+
+    if (!pendingExamDocs.length) {
+      Alert.alert("Nenhum exame pendente", "Todos os seus exames já estão concluídos ou não há exames pendentes de agendamento.");
+      return;
+    }
+
+    const list = pendingExamDocs.map((d, idx) => `${idx + 1}. ${String(d.title || "Exame Solicitado")}`).join("\n");
+    const partnerLabPhone = "5521979828341";
+    const text = encodeURIComponent(
+      `Olá! Gostaria de agendar meus exames solicitados no MediNexus pela rede de laboratórios parceiros:\n\n${list}\n\nPor favor, confirmem as unidades disponíveis e orientações de preparo.`
+    );
+    void open(`https://wa.me/${partnerLabPhone}?text=${text}`);
+  }
+
+  function handleSingleWhatsAppExam(examTitle: string) {
+    const partnerLabPhone = "5521979828341";
+    const text = encodeURIComponent(
+      `Olá! Gostaria de agendar o exame "${examTitle}" pelo MediNexus na rede de laboratórios parceiros.`
+    );
+    void open(`https://wa.me/${partnerLabPhone}?text=${text}`);
   }
 
   function requestPartnerLabAppointment(lab: typeof PARTNER_LABS[0]) {
@@ -1766,23 +1794,25 @@ function Main() {
                             <FlaskConical size={22} color={colors.teal} />
                           </View>
                           <View style={{ flex: 1, gap: 2 }}>
-                            <Text style={styles.examBannerTitle}>Rede de Laboratórios Parceiros</Text>
+                            <Text style={styles.examBannerTitle}>Central de Exames & Laboratórios</Text>
                             <Text style={styles.examBannerDesc}>
-                              Agende exames laboratoriais e de imagem com descontos exclusivos e atendimento prioritário.
+                              Agende exames laboratoriais e de imagem com laudos integrados diretamente à sua ficha.
                             </Text>
                           </View>
                         </View>
+
+                        {/* Botão Geral de Disparo de Todos os Exames Pendentes */}
                         <Pressable
                           accessibilityRole="button"
-                          onPress={() => handleOpenExamBooking()}
+                          onPress={handleBatchWhatsAppExams}
                           style={({ pressed }) => [
                             styles.examBannerBtn,
                             shadows.sm,
-                            { opacity: pressed ? 0.9 : 1 },
+                            { backgroundColor: "#059669", opacity: pressed ? 0.9 : 1 },
                           ]}
                         >
-                          <FlaskConical size={18} color="white" />
-                          <Text style={styles.examBannerBtnText}>Agendar Exame em Laboratório Parceiro</Text>
+                          <MessageCircle size={18} color="white" />
+                          <Text style={styles.examBannerBtnText}>Disparar todos os exames via WhatsApp</Text>
                         </Pressable>
                       </View>
                     )}
@@ -1797,40 +1827,83 @@ function Main() {
                       filteredDocuments.map(d => {
                         const isSigned = d.signature_status === "signed";
                         const isExam = String(d.document_type || "").includes("exam") || String(d.title || "").toLowerCase().includes("exame");
+                        const examStatus = String(d.status || "solicitado");
+                        const isCompleted = examStatus === "concluido";
+
                         return (
                           <View style={[styles.card, shadows.sm]} key={String(d.id)}>
                             <View style={styles.cardHeaderRow}>
                               <Badge
                                 label={
                                   isExam
-                                    ? "SOLICITAÇÃO DE EXAME"
+                                    ? isCompleted
+                                      ? "CONCLUÍDO / LAUDO LIBERADO"
+                                      : examStatus === "em_andamento"
+                                      ? "EM ANÁLISE"
+                                      : examStatus === "agendado"
+                                      ? "AGENDADO"
+                                      : "SOLICITAÇÃO PENDENTE"
                                     : isSigned
                                     ? "ASSINADO DIGITALMENTE"
                                     : "REGISTRO MEDINEXUS"
                                 }
-                                variant={isExam ? "external" : isSigned ? "confirmed" : "brand"}
+                                variant={
+                                  isExam
+                                    ? isCompleted
+                                      ? "confirmed"
+                                      : examStatus === "em_andamento"
+                                      ? "brand"
+                                      : examStatus === "agendado"
+                                      ? "external"
+                                      : "warning"
+                                    : isSigned
+                                    ? "confirmed"
+                                    : "brand"
+                                }
                               />
                               <Text style={styles.date}>{when(String(d.issued_at || ""))}</Text>
                             </View>
 
                             <Text style={styles.cardTitle}>{String(d.title || "Documento médico")}</Text>
 
-                            {/* Botão dedicado para agendar o exame em laboratório parceiro */}
-                            {isExam && (
+                            {/* Ações dedicadas para exames */}
+                            {isExam && !isCompleted && (
                               <Pressable
                                 accessibilityRole="button"
-                                onPress={() => handleOpenExamBooking(String(d.title || "Exame Solicitado"))}
+                                onPress={() => handleSingleWhatsAppExam(String(d.title || "Exame Solicitado"))}
                                 style={styles.itemExamActionBtn}
                               >
-                                <FlaskConical size={16} color={colors.tealDark} />
-                                <Text style={styles.itemExamActionText}>Agendar este exame com desconto</Text>
+                                <MessageCircle size={16} color={colors.tealDark} />
+                                <Text style={styles.itemExamActionText}>Agendar este exame via WhatsApp</Text>
                                 <ChevronRight size={16} color={colors.teal} />
+                              </Pressable>
+                            )}
+
+                            {isExam && isCompleted && (
+                              <Pressable
+                                accessibilityRole="button"
+                                onPress={() =>
+                                  void open(
+                                    typeof d.result_url === "string"
+                                      ? d.result_url
+                                      : typeof d.signed_pdf_url === "string"
+                                      ? d.signed_pdf_url
+                                      : appUrl + `/documentos-medicos/${d.id}`
+                                  )
+                                }
+                                style={[styles.itemExamActionBtn, { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}
+                              >
+                                <CheckCircle2 size={16} color="#059669" />
+                                <Text style={[styles.itemExamActionText, { color: "#065F46", fontWeight: "700" }]}>
+                                  Ver resultados (Laudo Integrado)
+                                </Text>
+                                <ChevronRight size={16} color="#059669" />
                               </Pressable>
                             )}
 
                             <Button
                               secondary
-                              title="Visualizar documento em PDF"
+                              title="Visualizar pedido em PDF"
                               onPress={() =>
                                 void open(
                                   isSigned && typeof d.signed_pdf_url === "string"
