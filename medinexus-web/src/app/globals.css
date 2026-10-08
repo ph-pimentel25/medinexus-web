@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 /* =========================================================
    MEDINEXUS - Tailwind v4 Tokens Oficiais
@@ -201,21 +201,30 @@ button:disabled {
   font-size: 0.9rem;
   font-weight: 600;
   color: #ffffff;
-  box-shadow: 0 8px 24px -8px rgba(22, 73, 87, 0.35);
+  box-shadow: 0 8px 20px -6px rgba(22, 73, 87, 0.32);
   transition:
-    transform 180ms ease,
-    background-color 180ms ease,
-    opacity 180ms ease;
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+  user-select: none;
 }
 
 .app-button-primary:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1.5px);
   background: #0f343e;
+  box-shadow: 0 12px 24px -6px rgba(22, 73, 87, 0.38);
+}
+
+.app-button-primary:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 4px 12px -4px rgba(22, 73, 87, 0.25);
 }
 
 .app-button-primary:disabled {
   opacity: 0.6;
   transform: none;
+  box-shadow: none;
 }
 
 .app-button-secondary {
@@ -230,16 +239,24 @@ button:disabled {
   font-size: 0.9rem;
   font-weight: 600;
   color: #5A4C86;
+  box-shadow: 0 2px 6px -2px rgba(90, 76, 134, 0.08);
   transition:
-    transform 180ms ease,
-    background-color 180ms ease,
-    border-color 180ms ease;
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  user-select: none;
 }
 
 .app-button-secondary:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1.5px);
   background: #EAE7F4;
   border-color: #5A4C86;
+  box-shadow: 0 8px 16px -6px rgba(90, 76, 134, 0.16);
+}
+
+.app-button-secondary:active {
+  transform: scale(0.98) translateY(0);
 }
 
 .app-button-danger {
@@ -255,19 +272,26 @@ button:disabled {
   font-weight: 600;
   color: #b91c1c;
   transition:
-    transform 180ms ease,
-    background-color 180ms ease,
-    opacity 180ms ease;
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 160ms ease,
+    opacity 160ms ease;
+  user-select: none;
 }
 
 .app-button-danger:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1.5px);
   background: #fee2e2;
+  box-shadow: 0 8px 16px -6px rgba(185, 28, 28, 0.2);
+}
+
+.app-button-danger:active {
+  transform: scale(0.98) translateY(0);
 }
 
 .app-button-danger:disabled {
   opacity: 0.55;
   transform: none;
+  box-shadow: none;
 }
 
 /* =========================================================
@@ -377,10 +401,14 @@ button:disabled { opacity: .55; }
 .mn-page-content { min-width: 0; outline: none; }
 .mn-topbar-inner { height: 72px; }
 .mn-workspace-search { display: none; }
-.mn-panel, .app-card { border-radius: 16px; box-shadow: var(--mn-surface-shadow); border-color: var(--med-border); }
+.mn-panel, .app-card { border-radius: 16px; box-shadow: var(--mn-surface-shadow); border: 1px solid var(--med-border); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .mn-panel { padding: 24px; }
-.mn-button, .mn-button-secondary, .app-button-primary, .app-button-secondary, .app-button-danger { min-height: 44px; border-radius: 10px; font-weight: 600; font-size: 13px; gap: 8px; box-shadow: none; }
-.mn-input, .app-input, .app-textarea { border-radius: 10px; border-color: var(--med-border); font-size: 14px; min-height: 44px; }
+.mn-button, .mn-button-secondary { min-height: 44px; border-radius: 10px; font-weight: 600; font-size: 13px; gap: 8px; transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), background-color 160ms ease, box-shadow 160ms ease; user-select: none; }
+.mn-button:hover { transform: translateY(-1.5px); box-shadow: 0 8px 20px -6px rgba(22, 73, 87, 0.3); }
+.mn-button:active, .mn-button-secondary:active { transform: scale(0.975); }
+.mn-button-secondary:hover { transform: translateY(-1.5px); }
+.mn-input, .app-input, .app-textarea { border-radius: 10px; border: 1px solid var(--med-border); font-size: 14px; min-height: 44px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.mn-input:focus, .app-input:focus, .app-textarea:focus { border-color: var(--med-blue); box-shadow: 0 0 0 3px rgba(22, 73, 87, 0.12); }
 .mn-eyebrow { font-size: 10px; letter-spacing: .13em; color: var(--med-blue); }
 .mn-page-content :where(input, select, textarea) { accent-color: var(--med-blue); }
 .mn-page-content :where(.grid, .flex) > * { min-width: 0; }
