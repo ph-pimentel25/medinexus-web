@@ -33,8 +33,8 @@ import {
 const metrics = [
   { value: "100%", label: "Gratuito para pacientes", sub: "Zero taxas de agendamento" },
   { value: "0%", label: "Comissão da plataforma", sub: "Honorários integrais do médico" },
-  { value: "15 min", label: "Algoritmo de encaixe", sub: "Intervalos padronizados 24h" },
-  { value: "LGPD", label: "Conformidade e CFM", sub: "Segurança de dados clínicos" },
+  { value: "15 min", label: "Sistema de encaixe", sub: "Intervalos padronizados 24h" },
+  { value: "Privado", label: "Conformidade RLS", sub: "Isolamento de dados clínicos" },
 ];
 
 const pillars = [
@@ -64,7 +64,7 @@ const pillars = [
       "Console clínico moderno com prontuário eletrônico rápido, prescrição estruturada, validação de presença e zero comissão sobre suas consultas particulares.",
     features: [
       "Agenda inteligente com redução de no-show em até 80%",
-      "Prescrições e atestados com assinatura digital ICP-Brasil",
+      "Prescrições e atestados com assinatura digital [Em Breve]",
       "Recebimento direto das consultas particulares sem retenção",
       "Perfil verificado na rede de busca geolocalizada",
     ],
@@ -100,7 +100,7 @@ const differentials = [
   },
   {
     icon: Clock,
-    title: "Algoritmo de encaixe em 15 minutos",
+    title: "Sistema ágil de encaixe em 15 minutos",
     description:
       "O paciente informa seus dias e horários livres; nosso algoritmo cruza a grade dos médicos e encontra a combinação ideal automaticamente.",
   },
@@ -118,7 +118,7 @@ const differentials = [
   },
   {
     icon: ShieldCheck,
-    title: "Segurança de dados com padrão CFM e LGPD",
+    title: "Segurança de dados e conformidade clínica",
     description:
       "Prontuário sob controle absoluto do paciente, com acesso por consentimento expresso e integridade garantida por logs auditáveis.",
   },
@@ -221,7 +221,7 @@ export default function HomePage() {
               <div className="absolute -bottom-4 -right-4 z-30 hidden sm:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur-xl">
                 <ShieldCheck size={18} className="text-mn-teal" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">Padrão CFM & LGPD</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-mn-graphite/50">Privacidade de Dados</p>
                   <p className="text-xs font-bold text-mn-graphite">100% Gratuito ao Paciente</p>
                 </div>
               </div>

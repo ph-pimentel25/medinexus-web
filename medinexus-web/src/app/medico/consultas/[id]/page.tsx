@@ -3,6 +3,7 @@
 import ClinicalAISummary from "../../../components/clinical-ai-summary";
 import AuthorizedClinicalHistory from "../../../components/authorized-clinical-history";
 import HealthMetricsTracker from "../../../components/health-metrics-tracker";
+import MemedWidget from "../../../components/memed-widget";
 import { ANAMNESIS_TEMPLATES } from "../../../lib/anamnesis-templates";
 import {
   Video,
@@ -967,13 +968,11 @@ export default function MedicoConsultaPage() {
                 <span>Telemedicina (1-Clique)</span>
               </Link>
 
-              <Link
-                href={`/medico/consultas/${appointmentId}/documentos`}
-                className="inline-flex items-center gap-2 rounded-xl bg-mn-purple px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#483B6E] active:scale-95"
-              >
-                <FileText size={16} />
-                <span>Emitir documentos</span>
-              </Link>
+              <MemedWidget 
+                doctorId={appointment?.doctor_id || ""} 
+                buttonClassName="inline-flex items-center gap-2 rounded-xl bg-mn-purple px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#483B6E] active:scale-95" 
+                buttonLabel="Emitir documentos" 
+              />
 
               <button
                 type="button"
@@ -1450,12 +1449,11 @@ export default function MedicoConsultaPage() {
               </h2>
             </div>
 
-            <Link
-              href={`/medico/consultas/${appointmentId}/documentos`}
-              className="inline-flex justify-center rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white transition hover:bg-mn-teal"
-            >
-              Novo documento
-            </Link>
+            <MemedWidget 
+              doctorId={appointment?.doctor_id || ""} 
+              buttonClassName="inline-flex justify-center rounded-2xl bg-mn-teal px-6 py-4 text-sm font-bold text-white transition hover:bg-mn-teal" 
+              buttonLabel="Novo documento" 
+            />
           </div>
 
           {documents.length === 0 ? (
