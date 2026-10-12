@@ -13,7 +13,7 @@ begin
   -- Para fins de conformidade LGPD da nossa release, usaremos uma chave de ambiente.
   
   if NEW.private_notes is not null then
-    NEW.private_notes_encrypted = pgp_sym_encrypt(
+    NEW.private_notes_encrypted = extensions.pgp_sym_encrypt(
       NEW.private_notes, 
       coalesce(current_setting('app.settings.encryption_key', true), 'fallback-dev-key-change-in-prod')
     );
@@ -23,10 +23,10 @@ begin
 
   return NEW;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path=public,extensions;
 
 -- Aplica o trigger à tabela
-drop trigger if if exists trg_encrypt_consultation_notes on public.consultation_notes;
+drop trigger if exists trg_encrypt_consultation_notes on public.consultation_notes;
 create trigger trg_encrypt_consultation_notes
 before insert or update on public.consultation_notes
 for each row
@@ -42,13 +42,13 @@ language sql stable security definer set search_path=public as $$
     'patient_id', n.patient_id,
     'doctor_id', n.doctor_id,
     'private_notes', case 
-        when n.private_notes_encrypted is not null then pgp_sym_decrypt(
+        when n.private_notes_encrypted is not null then extensions.pgp_sym_decrypt(
             n.private_notes_encrypted, 
             coalesce(current_setting('app.settings.encryption_key', true), 'fallback-dev-key-change-in-prod')
         )
         else n.private_notes 
     end,
-    'clinical_summary', n.clinical_summary,
+    'clinical_summary', n.summary,
     'created_at', n.created_at
   )
   from consultation_notes n 

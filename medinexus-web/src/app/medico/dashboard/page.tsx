@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import DashboardOverview from "../../components/dashboard-overview";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { getCurrentDoctor } from "../../lib/auth";
+import { Copy, CheckCircle2, ExternalLink, Sparkles } from "lucide-react";
 
 type DoctorRow = {
   id: string;
@@ -196,6 +197,18 @@ export default function MedicoDashboardPage() {
   const [doctor, setDoctor] = useState<DoctorRow | null>(null);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyBioLink = async () => {
+    if (!doctor?.id) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://medinexus.com.br";
+    const bioUrl = `${origin}/profissionais/${doctor.id}`;
+    if (navigator?.clipboard) {
+      await navigator.clipboard.writeText(bioUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    }
+  };
 
 
   async function loadDashboard() {
@@ -310,7 +323,63 @@ export default function MedicoDashboardPage() {
             Carregando painel médico...
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
+          <>
+            {doctor?.id && (
+              <div className="mb-6 overflow-hidden rounded-3xl border border-mn-teal/20 bg-gradient-to-r from-mn-teal/5 via-white to-mn-purple/5 p-6 shadow-sm">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-2xl bg-mn-teal p-3 text-white shadow-sm">
+                      <Sparkles size={24} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-900">
+                          Seu Cartão Digital & Link na Bio está ativo!
+                        </h2>
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                          Online
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-600 max-w-xl">
+                        Divulgue no seu Instagram ou envie aos pacientes. Eles podem consultar suas especialidades, convênios aceitos e agendar consultas diretamente pela plataforma.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleCopyBioLink}
+                      className="inline-flex items-center gap-1.5 rounded-2xl bg-mn-teal px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#123B46] active:scale-95"
+                    >
+                      {linkCopied ? (
+                        <>
+                          <CheckCircle2 size={15} className="text-emerald-300" />
+                          <span>Link copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={15} />
+                          <span>Copiar link da bio</span>
+                        </>
+                      )}
+                    </button>
+
+                    <Link
+                      href={`/profissionais/${doctor.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-mn-border bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    >
+                      <span>Visualizar perfil</span>
+                      <ExternalLink size={14} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
             <div className="space-y-6">
               <div className="rounded-2xl border border-mn-border bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
@@ -579,6 +648,7 @@ export default function MedicoDashboardPage() {
               </div>
             </div>
           </div>
+        </>
         )}
       </section>
     </main>

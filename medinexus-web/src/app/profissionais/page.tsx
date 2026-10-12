@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import DoctorNetworkDetails from "../components/doctor-network-details";
@@ -363,6 +363,13 @@ export default function ProfissionaisPage() {
                     </div>
 
                     <div className="mt-8 grid gap-3">
+                      <Link
+                        href={`/profissionais/${item.id}`}
+                        className="rounded-full border border-mn-teal/30 bg-mn-sage-light/40 px-5 py-3 text-center text-sm font-bold text-mn-teal transition hover:bg-mn-sage-light"
+                      >
+                        Ver Perfil / Cartão Digital
+                      </Link>
+
                       <Link
                         href={`/busca${item.clinic_id?`?clinicId=${item.clinic_id}`:""}`}
                         className="rounded-full bg-mn-teal px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#123B46]"
